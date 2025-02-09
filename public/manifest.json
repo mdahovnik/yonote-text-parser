@@ -19,22 +19,21 @@
       ],
       "run_at": "document_end",
       "js": [
-        "content.ts"
+        "content.js"
       ]
     }
   ],
+  "action": {
+    "default_popup": "index.html"
+  },
   "host_permissions": [
     "https://*.yonote.ru/doc/*"
   ],
   "permissions": [
     "activeTab",
     "storage",
-    "scripting",
-    "sidePanel"
-  ],
-  "side_panel": {
-    "default_path": "index.html"
-  }
+    "scripting"
+  ]
 }
 
 

@@ -1,4 +1,6 @@
-const TAGS = {
+import {TParsedData, TRecord} from "./types.ts";
+
+const TAGTYPE = {
   A: 'A',
   BLOCKQUOTE: 'BLOCKQUOTE',
   BUTTON: `BUTTON`,
@@ -16,27 +18,37 @@ const TAGS = {
   TABLE: 'TABLE',
   U: 'U'
 }
+// chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.color) {
+    console.log("Receive color = " + msg.color);
+    document.body.style.backgroundColor = msg.color;
+    sendResponse("Change color to " + msg.color);
+  } else {
+    const id = sender.tab?.id;
+    sendResponse(`Color message is none. ${id}`);
+  }
 
-chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
+
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
   // console.log(textBoxNodes);
 
   let symbols = 0;
   let words = 0;
-  let textContent = '';
-  const textDataArr = [];
+  let textContent: string = '';
+  const textDataArr: TParsedData[] = [];
   let nodePath = '';
 
-  function extractData(nodeElement) {
+  function extractData(nodeElement: ChildNode) {
     nodeElement.childNodes.forEach((node) => {
       let nodeWords = 0;
       let nodeSymbols = 0;
 
-      if (node.nodeType === Node.TEXT_NODE) {
-        textContent = node.textContent;
+      if (node && node.nodeType === Node.TEXT_NODE) {
+        textContent = node.textContent ?? '';
 
-        if (textContent.length > 0) {
-          nodePath += node.parentNode.nodeName;
+        if (textContent && textContent.length > 0) {
+          nodePath += node.parentNode?.nodeName;
           symbols += nodeSymbols = textContent.length;
           words += nodeWords = getWordCount(textContent);
 
@@ -49,8 +61,8 @@ chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
         }
         nodePath = '';
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        if (node.nodeName !== TAGS.OPTION) {
-          nodePath += node.parentNode.nodeName + ',';
+        if (node.nodeName !== TAGTYPE.OPTION) {
+          nodePath += node.parentNode?.nodeName + ',';
           extractData(node)
         }
       }
@@ -63,15 +75,20 @@ chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
   })
   console.log(textDataArr)
 
-  function calculateData() {
-
-  }
+  // function calculateData() {
+  //
+  // }
 
   // сохраняем в хранилище records
-  chrome.storage.local.get("records", (storage) => {
-    storage['records'][textBoxNodes[0].textContent] = {
+  chrome.storage.local.get("records", (storage: { [p: string]: TRecord }) => {
+    const key = textBoxNodes[0].textContent;
+
+    if (key === null) return;
+    if (!storage['records']) return;
+
+    storage['records'][key] = {
       time: new Date().toLocaleTimeString(),
-      title: textDataArr[0],
+      title: textDataArr[0].text,
       words: words,
       symbols: symbols,
       raw: 'raw_string'
@@ -88,14 +105,30 @@ chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
   });
 });
 
-function prepareDataResponse() {
-  const data = {};
-  return data;
-}
+// function prepareDataResponse() {
+//   const data = {};
+//   return data;
+// }
+
+// type data = {
+//   text: string,
+//   nodePath: Element,
+//   words: number,
+//   symbols: number
+// }
+
+// function getTotalCounts(data: data) {
+//
+//   return {
+//     words: 0,
+//     symbols: 0
+//   }
+// }
 
 // Подсчет слов
-function getWordCount(str) {
+function getWordCount(str: string) {
   const matches = str.match(/\S+/g);
   return matches ? matches.length : 0;
 }
+
 
