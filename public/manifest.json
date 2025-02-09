@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Yonote Parser",
+  "description": "Yonote Parser counts words or characters on Yonote pages",
+  "version": "1.0",
+  "author": "Maksim Dahovnik",
+  "homepage_url": "https://t.me/shtopor_org",
+  "icons": {
+    "32": "icon-32.png",
+    "192": "icon-192.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.yonote.ru/doc/*"
+      ],
+      "run_at": "document_end",
+      "js": [
+        "content.ts"
+      ]
+    }
+  ],
+  "host_permissions": [
+    "https://*.yonote.ru/doc/*"
+  ],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "sidePanel"
+  ],
+  "side_panel": {
+    "default_path": "index.html"
+  }
+}
+
+
