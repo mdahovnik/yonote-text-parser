@@ -17,10 +17,9 @@ export function ButtonAction(
     text
   }: TButtonAction) {
   return (
-    <div
-      className={`button ${className} ${isActive ? "action" : "disabled"}`}
-      id={id}
-      onClick={onClick}>
+    <div className={`button ${className} ${isActive ? "action" : "disabled"}`}
+         id={id}
+         onClick={onClick}>
       <svg>
         <use href={`icons.svg#${type}`}></use>
       </svg>
@@ -28,3 +27,5 @@ export function ButtonAction(
     </div>
   )
 }
+
+//TODO: значёк svg должен появляться у лейбла по наведению

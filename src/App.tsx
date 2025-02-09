@@ -95,27 +95,65 @@ function App() {
       setData([...data, response])
     })
   }
-
+  const testData = [
+    {
+      raw: "raw_string",
+      symbols: 820,
+      time: "8:15:58 PM",
+      title: "testTitle",
+      words: 158
+    },
+    {
+      raw: "raw_string",
+      symbols: 820,
+      time: "8:15:58 PM",
+      title: "testTitle ваолор цуцудлдл ывыовыовыоxcxc",
+      words: 158
+    },
+    {
+      raw: "raw_string",
+      symbols: 820,
+      time: "8:15:58 PM",
+      title: "testTitle ваолор цуцудлдл ывыовopqыовыо",
+      words: 158
+    },
+    {
+      raw: "raw_string",
+      symbols: 820,
+      time: "8:15:58 PM",
+      title: "testTitleлололо hhjhjhjhjT Yuhjshjh",
+      words: 158
+    },
+    {
+      raw: "raw_string",
+      symbols: 820,
+      time: "8:15:58 PM",
+      title: "testTitle ваолор цу",
+      words: 158
+    },
+    {
+      raw: "raw_string",
+      symbols: 820,
+      time: "8:15:58 PM",
+      title: "testTitle ваолор цуцудлдл ывыовыовыо",
+      words: 158
+    }
+  ]
   return (
     <>
-      <div>{record.length}</div>
       {settingIsVisible
-        ? <SettingsPage
-          blockSettings={blockSettings}
-          setBlockSettings={setBlockSettings}
-          textTypesSettings={textTypesSettings}
-          setTextTypesSettings={setTextTypesSettings}
-          countTypeSettings={countTypeSettings}
-          setCountTypeSettings={setCountTypeSettings}
-          onSettingClick={onSettingClick}/>
+        ? <SettingsPage blockSettings={blockSettings}
+                        setBlockSettings={setBlockSettings}
+                        textTypesSettings={textTypesSettings}
+                        setTextTypesSettings={setTextTypesSettings}
+                        countTypeSettings={countTypeSettings}
+                        setCountTypeSettings={setCountTypeSettings}
+                        onSettingClick={onSettingClick}/>
         :
-        <MainPage
-          onSettingClick={onSettingClick}
-          onPlusClick={onPlusClickHandler}
-          data={data}
-          // records={record}
-          isActive={isActive}
-        />
+        <MainPage onSettingClick={onSettingClick}
+                  onPlusClick={onPlusClickHandler}
+                  data={testData}
+                  isActive={isActive}/>
       }
     </>
   )

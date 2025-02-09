@@ -46,42 +46,37 @@ export function SettingsPage(
       return {...item, checked: item.title === type}
     });
     setCountTypeSettings(newState);
-    console.log(newState)
+  }
+  //TODO: реализовать копирование настроек
+  const onCopyHandler = () => {
   }
 
   return (
     <div id="settings-page">
       <div className="menu">
-        <ButtonAction
-          onClick={onClickHandler}
-          id={"to-main"}
-          type={"back"}/>
-        <div className="title">
-          Settings
-        </div>
+        <ButtonAction onClick={onClickHandler}
+                      id={"to-main"}
+                      type={"back"}/>
+        <div className="title">Settings</div>
         <div/>
       </div>
-      <Settings
-        type={"checkbox"}
-        title={"Types of blocks to be counted:"}
-        settings={blockSettings}
-        onSettingsChanged={onBlockSettingsChanged}/>
-      <Settings
-        type={"checkbox"}
-        title={"Types of text style to be counted:"}
-        settings={textTypesSettings}
-        onSettingsChanged={onTextTypesSettingsChanged}/>
-      <Settings
-        type={"radio"}
-        title={"Counter type:"}
-        settings={countTypeSettings}
-        onSettingsChanged={onCountTypeSettingsChanged}/>
-      <ButtonAction
-        onClick={() => {
-        }}
-        id={"debug"}
-        type={"copy"}
-        text={"Copy raw text to check your settings"}/>
+      <Settings type={"checkbox"}
+                title={"Types of blocks to be counted:"}
+                settings={blockSettings}
+                onSettingsChanged={onBlockSettingsChanged}/>
+      <Settings type={"checkbox"}
+                title={"Types of text style to be counted:"}
+                settings={textTypesSettings}
+                onSettingsChanged={onTextTypesSettingsChanged}/>
+      <Settings type={"radio"}
+                title={"Counter type:"}
+                settings={countTypeSettings}
+                onSettingsChanged={onCountTypeSettingsChanged}/>
+      <hr/>
+      <ButtonAction onClick={onCopyHandler}
+                    id={"debug"}
+                    type={"copy"}
+                    text={"Copy raw text to check your settings"}/>
     </div>
   )
 }

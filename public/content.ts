@@ -19,9 +19,8 @@ const TAGS = {
 
 chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-  console.log(textBoxNodes);
+  // console.log(textBoxNodes);
 
-  const nodesTextContentArray = [];
   let symbols = 0;
   let words = 0;
   let textContent = '';
@@ -63,27 +62,6 @@ chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
     extractData(node)
   })
   console.log(textDataArr)
-
-  // textBoxNodes.forEach(node => {
-  //     if (node.childNodes.length > 1) {
-  //       node.childNodes.forEach(textNode => {
-  //         const trimmedText = textNode.textContent.trim();
-  //         if (trimmedText.length > 0) {
-  //           nodesTextContentArray.push(trimmedText);
-  //           symbols += trimmedText.length;
-  //           words += getWordCount(trimmedText);
-  //         }
-  //       })
-  //     } else {
-  //       if (node.textContent.length > 0) {
-  //         nodesTextContentArray.push(node.textContent)
-  //         symbols += node.textContent.length;
-  //         words += getWordCount(node.textContent);
-  //       }
-  //     }
-  //   }
-  // )
-  // console.log(nodesTextContentArray)
 
   function calculateData() {
 
