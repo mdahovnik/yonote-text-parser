@@ -1,25 +1,20 @@
-const VALIDTAGS = {
+const TAGS = {
+  A: 'A',
+  BLOCKQUOTE: 'BLOCKQUOTE',
+  BUTTON: `BUTTON`,
+  DEL: 'DEL',
   DIV: 'DIV',
+  EM: 'EM',
+  CODE: 'CODE',
   H1: 'H1',
   H2: 'H2',
   H3: 'H3',
-  SPAN: 'SPAN',
-  BUTTON: `BUTTON`,
   OPTION: 'OPTION',
   P: 'P',
-  A: 'A',
-  CODE: 'CODE',
-  EM: 'EM',
+  SPAN: 'SPAN',
   STRONG: 'STRONG',
   TABLE: 'TABLE',
-  BLOCKQUOTE: 'BLOCKQUOTE',
-  U: 'U',
-  DEL: 'DEL'
-}
-
-const INVALIDTAGS = {
-  OPTION: 'OPTION',
-  CODE: 'CODE'
+  U: 'U'
 }
 
 chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
@@ -30,34 +25,44 @@ chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
   let symbols = 0;
   let words = 0;
   let textContent = '';
-  const textInfoArr = [];
+  const textDataArr = [];
   let nodePath = '';
 
-  function extractText(nodeElement) {
+  function extractData(nodeElement) {
     nodeElement.childNodes.forEach((node) => {
+      let nodeWords = 0;
+      let nodeSymbols = 0;
+
       if (node.nodeType === Node.TEXT_NODE) {
-        textContent = node.textContent.trim();
-        nodePath += node.parentNode.nodeName;
-        symbols += textContent.length;
-        words += getWordCount(textContent);
+        textContent = node.textContent;
+
         if (textContent.length > 0) {
-          textInfoArr.push({text: textContent, path: nodePath});
+          nodePath += node.parentNode.nodeName;
+          symbols += nodeSymbols = textContent.length;
+          words += nodeWords = getWordCount(textContent);
+
+          textDataArr.push({
+            text: textContent,
+            nodePath: nodePath,
+            words: nodeWords,
+            symbols: nodeSymbols
+          });
         }
         nodePath = '';
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        if (node.nodeName !== INVALIDTAGS.OPTION) {
+        if (node.nodeName !== TAGS.OPTION) {
           nodePath += node.parentNode.nodeName + ',';
-          extractText(node)
+          extractData(node)
         }
       }
     })
-    return textInfoArr;
+    return textDataArr;
   }
 
   textBoxNodes.forEach(node => {
-    extractText(node)
+    extractData(node)
   })
-  console.log(textInfoArr)
+  console.log(textDataArr)
 
   // textBoxNodes.forEach(node => {
   //     if (node.childNodes.length > 1) {
@@ -80,11 +85,15 @@ chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
   // )
   // console.log(nodesTextContentArray)
 
+  function calculateData() {
+
+  }
+
   // сохраняем в хранилище records
   chrome.storage.local.get("records", (storage) => {
-    storage['records'][nodesTextContentArray[0]] = {
+    storage['records'][textBoxNodes[0].textContent] = {
       time: new Date().toLocaleTimeString(),
-      title: nodesTextContentArray[0],
+      title: textDataArr[0],
       words: words,
       symbols: symbols,
       raw: 'raw_string'
