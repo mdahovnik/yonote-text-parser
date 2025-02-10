@@ -55,7 +55,6 @@ chrome.runtime.onInstalled.addListener(() => {
 
 });
 
-
 // const loadDataFromStorage = () => {
 //     chrome.storage.local.get("records", (data) => {
 //         chrome.runtime.sendMessage(data['records'])

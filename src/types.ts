@@ -43,6 +43,7 @@ export const defaultCountTypeSettings: TSetting[] = [
 
 export type TRecord = {
   [tabUrl: string]: {
+    id: string,
     time: string,
     title: string,
     words: number,

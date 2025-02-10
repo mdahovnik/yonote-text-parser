@@ -57,7 +57,6 @@ function App() {
   //   setData([...newData.newValue])
   // }
 
-
   // const fetchData = () => {
   //   chrome.storage.sync.get('records`', (record) => {
   //     const newRecord = record['records'];
@@ -71,7 +70,6 @@ function App() {
   useLayoutEffect(() => {
     getUrl();
     // fetchData()
-
   }, [])
 
   const onSettingClick = async (isVisible: boolean) => {
@@ -92,7 +90,7 @@ function App() {
     const settings = await chrome.storage.local.get("defaultBlockSettings");
     // chrome.tabs.sendMessage(id, settings);
     chrome.tabs.sendMessage(id, settings, (response) => {
-      setData([...data, response])
+      setData([...data, response])//TODO: data может и не нужна
     })
   }
   const testData = [
@@ -149,11 +147,11 @@ function App() {
                         countTypeSettings={countTypeSettings}
                         setCountTypeSettings={setCountTypeSettings}
                         onSettingClick={onSettingClick}/>
-        :
-        <MainPage onSettingClick={onSettingClick}
-                  onPlusClick={onPlusClickHandler}
-                  data={testData}
-                  isActive={isActive}/>
+        : <MainPage onSettingClick={onSettingClick}
+                    onPlusClick={onPlusClickHandler}
+                    data={testData}
+                    isActive={isActive}
+                    countTypeSettings={countTypeSettings}/>
       }
     </>
   )

@@ -86,6 +86,10 @@ body {
     margin-right: 0.25em;
 }
 
+.count-bold {
+    font-weight: 400;
+}
+
 /* Настройки заглушки когда нет записей */
 .placeholder {
     text-align: center;

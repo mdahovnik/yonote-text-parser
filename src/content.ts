@@ -1,23 +1,24 @@
 import {TParsedData, TRecord} from "./types.ts";
 
-const TAGTYPE = {
-  A: 'A',
-  BLOCKQUOTE: 'BLOCKQUOTE',
-  BUTTON: `BUTTON`,
-  DEL: 'DEL',
-  DIV: 'DIV',
-  EM: 'EM',
-  CODE: 'CODE',
-  H1: 'H1',
-  H2: 'H2',
-  H3: 'H3',
-  OPTION: 'OPTION',
-  P: 'P',
-  SPAN: 'SPAN',
-  STRONG: 'STRONG',
-  TABLE: 'TABLE',
-  U: 'U'
+enum NODE_NAME {
+  A = "A",
+  BLOCKQUOTE = "BLOCKQUOTE",
+  BUTTON = "BUTTON",
+  DEL = "DEL",
+  DIV = "DIV",
+  EM = "EM",
+  CODE = "CODE",
+  H1 = "H1",
+  H2 = "H2",
+  H3 = "H3",
+  OPTION = "OPTION",
+  P = "P",
+  SPAN = "SPAN",
+  STRONG = "STRONG",
+  TABLE = "TABLE",
+  U = "U",
 }
+
 // chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.color) {
@@ -29,8 +30,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     sendResponse(`Color message is none. ${id}`);
   }
 
-
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
+  const mainDocContainer = document.getElementsByClassName("main-document-container");
+  const documentId = mainDocContainer[0].getAttribute("id");
+  // console.log(documentId);
   // console.log(textBoxNodes);
 
   let symbols = 0;
@@ -38,6 +41,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   let textContent: string = '';
   const textDataArr: TParsedData[] = [];
   let nodePath = '';
+  let rawString = '';
 
   function extractData(nodeElement: ChildNode) {
     nodeElement.childNodes.forEach((node) => {
@@ -51,6 +55,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           nodePath += node.parentNode?.nodeName;
           symbols += nodeSymbols = textContent.length;
           words += nodeWords = getWordCount(textContent);
+          rawString += " " + textContent;
 
           textDataArr.push({
             text: textContent,
@@ -61,7 +66,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
         nodePath = '';
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        if (node.nodeName !== TAGTYPE.OPTION) {
+        if (node.nodeName !== NODE_NAME.OPTION) {
           nodePath += node.parentNode?.nodeName + ',';
           extractData(node)
         }
@@ -79,19 +84,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   //
   // }
 
-  // сохраняем в хранилище records
+  // сохраняем в хранилище распарсенный документ
   chrome.storage.local.get("records", (storage: { [p: string]: TRecord }) => {
+    //заголовок документа используем в качестве ключа
     const key = textBoxNodes[0].textContent;
 
     if (key === null) return;
     if (!storage['records']) return;
 
     storage['records'][key] = {
+      id: documentId ?? crypto.randomUUID(),
       time: new Date().toLocaleTimeString(),
       title: textDataArr[0].text,
       words: words,
       symbols: symbols,
-      raw: 'raw_string'
+      raw: rawString.trim()
     }
     const data = storage['records'];
     chrome.storage.local.set({"records": {...data}});
@@ -101,7 +108,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     title: textBoxNodes[0].textContent,
     words: words,
     symbols: symbols,
-    raw: 'raw_string'
+    raw: rawString.trim()
   });
 });
 
