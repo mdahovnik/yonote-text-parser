@@ -87,56 +87,81 @@ function App() {
   const onPlusClickHandler = async () => {
     const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
     const id = tab?.id as number;
-    const settings = await chrome.storage.local.get("defaultBlockSettings");
+    // const settings = await chrome.storage.local.get("defaultBlockSettings");
     // chrome.tabs.sendMessage(id, settings);
-    chrome.tabs.sendMessage(id, settings, (response) => {
+
+    chrome.tabs.sendMessage(id, {action: "getData"}, (response: TStorage) => {
+      console.log(response)
       setData([...data, response])//TODO: data может и не нужна
     })
+    console.log(data)
   }
-  const testData = [
-    {
-      raw: "raw_string",
-      symbols: 820,
-      time: "8:15:58 PM",
-      title: "testTitle",
-      words: 158
-    },
-    {
-      raw: "raw_string",
-      symbols: 820,
-      time: "8:15:58 PM",
-      title: "testTitle ваолор цуцудлдл ывыовыовыоxcxc",
-      words: 158
-    },
-    {
-      raw: "raw_string",
-      symbols: 820,
-      time: "8:15:58 PM",
-      title: "testTitle ваолор цуцудлдл ывыовopqыовыо",
-      words: 158
-    },
-    {
-      raw: "raw_string",
-      symbols: 820,
-      time: "8:15:58 PM",
-      title: "testTitleлололо hhjhjhjhjT Yuhjshjh",
-      words: 158
-    },
-    {
-      raw: "raw_string",
-      symbols: 820,
-      time: "8:15:58 PM",
-      title: "testTitle ваолор цу",
-      words: 158
-    },
-    {
-      raw: "raw_string",
-      symbols: 820,
-      time: "8:15:58 PM",
-      title: "testTitle ваолор цуцудлдл ывыовыовыо",
-      words: 158
-    }
-  ]
+
+  // const testData: TStorage[] = [
+  //   {
+  //     time: "8:15:58 PM",
+  //     title: "Что такое Yonote?",
+  //     raw: "raw_string",
+  //     symbols: 820,
+  //     words: 8,
+  //   },
+  //   {
+  //     raw: "raw_string",
+  //     symbols: 820,
+  //     time: "8:15:58 PM",
+  //     title: "Ваолор цуцудлдл ывыовыовыоxcxc",
+  //     words: 25
+  //   },
+  //   {
+  //     raw: "raw_string",
+  //     symbols: 820,
+  //     time: "8:15:58 PM",
+  //     title: "Фаолор цуцудлдл ывыовopqыовыо",
+  //     words: 158
+  //   },
+  //   {
+  //     raw: "raw_string",
+  //     symbols: 820,
+  //     time: "8:15:58 PM",
+  //     title: "Практика поможет",
+  //     words: 89
+  //   },
+  //   {
+  //     raw: "raw_string",
+  //     symbols: 820,
+  //     time: "8:15:58 PM",
+  //     title: "Йаолор цу",
+  //     words: 73
+  //   },
+  //   {
+  //     raw: "raw_string",
+  //     symbols: 820,
+  //     time: "8:15:58 PM",
+  //     title: "Ууцудлдл ваа ывыовыовыо - ававпапа",
+  //     words: 158
+  //   },
+  //   {
+  //     raw: "raw_string",
+  //     symbols: 820,
+  //     time: "8:15:58 PM",
+  //     title: "Ваолор цуцудлдл ывыовыовыоxcxc",
+  //     words: 18
+  //   },
+  //   {
+  //     raw: "raw_string",
+  //     symbols: 820,
+  //     time: "8:15:58 PM",
+  //     title: "Фаолор цуцудлдл ывыовopqыовыо",
+  //     words: 58
+  //   },
+  //   {
+  //     raw: "raw_string",
+  //     symbols: 820,
+  //     time: "8:15:58 PM",
+  //     title: "Практика поможет",
+  //     words: 358
+  //   }
+  // ]
   return (
     <>
       {settingIsVisible
@@ -149,7 +174,7 @@ function App() {
                         onSettingClick={onSettingClick}/>
         : <MainPage onSettingClick={onSettingClick}
                     onPlusClick={onPlusClickHandler}
-                    data={testData}
+                    data={data}
                     isActive={isActive}
                     countTypeSettings={countTypeSettings}/>
       }

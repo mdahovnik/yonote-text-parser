@@ -1,38 +1,38 @@
-import {TStorage} from "../types.ts";
+import {TSetting, TStorage} from "../types.ts";
 import {ButtonAction} from "./buttonAction.tsx";
 
 
 type TRecordList = {
   data: TStorage[];
+  countTypeSettings: TSetting[];
 }
 
-export function Records({data}: TRecordList) {
+export function Records({data, countTypeSettings}: TRecordList) {
   return (
     <>
       <div id="records">
         <hr/>
-        {data.map((item, index) => (
-            // Object.entries(item).map(([tabUrl, details]) => (
-            <div className="record"
-                 key={index}>
-              <ButtonAction className={"record-remove danger"}
-                            onClick={() => {
-                            }}
-                            type={"remove"}/>
-              <div className="title">
-                <span className="record">
-                  {item.title}
-                </span>
+        {
+          data.map((item, index) => (
+              // Object.entries(item).map(([tabUrl, details]) => (
+              <div className="record"
+                   key={index}>
+                <ButtonAction className={"record-remove danger"}
+                              onClick={() => {
+                              }}
+                              type={"remove"}/>
+                <div className="title">
+                  <span className="record title">{item.title}</span>
+                </div>
+                <ButtonAction className={"record-counter"}
+                              onClick={() => {
+                              }}
+                              type={"copy"}
+                              text={`${countTypeSettings[0].checked ? item.words : item.symbols}`}/>
               </div>
-              <ButtonAction className={"record-counter"}
-                            onClick={() => {
-                            }}
-                            type={"copy"}
-                            text={`${item.words}`}/>
-            </div>
-            // ))
-          )
-        )}
+              // ))
+            )
+          )}
       </div>
     </>
   )

@@ -20,10 +20,12 @@ export function ButtonAction(
     <div className={`button ${className} ${isActive ? "action" : "disabled"}`}
          id={id}
          onClick={onClick}>
-      <svg>
-        <use href={`icons.svg#${type}`}></use>
-      </svg>
-      <label>{text}</label>
+      <div className="button-icon">
+        <svg>
+          <use href={`icons.svg#${type}`}></use>
+        </svg>
+        {text && <label className="button-icon-label">{text}</label>}
+      </div>
     </div>
   )
 }

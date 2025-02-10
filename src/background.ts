@@ -33,7 +33,7 @@ chrome.runtime.onInstalled.addListener(() => {
       {type: "allow_formatting_code", title: "Code", checked: false},
     ],
     "defaultCountTypeSettings": [
-      {type: "count_words", title: "Words", checked: false},
+      {type: "count_words", title: "Words", checked: true},
       {type: "count_symbols", title: "Symbols", checked: false},
     ],
     "records": []

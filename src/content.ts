@@ -1,4 +1,4 @@
-import {TParsedData, TRecord} from "./types.ts";
+import {TParsedData, TRecord, TStorage} from "./types.ts";
 
 enum NODE_NAME {
   A = "A",
@@ -20,15 +20,7 @@ enum NODE_NAME {
 }
 
 // chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.color) {
-    console.log("Receive color = " + msg.color);
-    document.body.style.backgroundColor = msg.color;
-    sendResponse("Change color to " + msg.color);
-  } else {
-    const id = sender.tab?.id;
-    sendResponse(`Color message is none. ${id}`);
-  }
+chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
 
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
   const mainDocContainer = document.getElementsByClassName("main-document-container");
@@ -72,13 +64,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
       }
     })
-    return textDataArr;
+    return textDataArr; //TODO: вывод в консоль распарсенного массива
   }
 
   textBoxNodes.forEach(node => {
     extractData(node)
   })
-  console.log(textDataArr)
+  // console.log(textDataArr)
 
   // function calculateData() {
   //
@@ -104,12 +96,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     chrome.storage.local.set({"records": {...data}});
   });
 
-  sendResponse({
-    title: textBoxNodes[0].textContent,
-    words: words,
-    symbols: symbols,
-    raw: rawString.trim()
-  });
+  if (message.action === "getData") {
+    const data: TStorage = {
+      raw: rawString.trim(),
+      symbols: symbols,
+      time: new Date().toLocaleTimeString(),
+      title: textBoxNodes[0].textContent ?? '',
+      words: words,
+    }
+    sendResponse(data);
+  }
 });
 
 // function prepareDataResponse() {

@@ -55,26 +55,24 @@ export function MainPage(
       {
         data.length
           ? <div id="table">
-            <Records data={data}/>
+            <Records data={data}
+                     countTypeSettings={countTypeSettings}/>
             <hr/>
             <div className="menu">
               <ButtonAction onClick={onClearClickHandler}
                             id={"clear-all"}
                             type={"trash"}
-                            text={"Clear"}
+                            text={"Clear all"}
                             className={"danger"}/>
               {
                 (() => {
                   const {words, symbols} = getTotals(data);
+                  return countTypeSettings[0].checked
+                    ? <div>Words:<span className="count-bold">{words}</span></div>
+                    : <div>Symbols:<span className="count-bold">{symbols}</span></div>
 
-                  return countTypeSettings[0].checked ? (
-                    <div className="count-bold">Words: {words}</div>
-                  ) : (
-                    <div className="count-bold">Symbols: {symbols}</div>
-                  );
                 })()
               }
-              {/*<div id="words-summary" className="title">0</div>*/}
             </div>
           </div>
           : <div className="placeholder" id="clear">

@@ -6,7 +6,7 @@
 body {
     width: 320px;
     padding: 0;
-
+    margin: 0;
     font-family: system-ui;
     text-align: center;
     font-size: 0.75em;
@@ -22,21 +22,32 @@ body {
     flex-wrap: nowrap;
     justify-content: space-between;
     align-items: center;
-    height: 3em;
+    /*height: 3em;*/
 }
 
 /* Полужирные заголовки в меню */
 .title {
     font-weight: 700;
-    font-size: 1.5em;
+    font-size: 1.3em;
 }
 
 /* Иконка в кнопке */
 .button svg {
-    height: 1.1em;
-    width: 1.1em;
+    height: 1.2em;
+    width: 1.2em;
     /*margin-bottom: -0.12em;*/
     fill: rgb(0, 0, 0);
+    display: flex;
+}
+
+.button-icon {
+    display: flex;
+    gap: 0.25em;
+    align-items: center;
+}
+
+.button-icon-label {
+    font-size: 1.1em;
 }
 
 /* Строка с записью */
@@ -58,9 +69,10 @@ body {
 }
 
 /* Обрезание текста заголовка в троеточие */
-.record span {
+.record .title span {
     display: table-cell;
-    font-size: 0.7em;
+    font-size: 0.9em;
+    font-weight: normal;
     max-width: 1px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -87,7 +99,8 @@ body {
 }
 
 .count-bold {
-    font-weight: 400;
+    font-weight: 700;
+    margin-left: 0.35em;
 }
 
 /* Настройки заглушки когда нет записей */
