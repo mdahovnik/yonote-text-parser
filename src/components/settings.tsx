@@ -23,7 +23,9 @@ export function Settings({type, title, settings, onSettingsChanged}: TSettingsBl
                    type={type}
                    value={type}
                    checked={item.checked}
-                   onChange={() => onSettingsChanged(item.title)}/>
+                   onChange={() => {
+                     console.log(item.title, item.checked)
+                     onSettingsChanged(item.title)}}/>
             <label>
               {item.title}
             </label>

@@ -1,52 +1,31 @@
 import {TSetting} from "../types.ts";
-import {Dispatch, SetStateAction} from "react";
 import {Settings} from "./settings.tsx";
 import {ButtonAction} from "./buttonAction.tsx";
 
 type TSettingPage = {
   onSettingClick: (isVisible: boolean) => void;
   blockSettings: TSetting[];
-  setBlockSettings: Dispatch<SetStateAction<TSetting[]>>;
+  onBlockTypeChange: (type: string) => void;
   textTypesSettings: TSetting[];
-  setTextTypesSettings: Dispatch<SetStateAction<TSetting[]>>;
+  onTextTypeChange: (type: string) => void;
   countTypeSettings: TSetting[];
-  setCountTypeSettings: Dispatch<SetStateAction<TSetting[]>>;
+  onCountTypeChange: (type: string) => void;
 }
 
 export function SettingsPage(
   {
     onSettingClick,
     blockSettings,
-    setBlockSettings,
+    onBlockTypeChange,
     textTypesSettings,
-    setTextTypesSettings,
+    onTextTypeChange,
     countTypeSettings,
-    setCountTypeSettings
+    onCountTypeChange
   }: TSettingPage) {
   const onClickHandler = () => {
     onSettingClick(false);
   }
 
-  const onTextTypesSettingsChanged = (type: string) => {
-    const elements = textTypesSettings.map((item) => item.title === type
-      ? {...item, checked: !item.checked}
-      : {...item});
-    setTextTypesSettings(elements)
-  }
-
-  const onBlockSettingsChanged = (type: string) => {
-    const newState = blockSettings.map((item) => item.title === type
-      ? {...item, checked: !item.checked}
-      : {...item});
-    setBlockSettings(newState)
-  }
-
-  const onCountTypeSettingsChanged = (type: string) => {
-    const newState = countTypeSettings.map((item) => {
-      return {...item, checked: item.title === type}
-    });
-    setCountTypeSettings(newState);
-  }
   //TODO: реализовать копирование настроек
   const onCopyHandler = () => {
   }
@@ -63,15 +42,15 @@ export function SettingsPage(
       <Settings type={"checkbox"}
                 title={"Types of blocks to be counted:"}
                 settings={blockSettings}
-                onSettingsChanged={onBlockSettingsChanged}/>
+                onSettingsChanged={onBlockTypeChange}/>
       <Settings type={"checkbox"}
                 title={"Types of text style to be counted:"}
                 settings={textTypesSettings}
-                onSettingsChanged={onTextTypesSettingsChanged}/>
+                onSettingsChanged={onTextTypeChange}/>
       <Settings type={"radio"}
                 title={"Counter type:"}
                 settings={countTypeSettings}
-                onSettingsChanged={onCountTypeSettingsChanged}/>
+                onSettingsChanged={onCountTypeChange}/>
       <hr/>
       <ButtonAction onClick={onCopyHandler}
                     id={"debug"}

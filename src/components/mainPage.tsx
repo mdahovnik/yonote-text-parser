@@ -55,7 +55,8 @@ export function MainPage(
                       isActive={isActive}/>
       </div>
       {
-        data ? <div id="table">
+        data.length > 0
+          ? <div id="table">
             <Records data={data}
                      countTypeSettings={countTypeSettings}/>
             <hr/>
@@ -67,8 +68,6 @@ export function MainPage(
                             className={"danger"}/>
               {
                 (() => {
-                  // console.log(data.length)//TODO: console.log(data.length), console.log(data)
-                  // console.log(data)
                   const {words, symbols} = getTotals(data);
                   return countTypeSettings[0].checked
                     ? <div>Words:<span className="count-bold">{words}</span></div>

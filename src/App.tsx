@@ -1,28 +1,42 @@
-import {useEffect, useState} from 'react'
+import {Dispatch, SetStateAction, useEffect, useState} from 'react'
 import './App.css'
 import {SettingsPage} from "./components/settingsPage.tsx";
 import {MainPage} from "./components/mainPage.tsx";
-import {
-  defaultBlockSettings,
-  defaultCountTypeSettings,
-  // defaultRecords,
-  defaultTextTypesSettings, TDocument
-} from "./types.ts";
+import {TDocument} from "./types.ts";
+import {blockTypeSettings, countTypeSettings, textTypeSettings} from "./constants/constants.ts";
 
-// async function getRecords(setData: Dispatch<SetStateAction<TDocument[]>>) {
+const ACT = {
+  GET_DOCUMENT: 'GET_DOCUMENT',
+  GET_RECORDS: 'GET_RECORDS',
+  SAVE_DOCUMENT: 'SAVE_DOCUMENT',
+  SAVE_SETTINGS: 'SAVE_SETTINGS'
+}
+
+async function getRecords<T>(setData: Dispatch<SetStateAction<T[]>>) {
+  const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
+  const id = tab?.id as number;
+
+  chrome.tabs.sendMessage(id, {action: ACT.GET_RECORDS}, (records: T[]) => {
+    if (records.length > 0) setData(records);
+  })
+}
+
+//TODO: реализовать сохранение настроек через отправку экшена в content.ts
+// async function saveSettings(setSettings: Dispatch<SetStateAction<TSetting[]>>) {
 //   const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
-//   const id = tab?.id as number;
-//   chrome.tabs.sendMessage(id, {action: "getRecords"}, (response: TDocument[]) => {
-//     if (response) setData([...response])
+//   const tabId = tab?.id as number;
+//
+//   chrome.tabs.sendMessage(tabId, {action: "saveSettings"}, (settings: TSetting[]) => {
+//     setSettings(settings);
+//     // chrome.storage.local.set({"records": {...documents, res}});
 //   })
 // }
 
 function App() {
-  const [settingIsVisible, setSettingIsVisible] = useState(false);
-  const [blockSettings, setBlockSettings] = useState(defaultBlockSettings);
-  const [textTypesSettings, setTextTypesSettings] = useState(defaultTextTypesSettings);
-  const [countTypeSettings, setCountTypeSettings] = useState(defaultCountTypeSettings);
-  // const [record, setRecord] = useState<TRecord[]>([])
+  const [isSettingChecked, setIsSettingChecked] = useState(false);
+  const [blockSettings, setBlockTypeSettings] = useState(blockTypeSettings);
+  const [textSettings, setTextTypesSettings] = useState(textTypeSettings);
+  const [countSettings, setCountTypeSettings] = useState(countTypeSettings);
   const [isActive, setIsActive] = useState(false);
   const [documents, setDocuments] = useState<TDocument[]>([]);
   // const [host, setHost] = useState("");
@@ -37,6 +51,34 @@ function App() {
       setIsActive(host === "yppm.yonote.ru");
     }
   }
+
+  //TODO: реализовать сохранение настроек через отправку экшена в content.ts
+  const onTextTypeChanged = (type: string) => {
+    const updatedSettings = textSettings.map((item) => item.title === type
+      ? {...item, checked: !item.checked}
+      : {...item});
+    // saveSettings(setBlockTypeSettings)
+    setTextTypesSettings(updatedSettings)
+  }
+
+  //TODO: реализовать сохранение настроек через отправку экшена в content.ts
+  const onBlockTypeChanged = (type: string) => {
+    const updatedSettings = blockSettings.map((item) => item.title === type
+      ? {...item, checked: !item.checked}
+      : {...item});
+    // saveSettings(setBlockTypeSettings)
+    setBlockTypeSettings(updatedSettings)
+  }
+
+  //TODO: реализовать сохранение настроек через отправку экшена в content.ts
+  const onCountTypeChanged = (type: string) => {
+    const updatedSettings = countSettings.map((item) => {
+      return {...item, checked: item.title === type}
+    });
+    // saveSettings(setBlockTypeSettings)
+    setCountTypeSettings(updatedSettings);
+  }
+
 
   // const initial = () => {
   //   // Получаем данные из chrome.storage.local
@@ -77,24 +119,11 @@ function App() {
 
   useEffect(() => {
     getUrl();
-    // getRecords(setData);//TODO: при монтировании компонента загружать documents из chrome.storage.local
-
-    //TODO: при монтировании компонента загружать documents из chrome.storage.local
-    // chrome.storage.local.get("records", (response) => {
-    //   if (response["records"]) {
-    //     setData([response["records"]])
-    //   }
-    //   console.log('при монтировании компонента загружать documents из chrome.storage.local')
-    //   console.log(response["records"])
-    // })
-
-    return () => {
-      //TODO: при размонтировании компонента сохранять documents в chrome.storage.local
-    }
+    getRecords(setDocuments);
   }, [])
 
   const onSettingClick = async (isVisible: boolean) => {
-    setSettingIsVisible(isVisible);
+    setIsSettingChecked(isVisible);
     // // initial()
     // const newRecord = await chrome.storage.local.get('records`')
     // const keys = Object.keys(newRecord)
@@ -108,95 +137,30 @@ function App() {
   const onPlusClickHandler = async () => {
     const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
     const tabId = tab?.id as number;
-    // const settings = await chrome.storage.local.get("defaultBlockSettings");
-    // chrome.tabs.sendMessage(id, settings);
 
-    chrome.tabs.sendMessage(tabId, {action: "getParsedDocument"}, (documents: TDocument[]) => {
+    chrome.tabs.sendMessage(tabId, {action: ACT.GET_DOCUMENT}, (documents: TDocument[]) => {
       setDocuments(documents);
-      // chrome.storage.local.set({"records": {...documents, res}});
     })
   }
 
-  // const testData: TStorage[] = [
-  //   {
-  //     time: "8:15:58 PM",
-  //     title: "Что такое Yonote?",
-  //     raw: "raw_string",
-  //     symbols: 820,
-  //     words: 8,
-  //   },
-  //   {
-  //     raw: "raw_string",
-  //     symbols: 820,
-  //     time: "8:15:58 PM",
-  //     title: "Ваолор цуцудлдл ывыовыовыоxcxc",
-  //     words: 25
-  //   },
-  //   {
-  //     raw: "raw_string",
-  //     symbols: 820,
-  //     time: "8:15:58 PM",
-  //     title: "Фаолор цуцудлдл ывыовopqыовыо",
-  //     words: 158
-  //   },
-  //   {
-  //     raw: "raw_string",
-  //     symbols: 820,
-  //     time: "8:15:58 PM",
-  //     title: "Практика поможет",
-  //     words: 89
-  //   },
-  //   {
-  //     raw: "raw_string",
-  //     symbols: 820,
-  //     time: "8:15:58 PM",
-  //     title: "Йаолор цу",
-  //     words: 73
-  //   },
-  //   {
-  //     raw: "raw_string",
-  //     symbols: 820,
-  //     time: "8:15:58 PM",
-  //     title: "Ууцудлдл ваа ывыовыовыо - ававпапа",
-  //     words: 158
-  //   },
-  //   {
-  //     raw: "raw_string",
-  //     symbols: 820,
-  //     time: "8:15:58 PM",
-  //     title: "Ваолор цуцудлдл ывыовыовыоxcxc",
-  //     words: 18
-  //   },
-  //   {
-  //     raw: "raw_string",
-  //     symbols: 820,
-  //     time: "8:15:58 PM",
-  //     title: "Фаолор цуцудлдл ывыовopqыовыо",
-  //     words: 58
-  //   },
-  //   {
-  //     raw: "raw_string",
-  //     symbols: 820,
-  //     time: "8:15:58 PM",
-  //     title: "Практика поможет",
-  //     words: 358
-  //   }
-  // ]
   return (
     <>
-      {settingIsVisible
-        ? <SettingsPage blockSettings={blockSettings}
-                        setBlockSettings={setBlockSettings}
-                        textTypesSettings={textTypesSettings}
-                        setTextTypesSettings={setTextTypesSettings}
-                        countTypeSettings={countTypeSettings}
-                        setCountTypeSettings={setCountTypeSettings}
-                        onSettingClick={onSettingClick}/>
-        : <MainPage onSettingClick={onSettingClick}
-                    onPlusClick={onPlusClickHandler}
-                    data={documents}
-                    isActive={isActive}
-                    countTypeSettings={countTypeSettings}/>
+      {
+        isSettingChecked
+          ? <SettingsPage
+            blockSettings={blockSettings}
+            onBlockTypeChange={onBlockTypeChanged}
+            textTypesSettings={textSettings}
+            onTextTypeChange={onTextTypeChanged}
+            countTypeSettings={countSettings}
+            onCountTypeChange={onCountTypeChanged}
+            onSettingClick={onSettingClick}/>
+          : <MainPage
+            onSettingClick={onSettingClick}
+            onPlusClick={onPlusClickHandler}
+            data={documents}
+            isActive={isActive}
+            countTypeSettings={countSettings}/>
       }
     </>
   )

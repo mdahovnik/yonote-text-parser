@@ -1,5 +1,12 @@
 import {TDocument, TParsedData, TStorage} from "./types.ts";
 
+const ACT = {
+  GET_DOCUMENT: 'GET_DOCUMENT',
+  GET_RECORDS: 'GET_RECORDS',
+  SAVE_DOCUMENT: 'SAVE_DOCUMENT',
+  SAVE_SETTINGS: 'SAVE_SETTINGS'
+}
+
 enum NODE_NAME {
   A = "A",
   BLOCKQUOTE = "BLOCKQUOTE",
@@ -19,13 +26,8 @@ enum NODE_NAME {
   U = "U",
 }
 
-// chrome.runtime.onMessage.addListener((settings, sender, sendResponse) => {
 chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
-
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-
-  // console.log(documentId);
-  // console.log(textBoxNodes);
 
   let symbols = 0;
   let words = 0;
@@ -70,8 +72,7 @@ chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
     extractData(node)
   })
 
-  // сохраняем в хранилище распарсенный документ //TODO: action === saveData
-  if (message.action === "saveData") {
+  if (message.action === ACT.SAVE_DOCUMENT) {
     // chrome.storage.local.get("records", (storage: TStorage) => {
     //   if (!storage.records) return;
     //
@@ -90,25 +91,14 @@ chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
     // });
   }
 
-  if (message.action === "getParsedDocument") {
-
-    // chrome.storage.local.get("records", (storage: TStorage) => {});
-    // const newDocument: TDocument = {
-    //   id: getDocumentId(),
-    //   raw: rawString.trim(),
-    //   symbols: symbols,
-    //   time: new Date().toLocaleTimeString(),
-    //   title: textBoxNodes[0].textContent ?? '',
-    //   words: words,
-    // };
-
+  // сохраняем в хранилище распарсенный документ
+  if (message.action === ACT.GET_DOCUMENT) {
     chrome.storage.local.get("records", (storage: TStorage) => {
       if (!storage.records) return;
 
       const records = storage.records;
       const docId = getDocumentId();
       const localTime = new Date().toLocaleTimeString();
-
       const mewDocument: TDocument = {
         id: docId,
         time: localTime,
@@ -120,17 +110,17 @@ chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
 
       records.push(mewDocument);
 
-      //сохраняем в хранилище распарсенный документ
-      chrome.storage.local.set({"records": [...records]}, () => {
+      chrome.storage.local.set({"records": records}, () => {
         sendResponse(storage.records);
       });
     });
   }
 
-  if (message.action === "getRecords") {
+  if (message.action === ACT.GET_RECORDS) {
     console.log("getRecords")
     chrome.storage.local.get("records", (storage: TStorage) => {
-      sendResponse(storage.records);
+      const records = storage.records;
+      sendResponse(records);
     })
   }
 

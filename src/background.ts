@@ -1,7 +1,7 @@
 chrome.runtime.onInstalled.addListener(() => {
   //await chrome.storage.local.clear();
   chrome.storage.local.set({
-    "defaultBlockSettings": [
+    "blockTypeSettings": [
       {type: "allow_title", title: "Page title", checked: false},
       {type: "allow_quote", title: "Quote block", checked: false},
       {type: "allow_text", title: "Text block", checked: false},
@@ -24,47 +24,18 @@ chrome.runtime.onInstalled.addListener(() => {
       {type: "allow_table", title: "Table", checked: false},
       {type: "allow_code", title: "Code block", checked: false}
     ],
-    "defaultTextTypesSettings": [
+    "textTypeSettings": [
       {type: "allow_formatting_bold", title: "Bold", checked: false},
       {type: "allow_formatting_italic", title: "Italic", checked: false},
       {type: "allow_formatting_underline", title: "Underline", checked: false},
       {type: "allow_formatting_strike", title: "Strike", checked: false},
       {type: "allow_formatting_code", title: "Code", checked: false},
     ],
-    "defaultCountTypeSettings": [
+    "countTypeSettings": [
       {type: "count_words", title: "Words", checked: true},
       {type: "count_symbols", title: "Symbols", checked: false},
     ],
-    "records": [
-      // {
-      //   time: "8:15:58 PM",
-      //   title: "Что такое Yonote?",
-      //   raw: "raw_string",
-      //   symbols: 820,
-      //   words: 8,
-      // },
-      // {
-      //   raw: "raw_string",
-      //   symbols: 820,
-      //   time: "8:15:58 PM",
-      //   title: "Ваолор цуцудлдл ывыовыовыоxcxc",
-      //   words: 25
-      // },
-      // {
-      //   raw: "raw_string",
-      //   symbols: 820,
-      //   time: "8:15:58 PM",
-      //   title: "Фаолор цуцудлдл ывыовopqыовыо",
-      //   words: 158
-      // },
-      // {
-      //   raw: "raw_string",
-      //   symbols: 820,
-      //   time: "8:15:58 PM",
-      //   title: "Практика поможет",
-      //   words: 89
-      // }
-    ]
+    "records": []
   });
 
   //активировать кнопку расширения Chrome только на определённом сайте
