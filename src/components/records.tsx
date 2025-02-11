@@ -1,9 +1,9 @@
-import {TSetting, TStorage} from "../types.ts";
+import {TSetting, TDocument} from "../types.ts";
 import {ButtonAction} from "./buttonAction.tsx";
 
 
 type TRecordList = {
-  data: TStorage[];
+  data: TDocument[];
   countTypeSettings: TSetting[];
 }
 

@@ -1,17 +1,19 @@
 import {ButtonAction} from "./buttonAction.tsx";
-import {TSetting, TStorage} from "../types.ts";
+import {TSetting, TDocument} from "../types.ts";
 import {Records} from "./records.tsx";
 
 type TMainPage = {
   onSettingClick: (isVisible: boolean) => void;
   onPlusClick: () => void;
-  data: TStorage[];
+  data: TDocument[];
   // records: TRecord[];
   isActive: boolean;
   countTypeSettings: TSetting[];
 }
 
-function getTotals(data: TStorage[]) {
+function getTotals(data: TDocument[]) {
+  // if (!data) return {words: 0, symbols: 0};
+  // if (data.length === 1) return {words: data[0].words, symbols: data[0].symbols};
   return data.reduce((a, b) => ({
     words: a.words + b.words,
     symbols: a.symbols + b.symbols
@@ -53,8 +55,7 @@ export function MainPage(
                       isActive={isActive}/>
       </div>
       {
-        data.length
-          ? <div id="table">
+        data ? <div id="table">
             <Records data={data}
                      countTypeSettings={countTypeSettings}/>
             <hr/>
@@ -66,6 +67,8 @@ export function MainPage(
                             className={"danger"}/>
               {
                 (() => {
+                  // console.log(data.length)//TODO: console.log(data.length), console.log(data)
+                  // console.log(data)
                   const {words, symbols} = getTotals(data);
                   return countTypeSettings[0].checked
                     ? <div>Words:<span className="count-bold">{words}</span></div>

@@ -1,7 +1,23 @@
+export type TDocument = {
+  id: string,
+  time: string,
+  title: string,
+  words: number,
+  symbols: number,
+  raw: string,
+}
+
 export type TSetting = {
   type: string,
   title: string,
   checked: boolean,
+}
+
+export type TStorage = {
+  records: TDocument[],
+  defaultBlockSettings: TSetting[],
+  defaultTextTypesSettings: TSetting[],
+  defaultCountTypeSettings: TSetting[]
 }
 
 export const defaultBlockSettings: TSetting[] = [
@@ -42,22 +58,7 @@ export const defaultCountTypeSettings: TSetting[] = [
 ]
 
 export type TRecord = {
-  [tabUrl: string]: {
-    id: string,
-    time: string,
-    title: string,
-    words: number,
-    symbols: number,
-    raw: string,
-  }
-}
-
-export type TStorage = {
-  time: string,
-  title: string,
-  words: number,
-  symbols: number,
-  raw: string,
+  [id: string]: TDocument
 }
 
 export type TParsedData = {
@@ -66,4 +67,5 @@ export type TParsedData = {
   words: number,
   symbols: number
 }
-export const defaultRecords: TRecord[] = []
+
+

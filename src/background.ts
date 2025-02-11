@@ -23,8 +23,7 @@ chrome.runtime.onInstalled.addListener(() => {
       {type: "allow_toggle_content", title: "Content", checked: false},
       {type: "allow_table", title: "Table", checked: false},
       {type: "allow_code", title: "Code block", checked: false}
-    ]
-    ,
+    ],
     "defaultTextTypesSettings": [
       {type: "allow_formatting_bold", title: "Bold", checked: false},
       {type: "allow_formatting_italic", title: "Italic", checked: false},
@@ -36,7 +35,36 @@ chrome.runtime.onInstalled.addListener(() => {
       {type: "count_words", title: "Words", checked: true},
       {type: "count_symbols", title: "Symbols", checked: false},
     ],
-    "records": []
+    "records": [
+      // {
+      //   time: "8:15:58 PM",
+      //   title: "Что такое Yonote?",
+      //   raw: "raw_string",
+      //   symbols: 820,
+      //   words: 8,
+      // },
+      // {
+      //   raw: "raw_string",
+      //   symbols: 820,
+      //   time: "8:15:58 PM",
+      //   title: "Ваолор цуцудлдл ывыовыовыоxcxc",
+      //   words: 25
+      // },
+      // {
+      //   raw: "raw_string",
+      //   symbols: 820,
+      //   time: "8:15:58 PM",
+      //   title: "Фаолор цуцудлдл ывыовopqыовыо",
+      //   words: 158
+      // },
+      // {
+      //   raw: "raw_string",
+      //   symbols: 820,
+      //   time: "8:15:58 PM",
+      //   title: "Практика поможет",
+      //   words: 89
+      // }
+    ]
   });
 
   //активировать кнопку расширения Chrome только на определённом сайте
@@ -68,4 +96,15 @@ chrome.runtime.onInstalled.addListener(() => {
 //         console.log(res)
 //     })
 //     // sendResponse([res])
+// })
+
+
+// chrome.runtime.onStartup.addListener(() => {
+//   async function getRecords(setState: Dispatch<SetStateAction<TStorage[]>>) {
+//   const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
+//   const id = tab?.id as number;
+//   chrome.tabs.sendMessage(id, {action: "getRecords"}, (response: TStorage) => {
+//     setState([response])
+//   })
+// }
 // })

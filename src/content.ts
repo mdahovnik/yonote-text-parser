@@ -1,4 +1,4 @@
-import {TParsedData, TRecord, TStorage} from "./types.ts";
+import {TDocument, TParsedData, TStorage} from "./types.ts";
 
 enum NODE_NAME {
   A = "A",
@@ -23,8 +23,7 @@ enum NODE_NAME {
 chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
 
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-  const mainDocContainer = document.getElementsByClassName("main-document-container");
-  const documentId = mainDocContainer[0].getAttribute("id");
+
   // console.log(documentId);
   // console.log(textBoxNodes);
 
@@ -70,42 +69,72 @@ chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
   textBoxNodes.forEach(node => {
     extractData(node)
   })
-  // console.log(textDataArr)
 
-  // function calculateData() {
-  //
-  // }
-
-  // сохраняем в хранилище распарсенный документ
-  chrome.storage.local.get("records", (storage: { [p: string]: TRecord }) => {
-    //заголовок документа используем в качестве ключа
-    const key = textBoxNodes[0].textContent;
-
-    if (key === null) return;
-    if (!storage['records']) return;
-
-    storage['records'][key] = {
-      id: documentId ?? crypto.randomUUID(),
-      time: new Date().toLocaleTimeString(),
-      title: textDataArr[0].text,
-      words: words,
-      symbols: symbols,
-      raw: rawString.trim()
-    }
-    const data = storage['records'];
-    chrome.storage.local.set({"records": {...data}});
-  });
-
-  if (message.action === "getData") {
-    const data: TStorage = {
-      raw: rawString.trim(),
-      symbols: symbols,
-      time: new Date().toLocaleTimeString(),
-      title: textBoxNodes[0].textContent ?? '',
-      words: words,
-    }
-    sendResponse(data);
+  // сохраняем в хранилище распарсенный документ //TODO: action === saveData
+  if (message.action === "saveData") {
+    // chrome.storage.local.get("records", (storage: TStorage) => {
+    //   if (!storage.records) return;
+    //
+    //   storage.records.push({ // TODO: сохраняется только один документ
+    //     id: getDocumentId(),
+    //     time: new Date().toLocaleTimeString(),
+    //     title: textDataArr[0].text,
+    //     words: words,
+    //     symbols: symbols,
+    //     raw: rawString.trim()
+    //   });
+    //
+    //   const data = storage.records;
+    //   chrome.storage.local.set({"records": {...data}}, () => {
+    //   });
+    // });
   }
+
+  if (message.action === "getParsedDocument") {
+
+    // chrome.storage.local.get("records", (storage: TStorage) => {});
+    // const newDocument: TDocument = {
+    //   id: getDocumentId(),
+    //   raw: rawString.trim(),
+    //   symbols: symbols,
+    //   time: new Date().toLocaleTimeString(),
+    //   title: textBoxNodes[0].textContent ?? '',
+    //   words: words,
+    // };
+
+    chrome.storage.local.get("records", (storage: TStorage) => {
+      if (!storage.records) return;
+
+      const records = storage.records;
+      const docId = getDocumentId();
+      const localTime = new Date().toLocaleTimeString();
+
+      const mewDocument: TDocument = {
+        id: docId,
+        time: localTime,
+        title: textDataArr[0].text ?? '',
+        words: words,
+        symbols: symbols,
+        raw: rawString.trim()
+      }
+
+      records.push(mewDocument);
+
+      //сохраняем в хранилище распарсенный документ
+      chrome.storage.local.set({"records": [...records]}, () => {
+        sendResponse(storage.records);
+      });
+    });
+  }
+
+  if (message.action === "getRecords") {
+    console.log("getRecords")
+    chrome.storage.local.get("records", (storage: TStorage) => {
+      sendResponse(storage.records);
+    })
+  }
+
+  return true;  //TODO: под вопросом
 });
 
 // function prepareDataResponse() {
@@ -132,6 +161,11 @@ chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
 function getWordCount(str: string) {
   const matches = str.match(/\S+/g);
   return matches ? matches.length : 0;
+}
+
+function getDocumentId() {
+  const mainDocContainer = document.getElementsByClassName("main-document-container");
+  return mainDocContainer[0].getAttribute("id") ?? crypto.randomUUID();
 }
 
 

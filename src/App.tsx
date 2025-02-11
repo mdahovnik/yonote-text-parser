@@ -1,22 +1,30 @@
-import {useLayoutEffect, useState} from 'react'
+import {useEffect, useState} from 'react'
 import './App.css'
 import {SettingsPage} from "./components/settingsPage.tsx";
 import {MainPage} from "./components/mainPage.tsx";
 import {
   defaultBlockSettings,
-  defaultCountTypeSettings, defaultRecords,
+  defaultCountTypeSettings,
   // defaultRecords,
-  defaultTextTypesSettings, TRecord, TStorage
+  defaultTextTypesSettings, TDocument
 } from "./types.ts";
+
+// async function getRecords(setData: Dispatch<SetStateAction<TDocument[]>>) {
+//   const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
+//   const id = tab?.id as number;
+//   chrome.tabs.sendMessage(id, {action: "getRecords"}, (response: TDocument[]) => {
+//     if (response) setData([...response])
+//   })
+// }
 
 function App() {
   const [settingIsVisible, setSettingIsVisible] = useState(false);
   const [blockSettings, setBlockSettings] = useState(defaultBlockSettings);
   const [textTypesSettings, setTextTypesSettings] = useState(defaultTextTypesSettings);
   const [countTypeSettings, setCountTypeSettings] = useState(defaultCountTypeSettings);
-  const [record, setRecord] = useState<TRecord[]>(defaultRecords)
+  // const [record, setRecord] = useState<TRecord[]>([])
   const [isActive, setIsActive] = useState(false);
-  const [data, setData] = useState<TStorage[]>([]);
+  const [documents, setDocuments] = useState<TDocument[]>([]);
   // const [host, setHost] = useState("");
   // const [tab, setTab] = useState<chrome.tabs.Tab>();
   // const [words, setWords] = useState(10);
@@ -67,34 +75,46 @@ function App() {
   //   });
   // }
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     getUrl();
-    // fetchData()
+    // getRecords(setData);//TODO: при монтировании компонента загружать documents из chrome.storage.local
+
+    //TODO: при монтировании компонента загружать documents из chrome.storage.local
+    // chrome.storage.local.get("records", (response) => {
+    //   if (response["records"]) {
+    //     setData([response["records"]])
+    //   }
+    //   console.log('при монтировании компонента загружать documents из chrome.storage.local')
+    //   console.log(response["records"])
+    // })
+
+    return () => {
+      //TODO: при размонтировании компонента сохранять documents в chrome.storage.local
+    }
   }, [])
 
   const onSettingClick = async (isVisible: boolean) => {
     setSettingIsVisible(isVisible);
-    // initial()
-    const newRecord = await chrome.storage.local.get('records`')
-    const keys = Object.keys(newRecord)
-    if (newRecord["records"][keys[0]]) {
-      const data = newRecord["records"];
-      setRecord([...record, data])
-    }
-    console.log(record)
+    // // initial()
+    // const newRecord = await chrome.storage.local.get('records`')
+    // const keys = Object.keys(newRecord)
+    // if (newRecord["records"][keys[0]]) {
+    //   const documents = newRecord["records"];
+    //   setRecord([...record, documents])
+    // }
+    // // console.log(record) //TODO: console.log(record)
   }
 
   const onPlusClickHandler = async () => {
     const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
-    const id = tab?.id as number;
+    const tabId = tab?.id as number;
     // const settings = await chrome.storage.local.get("defaultBlockSettings");
     // chrome.tabs.sendMessage(id, settings);
 
-    chrome.tabs.sendMessage(id, {action: "getData"}, (response: TStorage) => {
-      console.log(response)
-      setData([...data, response])//TODO: data может и не нужна
+    chrome.tabs.sendMessage(tabId, {action: "getParsedDocument"}, (documents: TDocument[]) => {
+      setDocuments(documents);
+      // chrome.storage.local.set({"records": {...documents, res}});
     })
-    console.log(data)
   }
 
   // const testData: TStorage[] = [
@@ -174,7 +194,7 @@ function App() {
                         onSettingClick={onSettingClick}/>
         : <MainPage onSettingClick={onSettingClick}
                     onPlusClick={onPlusClickHandler}
-                    data={data}
+                    data={documents}
                     isActive={isActive}
                     countTypeSettings={countTypeSettings}/>
       }
