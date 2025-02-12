@@ -1,4 +1,11 @@
-import {TSetting} from "../types.ts";
+import {TSetting} from "./types.ts";
+
+export const ACT = {
+  GET_DOCUMENT: 'GET_DOCUMENT',
+  GET_RECORDS: 'GET_RECORDS',
+  SAVE_DOCUMENT: 'SAVE_DOCUMENT',
+  SAVE_SETTINGS: 'SAVE_SETTINGS'
+}
 
 export const blockTypeSettings: TSetting[] = [
   {type: "allow_title", title: "Page title", checked: true},

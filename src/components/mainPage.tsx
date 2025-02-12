@@ -3,12 +3,12 @@ import {TSetting, TDocument} from "../types.ts";
 import {Records} from "./records.tsx";
 
 type TMainPage = {
-  onSettingClick: (isVisible: boolean) => void;
-  onPlusClick: () => void;
-  data: TDocument[];
-  // records: TRecord[];
   isActive: boolean;
+  data: TDocument[];
   countTypeSettings: TSetting[];
+  onSettingClick: () => void;
+  onPlusClick: () => void;
+  onClearClick: () => void;
 }
 
 function getTotals(data: TDocument[]) {
@@ -22,34 +22,24 @@ function getTotals(data: TDocument[]) {
 
 export function MainPage(
   {
-    onSettingClick,
     data,
-    onPlusClick,
     isActive,
-    countTypeSettings
+    countTypeSettings,
+    onSettingClick,
+    onPlusClick,
+    onClearClick
   }: TMainPage) {
-
-  const onSettingClickHandler = () => {
-    onSettingClick(true);
-  }
-
-  const onPlusClickHandler = () => {
-    onPlusClick();
-  }
-
-  const onClearClickHandler = () => {
-  }
 
   return (
     <div id="main-page">
       <div className="menu">
-        <ButtonAction onClick={onSettingClickHandler}
+        <ButtonAction onClick={onSettingClick}
                       id={"to-settings"}
                       type={"settings"}/>
         <div className="title">
           Yonote Parser
         </div>
-        <ButtonAction onClick={onPlusClickHandler}
+        <ButtonAction onClick={onPlusClick}
                       id={"add-record"}
                       type={"plus"}
                       isActive={isActive}/>
@@ -61,7 +51,7 @@ export function MainPage(
                      countTypeSettings={countTypeSettings}/>
             <hr/>
             <div className="menu">
-              <ButtonAction onClick={onClearClickHandler}
+              <ButtonAction onClick={onClearClick}
                             id={"clear-all"}
                             type={"trash"}
                             text={"Clear all"}

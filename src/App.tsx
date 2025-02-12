@@ -3,23 +3,28 @@ import './App.css'
 import {SettingsPage} from "./components/settingsPage.tsx";
 import {MainPage} from "./components/mainPage.tsx";
 import {TDocument} from "./types.ts";
-import {blockTypeSettings, countTypeSettings, textTypeSettings} from "./constants/constants.ts";
+import {blockTypeSettings, countTypeSettings, textTypeSettings} from "./constants.ts";
 
 const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
   GET_RECORDS: 'GET_RECORDS',
+  CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
-  SAVE_SETTINGS: 'SAVE_SETTINGS'
+  SAVE_SETTINGS: 'SAVE_SETTINGS',
+}
+
+async function getTabId() {
+  const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
+  return tab?.id as number;
 }
 
 async function getRecords<T>(setData: Dispatch<SetStateAction<T[]>>) {
-  const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
-  const id = tab?.id as number;
-
-  chrome.tabs.sendMessage(id, {action: ACT.GET_RECORDS}, (records: T[]) => {
+  const tabId = await getTabId()
+  chrome.tabs.sendMessage(tabId, {action: ACT.GET_RECORDS}, (records: T[]) => {
     if (records.length > 0) setData(records);
   })
 }
+
 
 //TODO: реализовать сохранение настроек через отправку экшена в content.ts
 // async function saveSettings(setSettings: Dispatch<SetStateAction<TSetting[]>>) {
@@ -39,11 +44,8 @@ function App() {
   const [countSettings, setCountTypeSettings] = useState(countTypeSettings);
   const [isActive, setIsActive] = useState(false);
   const [documents, setDocuments] = useState<TDocument[]>([]);
-  // const [host, setHost] = useState("");
-  // const [tab, setTab] = useState<chrome.tabs.Tab>();
-  // const [words, setWords] = useState(10);
-  // const [symbols, setSymbols] = useState(0);
 
+  //TODO: вынести из компонента
   const getUrl = async () => {
     const tabs = await chrome.tabs.query({active: true, lastFocusedWindow: true});
     if (tabs.length > 0 && tabs[0]?.url) {
@@ -79,50 +81,13 @@ function App() {
     setCountTypeSettings(updatedSettings);
   }
 
-
-  // const initial = () => {
-  //   // Получаем данные из chrome.storage.local
-  //   chrome.storage.local.get('records', (storage) => {
-  //     const rec = storage['records'];
-  //     if (rec.records) {
-  //       setData([...rec]);
-  //     }
-  //   });
-  // }
-
-  // const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, namespace: string) => {
-  //   if (namespace === "local" && changes.keyName) {
-  //     setData(changes.keyName.newValue);
-  //   }
-  //   // if (namespace === "local") {
-  //   //   Object.keys(changes).forEach((key) => {
-  //   //     setData(changes[key].newValue);
-  //   //   });
-  //   // }
-  // }
-
-  // const handleStorageChange = (message: { [key: string]: chrome.storage.StorageChange }) => {
-  //   const newData = message['records']
-  //   console.log(newData.newValue)
-  //   setData([...newData.newValue])
-  // }
-
-  // const fetchData = () => {
-  //   chrome.storage.sync.get('records`', (record) => {
-  //     const newRecord = record['records'];
-  //     console.log(newRecord)
-  //     if (record['records']) {
-  //       setRecord([newRecord]);
-  //     }
-  //   });
-  // }
-
   useEffect(() => {
     getUrl();
     getRecords(setDocuments);
   }, [])
 
-  const onSettingClick = async (isVisible: boolean) => {
+  const handleSettingsClick = () => {
+    const isVisible = !isSettingChecked;
     setIsSettingChecked(isVisible);
     // // initial()
     // const newRecord = await chrome.storage.local.get('records`')
@@ -134,12 +99,18 @@ function App() {
     // // console.log(record) //TODO: console.log(record)
   }
 
-  const onPlusClickHandler = async () => {
-    const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
-    const tabId = tab?.id as number;
-
+  const handlePlusClick = async () => {
+    const tabId = await getTabId()
     chrome.tabs.sendMessage(tabId, {action: ACT.GET_DOCUMENT}, (documents: TDocument[]) => {
       setDocuments(documents);
+    })
+  }
+
+  const handleClearClick = async () => {
+    const tabId = await getTabId();
+    chrome.tabs.sendMessage(tabId, {action: ACT.CLEAR_RECORDS}, (documents: TDocument[]) => {
+      if (!documents)
+        setDocuments([]);
     })
   }
 
@@ -154,10 +125,11 @@ function App() {
             onTextTypeChange={onTextTypeChanged}
             countTypeSettings={countSettings}
             onCountTypeChange={onCountTypeChanged}
-            onSettingClick={onSettingClick}/>
+            onSettingClick={handleSettingsClick}/>
           : <MainPage
-            onSettingClick={onSettingClick}
-            onPlusClick={onPlusClickHandler}
+            onSettingClick={handleSettingsClick}
+            onPlusClick={handlePlusClick}
+            onClearClick={handleClearClick}
             data={documents}
             isActive={isActive}
             countTypeSettings={countSettings}/>

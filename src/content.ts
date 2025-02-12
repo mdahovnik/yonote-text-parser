@@ -3,6 +3,7 @@ import {TDocument, TParsedData, TStorage} from "./types.ts";
 const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
   GET_RECORDS: 'GET_RECORDS',
+  CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
   SAVE_SETTINGS: 'SAVE_SETTINGS'
 }
@@ -124,30 +125,19 @@ chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
     })
   }
 
-  return true;  //TODO: под вопросом
+  if (message.action === ACT.CLEAR_RECORDS) {
+    chrome.storage.local.set({"records": []}, () => {
+      sendResponse(null)
+    })
+    // chrome.storage.local.remove('records', () => {
+    //   // const documents: TDocument = [];
+    //   // sendResponse(null)
+    // })
+  }
+
+  return true;
 });
 
-// function prepareDataResponse() {
-//   const data = {};
-//   return data;
-// }
-
-// type data = {
-//   text: string,
-//   nodePath: Element,
-//   words: number,
-//   symbols: number
-// }
-
-// function getTotalCounts(data: data) {
-//
-//   return {
-//     words: 0,
-//     symbols: 0
-//   }
-// }
-
-// Подсчет слов
 function getWordCount(str: string) {
   const matches = str.match(/\S+/g);
   return matches ? matches.length : 0;
