@@ -11,6 +11,7 @@ const ACT = {
   CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
   SAVE_SETTINGS: 'SAVE_SETTINGS',
+  REMOVE_DOCUMENT: 'REMOVE_DOCUMENT'
 }
 
 async function getTabId() {
@@ -101,7 +102,7 @@ function App() {
 
   const handlePlusClick = async () => {
     const tabId = await getTabId()
-    chrome.tabs.sendMessage(tabId, {action: ACT.GET_DOCUMENT}, (documents: TDocument[]) => {
+    chrome.tabs.sendMessage(tabId, {action: ACT.SAVE_DOCUMENT}, (documents: TDocument[]) => {
       setDocuments(documents);
     })
   }
@@ -114,25 +115,32 @@ function App() {
     })
   }
 
+  const handleDeleteClick = async (id: string) => {
+    console.log(id)
+    const tabId = await getTabId();
+    chrome.tabs.sendMessage(tabId, {action: ACT.REMOVE_DOCUMENT, data: {id: id}}, (documents: TDocument[]) => {
+      setDocuments(documents);
+    })
+  }
+
   return (
     <>
       {
         isSettingChecked
-          ? <SettingsPage
-            blockSettings={blockSettings}
-            onBlockTypeChange={onBlockTypeChanged}
-            textTypesSettings={textSettings}
-            onTextTypeChange={onTextTypeChanged}
-            countTypeSettings={countSettings}
-            onCountTypeChange={onCountTypeChanged}
-            onSettingClick={handleSettingsClick}/>
-          : <MainPage
-            onSettingClick={handleSettingsClick}
-            onPlusClick={handlePlusClick}
-            onClearClick={handleClearClick}
-            data={documents}
-            isActive={isActive}
-            countTypeSettings={countSettings}/>
+          ? <SettingsPage blockSettings={blockSettings}
+                          onBlockTypeChange={onBlockTypeChanged}
+                          textTypesSettings={textSettings}
+                          onTextTypeChange={onTextTypeChanged}
+                          countTypeSettings={countSettings}
+                          onCountTypeChange={onCountTypeChanged}
+                          onSettingClick={handleSettingsClick}/>
+          : <MainPage onSettingClick={handleSettingsClick}
+                      onPlusClick={handlePlusClick}
+                      onClearClick={handleClearClick}
+                      onDeleteClick={handleDeleteClick}
+                      data={documents}
+                      isActive={isActive}
+                      countTypeSettings={countSettings}/>
       }
     </>
   )

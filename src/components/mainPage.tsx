@@ -9,6 +9,7 @@ type TMainPage = {
   onSettingClick: () => void;
   onPlusClick: () => void;
   onClearClick: () => void;
+  onDeleteClick: (id: string) => void;
 }
 
 function getTotals(data: TDocument[]) {
@@ -27,7 +28,8 @@ export function MainPage(
     countTypeSettings,
     onSettingClick,
     onPlusClick,
-    onClearClick
+    onClearClick,
+    onDeleteClick
   }: TMainPage) {
 
   return (
@@ -48,6 +50,7 @@ export function MainPage(
         data.length > 0
           ? <div id="table">
             <Records data={data}
+                     onDeleteClick={onDeleteClick}
                      countTypeSettings={countTypeSettings}/>
             <hr/>
             <div className="menu">

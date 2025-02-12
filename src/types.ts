@@ -14,7 +14,7 @@ export type TSetting = {
 }
 
 export type TStorage = {
-  records: TDocument[],
+  documents: TDocument[],
   blockTypeSettings: TSetting[],
   textTypeSettings: TSetting[],
   countTypeSettings: TSetting[]

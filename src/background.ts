@@ -35,7 +35,7 @@ chrome.runtime.onInstalled.addListener(() => {
       {type: "count_words", title: "Words", checked: true},
       {type: "count_symbols", title: "Symbols", checked: false},
     ],
-    "records": []
+    "documents": []
   });
 
   //активировать кнопку расширения Chrome только на определённом сайте

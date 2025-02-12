@@ -22,6 +22,7 @@ export function SettingsPage(
     countTypeSettings,
     onCountTypeChange
   }: TSettingPage) {
+
   const onClickHandler = () => {
     onSettingClick(false);
   }

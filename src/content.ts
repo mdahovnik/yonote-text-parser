@@ -1,11 +1,17 @@
 import {TDocument, TParsedData, TStorage} from "./types.ts";
 
+type TMessage = {
+  action: string;
+  data: { id: string }
+}
+
 const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
   GET_RECORDS: 'GET_RECORDS',
   CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
-  SAVE_SETTINGS: 'SAVE_SETTINGS'
+  SAVE_SETTINGS: 'SAVE_SETTINGS',
+  REMOVE_DOCUMENT: 'REMOVE_DOCUMENT'
 }
 
 enum NODE_NAME {
@@ -27,15 +33,14 @@ enum NODE_NAME {
   U = "U",
 }
 
-chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
-  const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-
+chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   let symbols = 0;
   let words = 0;
   let textContent: string = '';
   const textDataArr: TParsedData[] = [];
   let nodePath = '';
   let rawString = '';
+  const textBoxNodes = document.querySelectorAll('[role="textbox"]');
 
   function extractData(nodeElement: ChildNode) {
     nodeElement.childNodes.forEach((node) => {
@@ -73,35 +78,36 @@ chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
     extractData(node)
   })
 
-  if (message.action === ACT.SAVE_DOCUMENT) {
-    // chrome.storage.local.get("records", (storage: TStorage) => {
-    //   if (!storage.records) return;
-    //
-    //   storage.records.push({ // TODO: сохраняется только один документ
-    //     id: getDocumentId(),
-    //     time: new Date().toLocaleTimeString(),
-    //     title: textDataArr[0].text,
-    //     words: words,
-    //     symbols: symbols,
-    //     raw: rawString.trim()
-    //   });
-    //
-    //   const data = storage.records;
-    //   chrome.storage.local.set({"records": {...data}}, () => {
-    //   });
-    // });
-  }
+  // if (message.action === ACT.SAVE_DOCUMENT) {
+  // chrome.storage.local.get("records", (storage: TStorage) => {
+  //   if (!storage.records) return;
+  //
+  //   storage.records.push({ // TODO: сохраняется только один документ
+  //     id: getDocumentId(),
+  //     time: new Date().toLocaleTimeString(),
+  //     title: textDataArr[0].text,
+  //     words: words,
+  //     symbols: symbols,
+  //     raw: rawString.trim()
+  //   });
+  //
+  //   const data = storage.records;
+  //   chrome.storage.local.set({"records": {...data}}, () => {
+  //   });
+  // });
+  // }
 
   // сохраняем в хранилище распарсенный документ
-  if (message.action === ACT.GET_DOCUMENT) {
-    chrome.storage.local.get("records", (storage: TStorage) => {
-      if (!storage.records) return;
+  if (message.action === ACT.SAVE_DOCUMENT) {
+    chrome.storage.local.get("documents", (storage: TStorage) => {
+      if (!storage.documents) return;
 
-      const records = storage.records;
-      const docId = getDocumentId();
+      const documents = storage.documents;
       const localTime = new Date().toLocaleTimeString();
-      const mewDocument: TDocument = {
-        id: docId,
+      const id = getDocumentId();
+
+      const parsedDocument: TDocument = {
+        id: id,
         time: localTime,
         title: textDataArr[0].text ?? '',
         words: words,
@@ -109,30 +115,42 @@ chrome.runtime.onMessage.addListener((message, {}, sendResponse) => {
         raw: rawString.trim()
       }
 
-      records.push(mewDocument);
+      const foundDocument = findDocumentById(documents, id);
+      if (foundDocument) {
+        const updatedDocument = updateFoundDocument(foundDocument, parsedDocument);
 
-      chrome.storage.local.set({"records": records}, () => {
-        sendResponse(storage.records);
+        documents.splice(documents.indexOf(foundDocument), 1, updatedDocument);
+      } else {
+        documents.push(parsedDocument);
+      }
+
+      chrome.storage.local.set({"documents": documents}, () => {
+        sendResponse(storage.documents);
       });
     });
   }
 
   if (message.action === ACT.GET_RECORDS) {
-    console.log("getRecords")
-    chrome.storage.local.get("records", (storage: TStorage) => {
-      const records = storage.records;
+    chrome.storage.local.get("documents", (storage: TStorage) => {
+      const records = storage.documents;
       sendResponse(records);
     })
   }
 
   if (message.action === ACT.CLEAR_RECORDS) {
-    chrome.storage.local.set({"records": []}, () => {
+    chrome.storage.local.set({"documents": []}, () => {
       sendResponse(null)
     })
-    // chrome.storage.local.remove('records', () => {
-    //   // const documents: TDocument = [];
-    //   // sendResponse(null)
-    // })
+  }
+
+  if (message.action === ACT.REMOVE_DOCUMENT) {
+    chrome.storage.local.get("documents", (storage: TStorage) => {
+      const filteredRecords = storage.documents.filter((document) => document.id !== message.data.id);
+
+      chrome.storage.local.set({"documents": filteredRecords}, () => {
+        sendResponse(filteredRecords);
+      });
+    });
   }
 
   return true;
@@ -148,4 +166,19 @@ function getDocumentId() {
   return mainDocContainer[0].getAttribute("id") ?? crypto.randomUUID();
 }
 
+function findDocumentById(documents: TDocument[], id: string) {
+  console.log(id)
+  return documents.find((document) => document.id === id);
+}
 
+function updateFoundDocument(foundDocument: TDocument, parsedDocument: TDocument) {
+  if (!foundDocument) return parsedDocument;
+  return {
+    ...foundDocument,
+    time: parsedDocument.time,
+    title: parsedDocument.title,
+    words: parsedDocument.words,
+    symbols: parsedDocument.symbols,
+    raw: parsedDocument.raw
+  }
+}
