@@ -2,12 +2,13 @@ import {Dispatch, SetStateAction, useEffect, useState} from 'react'
 import './App.css'
 import {SettingsPage} from "./components/settingsPage.tsx";
 import {MainPage} from "./components/mainPage.tsx";
-import {TDocument} from "./types.ts";
+import {TDocument, TSetting} from "./types.ts";
 import {blockTypeSettings, countTypeSettings, textTypeSettings} from "./constants.ts";
 
 const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
   GET_RECORDS: 'GET_RECORDS',
+  GET_SETTINGS: 'GET_SETTINGS',
   CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
   SAVE_COUNT_SETTINGS: 'SAVE_COUNT_SETTINGS',
@@ -22,22 +23,17 @@ async function getTabId() {
 
 async function getRecords<T>(setData: Dispatch<SetStateAction<T[]>>) {
   const tabId = await getTabId()
-  chrome.tabs.sendMessage(tabId, {action: ACT.GET_RECORDS}, (records: T[]) => {
-    if (records) setData(records);
+  chrome.tabs.sendMessage(tabId, {action: ACT.GET_RECORDS}, (documents: T[]) => {
+    if (documents) setData(documents);
   })
 }
 
-
-//TODO: реализовать сохранение настроек через отправку экшена в content.ts
-// async function saveSettings(setSettings: Dispatch<SetStateAction<TSetting[]>>) {
-//   const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
-//   const tabId = tab?.id as number;
-//
-//   chrome.tabs.sendMessage(tabId, {action: "saveSettings"}, (settings: TSetting[]) => {
-//     setSettings(settings);
-//     // chrome.storage.local.set({"records": {...documents, res}});
-//   })
-// }
+async function getSettings<T>(setData: Dispatch<SetStateAction<T[]>>) {
+  const tabId = await getTabId()
+  chrome.tabs.sendMessage(tabId, {action: ACT.GET_SETTINGS}, (settings: T[]) => {
+    if (settings) setData(settings);
+  })
+}
 
 function App() {
   const [isSettingOpen, setIsSettingOpen] = useState(false);
@@ -80,40 +76,26 @@ function App() {
     const updatedSettings = countSettings.map((item) => {
       return {...item, checked: item.title === type}
     });
-    setCountTypeSettings(updatedSettings);
-    // const tabId = await getTabId();
-    // chrome.tabs.sendMessage(tabId, {
-    //   action: ACT.SAVE_COUNT_SETTINGS,
-    //   data: {newCountTypeSettings: updatedSettings}
-    // }, (savedSettings: TSetting[]) => {
-    //   setCountTypeSettings(savedSettings);
-    // })
+    // setCountTypeSettings(updatedSettings);
+    const tabId = await getTabId();
+    chrome.tabs.sendMessage(tabId, {
+      action: ACT.SAVE_COUNT_SETTINGS,
+      data: {newCountTypeSettings: updatedSettings}
+    }, (savedSettings: TSetting[]) => {
+      console.log(`savedSettings: ${JSON.stringify(savedSettings)}`)//TODO: вывод в консоль
+      setCountTypeSettings(savedSettings);
+    })
   }
 
   useEffect(() => {
     getUrl();
-    getRecords(setDocuments);
+    getSettings<TSetting>(setCountTypeSettings)
+    getRecords<TDocument>(setDocuments);
   }, [])
 
   const handleSettingsClick = async () => {
     const isOpen = !isSettingOpen;
     setIsSettingOpen(isOpen);
-    // if (!isSettingOpen) {
-    //   const tabId = await getTabId();
-    //   chrome.tabs.sendMessage(tabId, {action: ACT.SETTING_APPLIED}, (documents: TDocument[]) => {
-    //     setDocuments(documents);
-    //   });
-    // }
-
-
-    // // initial()
-    // const newRecord = await chrome.storage.local.get('records`')
-    // const keys = Object.keys(newRecord)
-    // if (newRecord["records"][keys[0]]) {
-    //   const documents = newRecord["records"];
-    //   setRecord([...record, documents])
-    // }
-    // // console.log(record) //TODO: console.log(record)
   }
 
   const handlePlusClick = async () => {

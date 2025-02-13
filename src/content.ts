@@ -11,6 +11,7 @@ type TMessage = {
 const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
   GET_RECORDS: 'GET_RECORDS',
+  GET_SETTINGS: 'GET_SETTINGS',
   CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
   SAVE_COUNT_SETTINGS: 'SAVE_COUNT_SETTINGS',
@@ -127,6 +128,13 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     })
   }
 
+  if(message.action === ACT.GET_SETTINGS) {
+    chrome.storage.local.get("settings", (storage: TStorage) => {
+      const settings = storage.settings;
+      sendResponse(settings);
+    })
+  }
+
   if (message.action === ACT.CLEAR_RECORDS) {
     chrome.storage.local.set({"documents": []}, () => {
       sendResponse(null)
@@ -145,10 +153,10 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
   if (message.action === ACT.SAVE_COUNT_SETTINGS) {
     const newCountTypeSettings = message.data.newCountTypeSettings;
-
-    chrome.storage.local.set({"countTypeSettings": newCountTypeSettings}, () => {
-      chrome.storage.local.get("documents", (storage: TStorage) => {
-        sendResponse(storage.countTypeSettings)
+    console.log(`newCountTypeSettings: ${JSON.stringify(newCountTypeSettings)}`)//TODO: вывод в консоль
+    chrome.storage.local.set({"settings": newCountTypeSettings}, () => {
+      chrome.storage.local.get("settings", (storage: TStorage) => {
+        sendResponse(storage.settings)
       })
     })
   }

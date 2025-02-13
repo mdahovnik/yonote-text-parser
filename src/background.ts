@@ -1,7 +1,11 @@
+// import {TStorage} from "./types.ts";
+
+// import {TStorage} from "./types.ts";
+
 chrome.runtime.onInstalled.addListener(() => {
-  //await chrome.storage.local.clear();
+
   chrome.storage.local.set({
-    "blockTypeSettings": [
+    "settings": [
       {type: "block", name: "allow_title", title: "Page title", checked: false},
       {type: "block", name: "allow_quote", title: "Quote block", checked: false},
       {type: "block", name: "allow_text", title: "Text block", checked: false},
@@ -22,21 +26,31 @@ chrome.runtime.onInstalled.addListener(() => {
       {type: "block", name: "allow_column", title: "Columns", checked: false},
       {type: "block", name: "allow_toggle_content", title: "Content", checked: false},
       {type: "block", name: "allow_table", title: "Table", checked: false},
-      {type: "block", name: "allow_code", title: "Code block", checked: false}
-    ],
-    "textTypeSettings": [
+      {type: "block", name: "allow_code", title: "Code block", checked: false},
       {type: "text", name: "allow_formatting_bold", title: "Bold", checked: false},
       {type: "text", name: "allow_formatting_italic", title: "Italic", checked: false},
       {type: "text", name: "allow_formatting_underline", title: "Underline", checked: false},
       {type: "text", name: "allow_formatting_strike", title: "Strike", checked: false},
       {type: "text", name: "allow_formatting_code", title: "Code", checked: false},
-    ],
-    "countTypeSettings": [
       {type: "count", name: "count_words", title: "Words", checked: true},
       {type: "count", name: "count_symbols", title: "Symbols", checked: false},
     ],
     "documents": []
   });
+
+  // chrome.runtime.onStartup.addListener(() => {
+  //   // await chrome.storage.local.clear();
+  //   const defaultSettings: TStorage = {}
+  //
+  //
+  //   chrome.storage.local.get("settings", (storage: TStorage) => {
+  //     const savedSettings = storage.settings;
+  //     if (savedSettings) {
+  //
+  //       chrome.storage.local.set()
+  //     }
+  //   });
+  // })
 
   //активировать кнопку расширения Chrome только на определённом сайте
   // chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
