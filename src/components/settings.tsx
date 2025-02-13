@@ -19,13 +19,13 @@ export function Settings({type, title, settings, onSettingsChanged}: TSettingsBl
            id="settings-formatting">
         {settings.map((item, index) => (
           <div key={index}>
-            <input className={item.type}
+            <input className={item.name}
                    type={type}
                    value={type}
                    checked={item.checked}
                    onChange={() => {
-                     console.log(item.title, item.checked)
-                     onSettingsChanged(item.title)}}/>
+                     onSettingsChanged(item.title)
+                   }}/>
             <label>
               {item.title}
             </label>

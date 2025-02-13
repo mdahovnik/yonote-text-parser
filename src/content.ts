@@ -1,8 +1,11 @@
-import {TDocument, TParsedData, TStorage} from "./types.ts";
+import {TDocument, TParsedData, TSetting, TStorage} from "./types.ts";
 
 type TMessage = {
   action: string;
-  data: { id: string }
+  data: {
+    id?: string,
+    newCountTypeSettings?: TSetting[]
+  }
 }
 
 const ACT = {
@@ -10,40 +13,44 @@ const ACT = {
   GET_RECORDS: 'GET_RECORDS',
   CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
-  SAVE_SETTINGS: 'SAVE_SETTINGS',
-  REMOVE_DOCUMENT: 'REMOVE_DOCUMENT'
+  SAVE_COUNT_SETTINGS: 'SAVE_COUNT_SETTINGS',
+  REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
+  APPLY_SETTINGS: 'APPLY_SETTINGS',
 }
 
-enum NODE_NAME {
-  A = "A",
-  BLOCKQUOTE = "BLOCKQUOTE",
-  BUTTON = "BUTTON",
-  DEL = "DEL",
-  DIV = "DIV",
-  EM = "EM",
-  CODE = "CODE",
-  H1 = "H1",
-  H2 = "H2",
-  H3 = "H3",
-  OPTION = "OPTION",
-  P = "P",
-  SPAN = "SPAN",
-  STRONG = "STRONG",
-  TABLE = "TABLE",
-  U = "U",
-}
+// enum NODE_NAME {
+//   A = "A",
+//   BLOCKQUOTE = "BLOCKQUOTE",
+//   BUTTON = "BUTTON",
+//   DEL = "DEL",
+//   DIV = "DIV",
+//   EM = "EM",
+//   CODE = "CODE",
+//   H1 = "H1",
+//   H2 = "H2",
+//   H3 = "H3",
+//   OPTION = "OPTION",
+//   P = "P",
+//   SPAN = "SPAN",
+//   STRONG = "STRONG",
+//   TABLE = "TABLE",
+//   U = "U",
+// }
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   let symbols = 0;
   let words = 0;
   let textContent: string = '';
-  const textDataArr: TParsedData[] = [];
   let nodePath = '';
   let rawString = '';
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
+  const textDataArr: TParsedData[] = [];
+
+  console.log(textBoxNodes[1].childNodes)
 
   function extractData(nodeElement: ChildNode) {
     nodeElement.childNodes.forEach((node) => {
+
       let nodeWords = 0;
       let nodeSymbols = 0;
 
@@ -65,40 +72,24 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
         }
         nodePath = '';
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        if (node.nodeName !== NODE_NAME.OPTION) {
-          nodePath += node.parentNode?.nodeName + ',';
-          extractData(node)
-        }
+        // console.log(node);
+        // if (node.nodeName !== NODE_NAME.OPTION) { //TODO: пропустить выпадающий список OPTION
+        nodePath += node.parentNode?.nodeName + ',';
+        extractData(node)
+        // }
       }
     })
-    return textDataArr; //TODO: вывод в консоль распарсенного массива
+
+    return textDataArr;
   }
 
   textBoxNodes.forEach(node => {
     extractData(node)
   })
 
-  // if (message.action === ACT.SAVE_DOCUMENT) {
-  // chrome.storage.local.get("records", (storage: TStorage) => {
-  //   if (!storage.records) return;
-  //
-  //   storage.records.push({ // TODO: сохраняется только один документ
-  //     id: getDocumentId(),
-  //     time: new Date().toLocaleTimeString(),
-  //     title: textDataArr[0].text,
-  //     words: words,
-  //     symbols: symbols,
-  //     raw: rawString.trim()
-  //   });
-  //
-  //   const data = storage.records;
-  //   chrome.storage.local.set({"records": {...data}}, () => {
-  //   });
-  // });
-  // }
-
-  // сохраняем в хранилище распарсенный документ
   if (message.action === ACT.SAVE_DOCUMENT) {
+    console.log(textDataArr)//TODO: вывод в консоль распарсенного массива
+
     chrome.storage.local.get("documents", (storage: TStorage) => {
       if (!storage.documents) return;
 
@@ -118,7 +109,6 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
       const foundDocument = findDocumentById(documents, id);
       if (foundDocument) {
         const updatedDocument = updateFoundDocument(foundDocument, parsedDocument);
-
         documents.splice(documents.indexOf(foundDocument), 1, updatedDocument);
       } else {
         documents.push(parsedDocument);
@@ -153,6 +143,15 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     });
   }
 
+  if (message.action === ACT.SAVE_COUNT_SETTINGS) {
+    const newCountTypeSettings = message.data.newCountTypeSettings;
+
+    chrome.storage.local.set({"countTypeSettings": newCountTypeSettings}, () => {
+      chrome.storage.local.get("documents", (storage: TStorage) => {
+        sendResponse(storage.countTypeSettings)
+      })
+    })
+  }
   return true;
 });
 
@@ -182,3 +181,5 @@ function updateFoundDocument(foundDocument: TDocument, parsedDocument: TDocument
     raw: parsedDocument.raw
   }
 }
+
+// "https://*.yonote.ru/doc/*"

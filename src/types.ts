@@ -8,6 +8,7 @@ export type TDocument = {
 }
 
 export type TSetting = {
+  name: string,
   type: string,
   title: string,
   checked: boolean,

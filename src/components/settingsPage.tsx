@@ -3,7 +3,7 @@ import {Settings} from "./settings.tsx";
 import {ButtonAction} from "./buttonAction.tsx";
 
 type TSettingPage = {
-  onSettingClick: (isVisible: boolean) => void;
+  onBackButtonClick: () => void;
   blockSettings: TSetting[];
   onBlockTypeChange: (type: string) => void;
   textTypesSettings: TSetting[];
@@ -14,7 +14,7 @@ type TSettingPage = {
 
 export function SettingsPage(
   {
-    onSettingClick,
+    onBackButtonClick,
     blockSettings,
     onBlockTypeChange,
     textTypesSettings,
@@ -23,10 +23,6 @@ export function SettingsPage(
     onCountTypeChange
   }: TSettingPage) {
 
-  const onClickHandler = () => {
-    onSettingClick(false);
-  }
-
   //TODO: реализовать копирование настроек
   const onCopyHandler = () => {
   }
@@ -34,7 +30,7 @@ export function SettingsPage(
   return (
     <div id="settings-page">
       <div className="menu">
-        <ButtonAction onClick={onClickHandler}
+        <ButtonAction onClick={onBackButtonClick}
                       id={"to-main"}
                       type={"back"}/>
         <div className="title">Settings</div>

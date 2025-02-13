@@ -10,8 +10,9 @@ const ACT = {
   GET_RECORDS: 'GET_RECORDS',
   CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
-  SAVE_SETTINGS: 'SAVE_SETTINGS',
-  REMOVE_DOCUMENT: 'REMOVE_DOCUMENT'
+  SAVE_COUNT_SETTINGS: 'SAVE_COUNT_SETTINGS',
+  REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
+  APPLY_SETTINGS: 'APPLY_SETTINGS',
 }
 
 async function getTabId() {
@@ -22,7 +23,7 @@ async function getTabId() {
 async function getRecords<T>(setData: Dispatch<SetStateAction<T[]>>) {
   const tabId = await getTabId()
   chrome.tabs.sendMessage(tabId, {action: ACT.GET_RECORDS}, (records: T[]) => {
-    if (records.length > 0) setData(records);
+    if (records) setData(records);
   })
 }
 
@@ -39,7 +40,7 @@ async function getRecords<T>(setData: Dispatch<SetStateAction<T[]>>) {
 // }
 
 function App() {
-  const [isSettingChecked, setIsSettingChecked] = useState(false);
+  const [isSettingOpen, setIsSettingOpen] = useState(false);
   const [blockSettings, setBlockTypeSettings] = useState(blockTypeSettings);
   const [textSettings, setTextTypesSettings] = useState(textTypeSettings);
   const [countSettings, setCountTypeSettings] = useState(countTypeSettings);
@@ -52,11 +53,12 @@ function App() {
     if (tabs.length > 0 && tabs[0]?.url) {
       const host = new URL(tabs[0].url).hostname;
       setIsActive(host === "yppm.yonote.ru");
+      // setIsActive(host === "www.notion.so");
     }
   }
 
   //TODO: реализовать сохранение настроек через отправку экшена в content.ts
-  const onTextTypeChanged = (type: string) => {
+  const handleTextTypeChange = (type: string) => {
     const updatedSettings = textSettings.map((item) => item.title === type
       ? {...item, checked: !item.checked}
       : {...item});
@@ -65,7 +67,7 @@ function App() {
   }
 
   //TODO: реализовать сохранение настроек через отправку экшена в content.ts
-  const onBlockTypeChanged = (type: string) => {
+  const handleBlockTypeChange = (type: string) => {
     const updatedSettings = blockSettings.map((item) => item.title === type
       ? {...item, checked: !item.checked}
       : {...item});
@@ -74,12 +76,18 @@ function App() {
   }
 
   //TODO: реализовать сохранение настроек через отправку экшена в content.ts
-  const onCountTypeChanged = (type: string) => {
+  const handleCountTypeChange = async (type: string) => {
     const updatedSettings = countSettings.map((item) => {
       return {...item, checked: item.title === type}
     });
-    // saveSettings(setBlockTypeSettings)
     setCountTypeSettings(updatedSettings);
+    // const tabId = await getTabId();
+    // chrome.tabs.sendMessage(tabId, {
+    //   action: ACT.SAVE_COUNT_SETTINGS,
+    //   data: {newCountTypeSettings: updatedSettings}
+    // }, (savedSettings: TSetting[]) => {
+    //   setCountTypeSettings(savedSettings);
+    // })
   }
 
   useEffect(() => {
@@ -87,9 +95,17 @@ function App() {
     getRecords(setDocuments);
   }, [])
 
-  const handleSettingsClick = () => {
-    const isVisible = !isSettingChecked;
-    setIsSettingChecked(isVisible);
+  const handleSettingsClick = async () => {
+    const isOpen = !isSettingOpen;
+    setIsSettingOpen(isOpen);
+    // if (!isSettingOpen) {
+    //   const tabId = await getTabId();
+    //   chrome.tabs.sendMessage(tabId, {action: ACT.SETTING_APPLIED}, (documents: TDocument[]) => {
+    //     setDocuments(documents);
+    //   });
+    // }
+
+
     // // initial()
     // const newRecord = await chrome.storage.local.get('records`')
     // const keys = Object.keys(newRecord)
@@ -126,18 +142,18 @@ function App() {
   return (
     <>
       {
-        isSettingChecked
+        isSettingOpen
           ? <SettingsPage blockSettings={blockSettings}
-                          onBlockTypeChange={onBlockTypeChanged}
                           textTypesSettings={textSettings}
-                          onTextTypeChange={onTextTypeChanged}
                           countTypeSettings={countSettings}
-                          onCountTypeChange={onCountTypeChanged}
-                          onSettingClick={handleSettingsClick}/>
-          : <MainPage onSettingClick={handleSettingsClick}
-                      onPlusClick={handlePlusClick}
+                          onBlockTypeChange={handleBlockTypeChange}
+                          onTextTypeChange={handleTextTypeChange}
+                          onCountTypeChange={handleCountTypeChange}
+                          onBackButtonClick={handleSettingsClick}/>
+          : <MainPage onPlusClick={handlePlusClick}
                       onClearClick={handleClearClick}
                       onDeleteClick={handleDeleteClick}
+                      onSettingClick={handleSettingsClick}
                       data={documents}
                       isActive={isActive}
                       countTypeSettings={countSettings}/>
