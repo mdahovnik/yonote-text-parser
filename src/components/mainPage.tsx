@@ -1,11 +1,12 @@
 import {ButtonAction} from "./buttonAction.tsx";
-import {TSetting, TDocument} from "../types.ts";
+import {TSetting, TDocument, TSettingList} from "../types.ts";
 import {Records} from "./records.tsx";
 
 type TMainPage = {
   isActive: boolean;
   data: TDocument[];
   countTypeSettings: TSetting[];
+  settings: TSettingList;
   onSettingClick: () => void;
   onPlusClick: () => void;
   onClearClick: () => void;
@@ -26,6 +27,7 @@ export function MainPage(
     data,
     isActive,
     countTypeSettings,
+    settings,
     onSettingClick,
     onPlusClick,
     onClearClick,
@@ -62,7 +64,8 @@ export function MainPage(
               {
                 (() => {
                   const {words, symbols} = getTotals(data);
-                  return countTypeSettings[0].checked
+                  const isWordsSelected = settings.count.find((item) => item.title === "Words");
+                  return isWordsSelected?.checked
                     ? <div>Words:<span className="count-bold">{words}</span></div>
                     : <div>Symbols:<span className="count-bold">{symbols}</span></div>
 

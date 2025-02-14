@@ -1,26 +1,18 @@
-import {TSetting} from "../types.ts";
+import {TSettingList} from "../types.ts";
 import {Settings} from "./settings.tsx";
 import {ButtonAction} from "./buttonAction.tsx";
 
 type TSettingPage = {
   onBackButtonClick: () => void;
-  blockSettings: TSetting[];
-  onBlockTypeChange: (type: string) => void;
-  textTypesSettings: TSetting[];
-  onTextTypeChange: (type: string) => void;
-  countTypeSettings: TSetting[];
-  onCountTypeChange: (type: string) => void;
+  onSettingsChange: (category: keyof TSettingList, type: string) => void;
+  settings: TSettingList;
 }
 
 export function SettingsPage(
   {
     onBackButtonClick,
-    blockSettings,
-    onBlockTypeChange,
-    textTypesSettings,
-    onTextTypeChange,
-    countTypeSettings,
-    onCountTypeChange
+    onSettingsChange,
+    settings
   }: TSettingPage) {
 
   //TODO: реализовать копирование настроек
@@ -38,16 +30,19 @@ export function SettingsPage(
       </div>
       <Settings type={"checkbox"}
                 title={"Types of blocks to be counted:"}
-                settings={blockSettings}
-                onSettingsChanged={onBlockTypeChange}/>
+                settings={settings.block}
+                categorySettings={"block"}
+                onSettingsChange={onSettingsChange}/>
       <Settings type={"checkbox"}
                 title={"Types of text style to be counted:"}
-                settings={textTypesSettings}
-                onSettingsChanged={onTextTypeChange}/>
+                settings={settings.text}
+                categorySettings={"text"}
+                onSettingsChange={onSettingsChange}/>
       <Settings type={"radio"}
                 title={"Counter type:"}
-                settings={countTypeSettings}
-                onSettingsChanged={onCountTypeChange}/>
+                settings={settings.count}
+                categorySettings={"count"}
+                onSettingsChange={onSettingsChange}/>
       <hr/>
       <ButtonAction onClick={onCopyHandler}
                     id={"debug"}

@@ -1,10 +1,10 @@
 import {TDocument, TParsedData, TSetting, TStorage} from "./types.ts";
 
 type TMessage = {
-  action: string;
+  action: keyof typeof ACT;
   data: {
     id?: string,
-    newCountTypeSettings?: TSetting[]
+    newSettings?: TSetting[]
   }
 }
 
@@ -47,8 +47,6 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
   const textDataArr: TParsedData[] = [];
 
-  console.log(textBoxNodes[1].childNodes)
-
   function extractData(nodeElement: ChildNode) {
     nodeElement.childNodes.forEach((node) => {
 
@@ -89,7 +87,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   })
 
   if (message.action === ACT.SAVE_DOCUMENT) {
-    console.log(textDataArr)//TODO: вывод в консоль распарсенного массива
+    console.dir(textDataArr)//TODO: вывод в консоль распарсенного массива
 
     chrome.storage.local.get("documents", (storage: TStorage) => {
       if (!storage.documents) return;
@@ -128,7 +126,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     })
   }
 
-  if(message.action === ACT.GET_SETTINGS) {
+  if (message.action === ACT.GET_SETTINGS) {
     chrome.storage.local.get("settings", (storage: TStorage) => {
       const settings = storage.settings;
       sendResponse(settings);
@@ -152,8 +150,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 
   if (message.action === ACT.SAVE_COUNT_SETTINGS) {
-    const newCountTypeSettings = message.data.newCountTypeSettings;
-    console.log(`newCountTypeSettings: ${JSON.stringify(newCountTypeSettings)}`)//TODO: вывод в консоль
+    const newCountTypeSettings = message.data.newSettings;
     chrome.storage.local.set({"settings": newCountTypeSettings}, () => {
       chrome.storage.local.get("settings", (storage: TStorage) => {
         sendResponse(storage.settings)

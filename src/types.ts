@@ -7,16 +7,16 @@ export type TDocument = {
   raw: string,
 }
 
-export type TSetting = {
-  name: string,
-  type: string,
-  title: string,
-  checked: boolean,
-}
+// export type TSetting = {
+//   name: string,
+//   type: string,
+//   title: string,
+//   checked: boolean,
+// }
 
 export type TStorage = {
   documents: TDocument[],
-  settings: TSetting[]
+  settings: TSettingList
 }
 
 export type TParsedData = {
@@ -26,4 +26,16 @@ export type TParsedData = {
   symbols: number
 }
 
+
+export type TSetting = {
+  name: string,
+  title: string,
+  checked: boolean
+}
+
+export type TSettingList = {
+  block: TSetting[],
+  text: TSetting[],
+  count: TSetting[]
+}
 

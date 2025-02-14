@@ -1,9 +1,9 @@
-import {Dispatch, SetStateAction, useEffect, useState} from 'react'
+import {useEffect, useState} from 'react'
 import './App.css'
 import {SettingsPage} from "./components/settingsPage.tsx";
 import {MainPage} from "./components/mainPage.tsx";
-import {TDocument, TSetting} from "./types.ts";
-import {blockTypeSettings, countTypeSettings, textTypeSettings} from "./constants.ts";
+import {TDocument, TSettingList} from "./types.ts";
+import {appSettings} from "./constants.ts";
 
 const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
@@ -21,25 +21,23 @@ async function getTabId() {
   return tab?.id as number;
 }
 
-async function getRecords<T>(setData: Dispatch<SetStateAction<T[]>>) {
+//TODO: закоммитить
+async function fetchFromLocalStorage<T>(actionType: keyof typeof ACT) {
   const tabId = await getTabId()
-  chrome.tabs.sendMessage(tabId, {action: ACT.GET_RECORDS}, (documents: T[]) => {
-    if (documents) setData(documents);
-  })
-}
-
-async function getSettings<T>(setData: Dispatch<SetStateAction<T[]>>) {
-  const tabId = await getTabId()
-  chrome.tabs.sendMessage(tabId, {action: ACT.GET_SETTINGS}, (settings: T[]) => {
-    if (settings) setData(settings);
-  })
+  return new Promise<T>((resolve, reject) => {
+    chrome.tabs.sendMessage(tabId, {action: actionType}, (data: T) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError)
+      } else {
+        resolve(data)
+      }
+    })
+  });
 }
 
 function App() {
   const [isSettingOpen, setIsSettingOpen] = useState(false);
-  const [blockSettings, setBlockTypeSettings] = useState(blockTypeSettings);
-  const [textSettings, setTextTypesSettings] = useState(textTypeSettings);
-  const [countSettings, setCountTypeSettings] = useState(countTypeSettings);
+  const [settings, setSettings] = useState<TSettingList>(appSettings);
   const [isActive, setIsActive] = useState(false);
   const [documents, setDocuments] = useState<TDocument[]>([]);
 
@@ -47,50 +45,40 @@ function App() {
   const getUrl = async () => {
     const tabs = await chrome.tabs.query({active: true, lastFocusedWindow: true});
     if (tabs.length > 0 && tabs[0]?.url) {
-      const host = new URL(tabs[0].url).hostname;
-      setIsActive(host === "yppm.yonote.ru");
-      // setIsActive(host === "www.notion.so");
-    }
+      return new URL(tabs[0].url).hostname;
+    } else return "";
   }
 
-  //TODO: реализовать сохранение настроек через отправку экшена в content.ts
-  const handleTextTypeChange = (type: string) => {
-    const updatedSettings = textSettings.map((item) => item.title === type
-      ? {...item, checked: !item.checked}
-      : {...item});
-    // saveSettings(setBlockTypeSettings)
-    setTextTypesSettings(updatedSettings)
-  }
+  const handleSettingsChange = async (category: keyof TSettingList, title: string) => {
+    const updatedSettings = {
+      ...settings,
+      [category]: settings[category].map((item) => {
+        if (title === "Words" || title === "Symbols")
+          return {...item, checked: item.title === title};
+        else
+          return {...item, checked: item.title === title ? !item.checked : item.checked};
 
-  //TODO: реализовать сохранение настроек через отправку экшена в content.ts
-  const handleBlockTypeChange = (type: string) => {
-    const updatedSettings = blockSettings.map((item) => item.title === type
-      ? {...item, checked: !item.checked}
-      : {...item});
-    // saveSettings(setBlockTypeSettings)
-    setBlockTypeSettings(updatedSettings)
-  }
+      })
+    };
 
-  //TODO: реализовать сохранение настроек через отправку экшена в content.ts
-  const handleCountTypeChange = async (type: string) => {
-    const updatedSettings = countSettings.map((item) => {
-      return {...item, checked: item.title === type}
-    });
-    // setCountTypeSettings(updatedSettings);
     const tabId = await getTabId();
     chrome.tabs.sendMessage(tabId, {
       action: ACT.SAVE_COUNT_SETTINGS,
-      data: {newCountTypeSettings: updatedSettings}
-    }, (savedSettings: TSetting[]) => {
-      console.log(`savedSettings: ${JSON.stringify(savedSettings)}`)//TODO: вывод в консоль
-      setCountTypeSettings(savedSettings);
+      data: {newSettings: {...updatedSettings}}
+    }, (savedSettings: TSettingList) => {
+      setSettings(savedSettings);
     })
   }
 
   useEffect(() => {
-    getUrl();
-    getSettings<TSetting>(setCountTypeSettings)
-    getRecords<TDocument>(setDocuments);
+    getUrl()
+      .then((host: string) => setIsActive(host === "yppm.yonote.ru"));
+
+    fetchFromLocalStorage<TSettingList>("GET_SETTINGS")
+      .then((data: TSettingList) => setSettings(data));
+
+    fetchFromLocalStorage<TDocument[]>("GET_RECORDS")
+      .then((data: TDocument[]) => setDocuments(data))
   }, [])
 
   const handleSettingsClick = async () => {
@@ -125,12 +113,8 @@ function App() {
     <>
       {
         isSettingOpen
-          ? <SettingsPage blockSettings={blockSettings}
-                          textTypesSettings={textSettings}
-                          countTypeSettings={countSettings}
-                          onBlockTypeChange={handleBlockTypeChange}
-                          onTextTypeChange={handleTextTypeChange}
-                          onCountTypeChange={handleCountTypeChange}
+          ? <SettingsPage settings={settings}
+                          onSettingsChange={handleSettingsChange}
                           onBackButtonClick={handleSettingsClick}/>
           : <MainPage onPlusClick={handlePlusClick}
                       onClearClick={handleClearClick}
@@ -138,7 +122,8 @@ function App() {
                       onSettingClick={handleSettingsClick}
                       data={documents}
                       isActive={isActive}
-                      countTypeSettings={countSettings}/>
+                      countTypeSettings={settings.count}
+                      settings={settings}/>
       }
     </>
   )
