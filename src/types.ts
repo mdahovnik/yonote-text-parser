@@ -20,10 +20,16 @@ export type TStorage = {
 }
 
 export type TParsedData = {
+  type: string,
   text: string,
   nodePath: string,
   words: number,
-  symbols: number
+  symbols: number,
+  classList: string[][],
+}
+
+export type TParsedNode = {
+  [key: string]: TParsedData
 }
 
 

@@ -85,7 +85,7 @@ export const appSettings: TSettingList = {
     {name: "allow_quote", title: "Quote block", checked: false},
     {name: "allow_text", title: "Text block", checked: false},
     {name: "allow_callout", title: "Callout block", checked: false},
-    {name: "allow_h1", title: "Heading 1", checked: false},
+    {name: "allow_h1", title: "Heading 1", checked: true},
     {name: "allow_toggle_h1_title", title: "H1 title", checked: false},
     {name: "allow_h2", title: "Heading 2", checked: false},
     {name: "allow_toggle_h1_content", title: "H1 content", checked: false},

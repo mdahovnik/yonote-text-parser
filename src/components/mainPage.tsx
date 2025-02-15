@@ -14,8 +14,6 @@ type TMainPage = {
 }
 
 function getTotals(data: TDocument[]) {
-  // if (!data) return {words: 0, symbols: 0};
-  // if (data.length === 1) return {words: data[0].words, symbols: data[0].symbols};
   return data.reduce((a, b) => ({
     words: a.words + b.words,
     symbols: a.symbols + b.symbols

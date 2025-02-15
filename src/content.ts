@@ -14,92 +14,137 @@ const ACT = {
   GET_SETTINGS: 'GET_SETTINGS',
   CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
-  SAVE_COUNT_SETTINGS: 'SAVE_COUNT_SETTINGS',
+  SAVE_SETTINGS: 'SAVE_SETTINGS',
   REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
   APPLY_SETTINGS: 'APPLY_SETTINGS',
 }
 
-// enum NODE_NAME {
-//   A = "A",
-//   BLOCKQUOTE = "BLOCKQUOTE",
-//   BUTTON = "BUTTON",
-//   DEL = "DEL",
-//   DIV = "DIV",
-//   EM = "EM",
-//   CODE = "CODE",
-//   H1 = "H1",
-//   H2 = "H2",
-//   H3 = "H3",
-//   OPTION = "OPTION",
-//   P = "P",
-//   SPAN = "SPAN",
-//   STRONG = "STRONG",
-//   TABLE = "TABLE",
-//   U = "U",
-// }
+enum NODE_NAME {
+  A = "A",
+  BLOCKQUOTE = "BLOCKQUOTE",
+  BUTTON = "BUTTON",
+  DEL = "DEL",
+  DIV = "DIV",
+  EM = "EM",
+  CODE = "CODE",
+  H1 = "H1",
+  H2 = "H2",
+  H3 = "H3",
+  OPTION = "OPTION",
+  P = "P",
+  SPAN = "SPAN",
+  STRONG = "STRONG",
+  TABLE = "TABLE",
+  U = "U",
+}
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
+  // let textContent: string = '';
+  // let nodePath = '';
+  // let classList: string[][] = [];
+  // const textDataArr: TParsedData[] = [];
+  // const parsedDocument: TParsedNode = {};
   let symbols = 0;
   let words = 0;
-  let textContent: string = '';
-  let nodePath = '';
   let rawString = '';
+  let nodeType: string = "";
+
+  // const parsedDocument: TParsedData[] = [];
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-  const textDataArr: TParsedData[] = [];
 
-  function extractData(nodeElement: ChildNode) {
+  let textContent: string = '';
+  let nodeSymbols = 0;
+  let nodeWords = 0;
+  let classList: string[][] = [];
+  let nodePath = '';
+
+  function extractNodeData(nodeElement: ChildNode) {
     nodeElement.childNodes.forEach((node) => {
-
-      let nodeWords = 0;
-      let nodeSymbols = 0;
-
-      if (node && node.nodeType === Node.TEXT_NODE) {
-        textContent = node.textContent ?? '';
-
-        if (textContent && textContent.length > 0) {
+        if (node && node.nodeType === Node.TEXT_NODE) {
+          textContent += node.textContent ? node.textContent + ' ' : '';
+          // if (textContent && textContent.length > 0) {
           nodePath += node.parentNode?.nodeName;
           symbols += nodeSymbols = textContent.length;
           words += nodeWords = getWordCount(textContent);
           rawString += " " + textContent;
 
-          textDataArr.push({
-            text: textContent,
-            nodePath: nodePath,
-            words: nodeWords,
-            symbols: nodeSymbols
-          });
-        }
-        nodePath = '';
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        // console.log(node);
-        // if (node.nodeName !== NODE_NAME.OPTION) { //TODO: пропустить выпадающий список OPTION
-        nodePath += node.parentNode?.nodeName + ',';
-        extractData(node)
-        // }
-      }
-    })
+          // textDataArr.push({
+          //   text: textContent.trim(),
+          //   nodePath: nodePath,
+          //   words: nodeWords,
+          //   symbols: nodeSymbols,
+          //   classList: classList,
+          // });
 
-    return textDataArr;
+          // parsedDataArray.push({
+          //   text: textContent,
+          //   nodePath: nodePath,
+          //   words: nodeWords,
+          //   symbols: nodeSymbols,
+          //   classList: classList,
+          // });
+          // }
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.nodeName !== NODE_NAME.OPTION) { //TODO: пропустить выпадающий список OPTION
+            nodePath += node.parentNode?.nodeName + ',';
+            extractNodeData(node)
+          }
+        }
+      }
+    )
+    // return textDataArr;
+    return {
+      type: extractNodeType(nodeElement),
+      text: textContent.trim(),
+      nodePath: nodePath,
+      words: nodeWords,
+      symbols: nodeSymbols,
+      classList: classList,
+    };
   }
 
-  textBoxNodes.forEach(node => {
-    extractData(node)
+  function extractNodeType(node: ChildNode) {
+    if (node instanceof Element) {
+      nodeType = node.classList.length > 0 ? `class:${node.className}` : `node:${node.nodeName}`
+    } else {
+      nodeType = `node-${node.nodeName}`;
+    }
+    return nodeType;
+  }
+
+  console.log(textBoxNodes[1].childNodes);
+
+  textBoxNodes.forEach(textBoxNode => {
+    const parsedDocument: TParsedData[] = [];
+    textBoxNode.childNodes.forEach((node) => {
+      if (node instanceof Element) {
+        if (node.textContent) parsedDocument.push(extractNodeData(node));
+      }
+      textContent = '';
+      nodeSymbols = 0;
+      nodeWords = 0;
+      classList = [];
+      nodePath = '';
+    })
+    console.dir(parsedDocument)
   })
+  // })
+
 
   if (message.action === ACT.SAVE_DOCUMENT) {
-    console.dir(textDataArr)//TODO: вывод в консоль распарсенного массива
-
+    // console.dir(parsedDataArray)//TODO: вывод в консоль распарсенного массива
     chrome.storage.local.get("documents", (storage: TStorage) => {
       if (!storage.documents) return;
 
       const documents = storage.documents;
       const localTime = new Date().toLocaleTimeString();
       const id = getDocumentId();
+      let title: string = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
 
-      const parsedDocument: TDocument = {
+      const parsedData: TDocument = {
         id: id,
         time: localTime,
-        title: textDataArr[0].text ?? '',
+        title: title,
         words: words,
         symbols: symbols,
         raw: rawString.trim()
@@ -107,10 +152,10 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
       const foundDocument = findDocumentById(documents, id);
       if (foundDocument) {
-        const updatedDocument = updateFoundDocument(foundDocument, parsedDocument);
+        const updatedDocument = updateFoundDocument(foundDocument, parsedData);
         documents.splice(documents.indexOf(foundDocument), 1, updatedDocument);
       } else {
-        documents.push(parsedDocument);
+        documents.push(parsedData);
       }
 
       chrome.storage.local.set({"documents": documents}, () => {
@@ -149,7 +194,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     });
   }
 
-  if (message.action === ACT.SAVE_COUNT_SETTINGS) {
+  if (message.action === ACT.SAVE_SETTINGS) {
     const newCountTypeSettings = message.data.newSettings;
     chrome.storage.local.set({"settings": newCountTypeSettings}, () => {
       chrome.storage.local.get("settings", (storage: TStorage) => {
@@ -171,7 +216,6 @@ function getDocumentId() {
 }
 
 function findDocumentById(documents: TDocument[], id: string) {
-  console.log(id)
   return documents.find((document) => document.id === id);
 }
 

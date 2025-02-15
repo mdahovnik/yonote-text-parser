@@ -13,7 +13,9 @@ export function Settings(
   {
     type,
     title,
-    settings, onSettingsChange, categorySettings
+    settings,
+    onSettingsChange,
+    categorySettings
   }: TSettingsBlock) {
   return (
     <>

@@ -11,7 +11,7 @@ const ACT = {
   GET_SETTINGS: 'GET_SETTINGS',
   CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
-  SAVE_COUNT_SETTINGS: 'SAVE_COUNT_SETTINGS',
+  SAVE_SETTINGS: 'SAVE_SETTINGS',
   REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
   APPLY_SETTINGS: 'APPLY_SETTINGS',
 }
@@ -21,7 +21,6 @@ async function getTabId() {
   return tab?.id as number;
 }
 
-//TODO: закоммитить
 async function fetchFromLocalStorage<T>(actionType: keyof typeof ACT) {
   const tabId = await getTabId()
   return new Promise<T>((resolve, reject) => {
@@ -35,51 +34,49 @@ async function fetchFromLocalStorage<T>(actionType: keyof typeof ACT) {
   });
 }
 
+async function getUrl() {
+  const tabs = await chrome.tabs.query({active: true, lastFocusedWindow: true});
+  if (tabs.length > 0 && tabs[0]?.url) {
+    return new URL(tabs[0].url).hostname;
+  } else return "";
+}
+
 function App() {
   const [isSettingOpen, setIsSettingOpen] = useState(false);
   const [settings, setSettings] = useState<TSettingList>(appSettings);
   const [isActive, setIsActive] = useState(false);
   const [documents, setDocuments] = useState<TDocument[]>([]);
 
-  //TODO: вынести из компонента
-  const getUrl = async () => {
-    const tabs = await chrome.tabs.query({active: true, lastFocusedWindow: true});
-    if (tabs.length > 0 && tabs[0]?.url) {
-      return new URL(tabs[0].url).hostname;
-    } else return "";
-  }
-
-  const handleSettingsChange = async (category: keyof TSettingList, title: string) => {
-    const updatedSettings = {
-      ...settings,
-      [category]: settings[category].map((item) => {
-        if (title === "Words" || title === "Symbols")
-          return {...item, checked: item.title === title};
-        else
-          return {...item, checked: item.title === title ? !item.checked : item.checked};
-
-      })
-    };
-
-    const tabId = await getTabId();
-    chrome.tabs.sendMessage(tabId, {
-      action: ACT.SAVE_COUNT_SETTINGS,
-      data: {newSettings: {...updatedSettings}}
-    }, (savedSettings: TSettingList) => {
-      setSettings(savedSettings);
-    })
-  }
-
   useEffect(() => {
     getUrl()
       .then((host: string) => setIsActive(host === "yppm.yonote.ru"));
 
     fetchFromLocalStorage<TSettingList>("GET_SETTINGS")
-      .then((data: TSettingList) => setSettings(data));
+      .then((data) => setSettings(data));
 
     fetchFromLocalStorage<TDocument[]>("GET_RECORDS")
-      .then((data: TDocument[]) => setDocuments(data))
+      .then((data) => setDocuments(data))
   }, [])
+
+  const handleSettingsChange = async (category: keyof TSettingList, title: string) => {
+    const updatedSettings = {
+      ...settings,
+      [category]: settings[category].map((item) => {
+        if (category === "count")
+          return {...item, checked: item.title === title};
+        else
+          return {...item, checked: item.title === title ? !item.checked : item.checked};
+      })
+    };
+
+    const tabId = await getTabId();
+    chrome.tabs.sendMessage(tabId, {
+      action: ACT.SAVE_SETTINGS,
+      data: {newSettings: {...updatedSettings}}
+    }, (savedSettings: TSettingList) => {
+      setSettings(savedSettings);
+    })
+  }
 
   const handleSettingsClick = async () => {
     const isOpen = !isSettingOpen;
@@ -102,7 +99,7 @@ function App() {
   }
 
   const handleDeleteClick = async (id: string) => {
-    console.log(id)
+    // console.log(id)
     const tabId = await getTabId();
     chrome.tabs.sendMessage(tabId, {action: ACT.REMOVE_DOCUMENT, data: {id: id}}, (documents: TDocument[]) => {
       setDocuments(documents);
