@@ -39,123 +39,82 @@ enum NODE_NAME {
 }
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
-  // let textContent: string = '';
-  // let nodePath = '';
-  // let classList: string[][] = [];
-  // const textDataArr: TParsedData[] = [];
-  // const parsedDocument: TParsedNode = {};
-  let symbols = 0;
-  let words = 0;
-  let rawString = '';
-  let nodeType: string = "";
-
-  // const parsedDocument: TParsedData[] = [];
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
 
-  let textContent: string = '';
+  let rawString = '';
+  let textContent: string[] = [];
   let nodeSymbols = 0;
   let nodeWords = 0;
-  let classList: string[][] = [];
   let nodePath = '';
 
-  function extractNodeData(nodeElement: ChildNode) {
-    nodeElement.childNodes.forEach((node) => {
-        if (node && node.nodeType === Node.TEXT_NODE) {
-          textContent += node.textContent ? node.textContent + ' ' : '';
-          // if (textContent && textContent.length > 0) {
-          nodePath += node.parentNode?.nodeName;
-          symbols += nodeSymbols = textContent.length;
-          words += nodeWords = getWordCount(textContent);
-          rawString += " " + textContent;
+  function extractNodeData(nodeElement: ChildNode): TParsedData {
+    nodeElement.childNodes?.forEach((node) => {
+      if (node && node.nodeType === Node.TEXT_NODE) {
 
-          // textDataArr.push({
-          //   text: textContent.trim(),
-          //   nodePath: nodePath,
-          //   words: nodeWords,
-          //   symbols: nodeSymbols,
-          //   classList: classList,
-          // });
+        textContent.push(node.textContent ? node.textContent : '');
+        nodePath += node.parentNode?.nodeName + ',';
+        rawString = textContent.join(' ');
+        nodeSymbols = textContent.join('').length;
+        nodeWords = getWordCount(rawString);
 
-          // parsedDataArray.push({
-          //   text: textContent,
-          //   nodePath: nodePath,
-          //   words: nodeWords,
-          //   symbols: nodeSymbols,
-          //   classList: classList,
-          // });
-          // }
-        } else if (node.nodeType === Node.ELEMENT_NODE) {
-          if (node.nodeName !== NODE_NAME.OPTION) { //TODO: пропустить выпадающий список OPTION
-            nodePath += node.parentNode?.nodeName + ',';
-            extractNodeData(node)
-          }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.nodeName !== NODE_NAME.OPTION && node.nodeName !== NODE_NAME.BUTTON) { //TODO: пропустить выпадающий список OPTION
+          nodePath += node.parentNode?.nodeName + ',';
+          extractNodeData(node)
         }
       }
-    )
-    // return textDataArr;
+    })
+
     return {
       type: extractNodeType(nodeElement),
-      text: textContent.trim(),
+      text: textContent,
       nodePath: nodePath,
       words: nodeWords,
       symbols: nodeSymbols,
-      classList: classList,
-    };
-  }
-
-  function extractNodeType(node: ChildNode) {
-    if (node instanceof Element) {
-      nodeType = node.classList.length > 0 ? `class:${node.className}` : `node:${node.nodeName}`
-    } else {
-      nodeType = `node-${node.nodeName}`;
+      raw: rawString,
     }
-    return nodeType;
   }
-
-  console.log(textBoxNodes[1].childNodes);
-
-  textBoxNodes.forEach(textBoxNode => {
-    const parsedDocument: TParsedData[] = [];
-    textBoxNode.childNodes.forEach((node) => {
-      if (node instanceof Element) {
-        if (node.textContent) parsedDocument.push(extractNodeData(node));
-      }
-      textContent = '';
-      nodeSymbols = 0;
-      nodeWords = 0;
-      classList = [];
-      nodePath = '';
-    })
-    console.dir(parsedDocument)
-  })
-  // })
-
 
   if (message.action === ACT.SAVE_DOCUMENT) {
-    // console.dir(parsedDataArray)//TODO: вывод в консоль распарсенного массива
     chrome.storage.local.get("documents", (storage: TStorage) => {
       if (!storage.documents) return;
 
       const documents = storage.documents;
-      const localTime = new Date().toLocaleTimeString();
       const id = getDocumentId();
       let title: string = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
 
-      const parsedData: TDocument = {
+      // парсим данные
+      const parsedDocument: TParsedData[] = [];
+      textBoxNodes.forEach(textBoxNode => {
+        textBoxNode.childNodes.forEach((node) => {
+          if (node instanceof Element)
+            if (node.textContent) parsedDocument.push(extractNodeData(node));
+
+          textContent = [];
+          nodeSymbols = 0;
+          nodeWords = 0;
+          nodePath = '';
+        })
+        console.dir(parsedDocument)
+      })
+
+      const {words, symbols} = getTotals(parsedDocument)//TODO: исправить
+      const newDocument: TDocument = {
         id: id,
-        time: localTime,
+        time: new Date().toLocaleTimeString(),
         title: title,
         words: words,
         symbols: symbols,
         raw: rawString.trim()
       }
 
+      // проверяем наличие документа в хранилище, если есть - обновляем, нет - добавляем в хранилище
       const foundDocument = findDocumentById(documents, id);
       if (foundDocument) {
-        const updatedDocument = updateFoundDocument(foundDocument, parsedData);
+        const updatedDocument = updateFoundDocument(foundDocument, newDocument);
         documents.splice(documents.indexOf(foundDocument), 1, updatedDocument);
       } else {
-        documents.push(parsedData);
+        documents.push(newDocument);
       }
 
       chrome.storage.local.set({"documents": documents}, () => {
@@ -202,17 +161,25 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
       })
     })
   }
+
   return true;
 });
 
-function getWordCount(str: string) {
-  const matches = str.match(/\S+/g);
+function getWordCount(strings: string) {
+  const matches = strings.match(/\S+/g);
   return matches ? matches.length : 0;
 }
 
 function getDocumentId() {
   const mainDocContainer = document.getElementsByClassName("main-document-container");
   return mainDocContainer[0].getAttribute("id") ?? crypto.randomUUID();
+}
+
+function getTotals(data: TParsedData[]) {
+  return data.reduce((a, b) => ({
+    words: a.words + b.words,
+    symbols: a.symbols + b.symbols
+  }), {words: 0, symbols: 0});
 }
 
 function findDocumentById(documents: TDocument[], id: string) {
@@ -231,4 +198,9 @@ function updateFoundDocument(foundDocument: TDocument, parsedDocument: TDocument
   }
 }
 
-// "https://*.yonote.ru/doc/*"
+function extractNodeType(node: ChildNode) {
+  if (node instanceof Element) {
+    return node.classList.length > 0 ? `${node.className}` : `node-${node.nodeName}`
+  } else
+    return `node-${node.nodeName}`;
+}

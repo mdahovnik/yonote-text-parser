@@ -7,31 +7,14 @@ export type TDocument = {
   raw: string,
 }
 
-// export type TSetting = {
-//   name: string,
-//   type: string,
-//   title: string,
-//   checked: boolean,
-// }
-
-export type TStorage = {
-  documents: TDocument[],
-  settings: TSettingList
-}
-
 export type TParsedData = {
   type: string,
-  text: string,
+  text: string[],
   nodePath: string,
   words: number,
   symbols: number,
-  classList: string[][],
+  raw: string,
 }
-
-export type TParsedNode = {
-  [key: string]: TParsedData
-}
-
 
 export type TSetting = {
   name: string,
@@ -43,5 +26,10 @@ export type TSettingList = {
   block: TSetting[],
   text: TSetting[],
   count: TSetting[]
+}
+
+export type TStorage = {
+  documents: TDocument[],
+  settings: TSettingList
 }
 
