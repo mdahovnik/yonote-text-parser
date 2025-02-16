@@ -4,7 +4,7 @@ export type TDocument = {
   title: string,
   words: number,
   symbols: number,
-  raw: string,
+  rawString: string,
 }
 
 export type TParsedData = {

@@ -68,28 +68,3 @@ chrome.runtime.onInstalled.addListener(() => {
 
 });
 
-// const loadDataFromStorage = () => {
-//     chrome.storage.local.get("records", (data) => {
-//         chrome.runtime.sendMessage(data['records'])
-//     })
-// }
-//
-// chrome.runtime.onStartup.addListener((sendResponse) => {
-//     let res = []
-//     chrome.storage.local.get("records", (result) => {
-//         res = storage['records'];
-//         console.log(res)
-//     })
-//     // sendResponse([res])
-// })
-
-
-// chrome.runtime.onStartup.addListener(() => {
-//   async function getRecords(setState: Dispatch<SetStateAction<TStorage[]>>) {
-//   const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
-//   const id = tab?.id as number;
-//   chrome.tabs.sendMessage(id, {action: "getRecords"}, (response: TStorage) => {
-//     setState([response])
-//   })
-// }
-// })
