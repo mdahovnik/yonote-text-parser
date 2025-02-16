@@ -1,4 +1,4 @@
-import {TDocument, TParsedData, TSetting, TStorage} from "./types.ts";
+import {TDocument, TParsedData, TSetting, TStorage, TData} from "./types.ts";
 
 type TMessage = {
   action: keyof typeof ACT;
@@ -40,30 +40,37 @@ enum NODE_NAME {
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-  let textContent: string[] = [];
+  // let textContent: string[] = [];
   let nodePath = '';
+  let nodeData: TData[] = []
 
   function extractNodeData(nodeElement: ChildNode): TParsedData {
     nodeElement.childNodes?.forEach((node) => {
       if (node && node.nodeType === Node.TEXT_NODE) {
-        textContent.push(node.textContent ? node.textContent : '');
         nodePath += node.parentNode?.nodeName + ',';
+        nodeData.push({
+          text: node.textContent ?? '',
+          path: nodePath//node.parentNode?.nodeName + ','
+        });
+        nodePath = '';
 
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        if (node.nodeName !== NODE_NAME.OPTION && node.nodeName !== NODE_NAME.BUTTON) { //TODO: пропустить выпадающий список OPTION
+        if (node.nodeName !== NODE_NAME.OPTION && node.nodeName !== NODE_NAME.BUTTON) { // узлы которые не надо парсить
           nodePath += node.parentNode?.nodeName + ',';
           extractNodeData(node)
         }
       }
     })
 
+    let textContent = nodeData.map((item) => item.text);
+
     return {
-      type: extractNodeType(nodeElement),
-      text: textContent,
-      nodePath: nodePath,
+      nodeType: extractNodeType(nodeElement),
+      data: nodeData,
+      // nodePath: nodePath,
       words: getWordCount(textContent.join(' ')),
       symbols: textContent.join('').length,
-      raw: textContent.join(' '),
+      raw: textContent.join(' ')
     }
   }
 
@@ -77,10 +84,11 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
         parsedDocument = [];
         textBoxNode.childNodes.forEach((node) => {
           if (node instanceof Element && node.textContent) parsedDocument.push(extractNodeData(node));
-          textContent = [];
+          // textContent = [];
           nodePath = '';
+          nodeData = [];
         })
-        console.dir(parsedDocument)
+        console.log(parsedDocument)
       })
 
       // создаем новый документ
@@ -155,9 +163,9 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   return true;
 });
 
-function getWordCount(strings: string) {
-  const matches = strings.match(/\S+/g);
-  return matches ? matches.length : 0;
+function getWordCount(string: string) {
+  const matches = string.match(/[\p{L}\d]+/gu) || [];  //(/\b\w+\b/g)    //(/\b[\w\dА-Яа-яЁё]+\b/g)   //(/\S+/g);
+  return matches.length;
 }
 
 function getDocumentId() {
@@ -190,7 +198,7 @@ function updateFoundDocument(foundDocument: TDocument, parsedDocument: TDocument
 
 function extractNodeType(node: ChildNode) {
   if (node instanceof Element) {
-    return node.classList.length > 0 ? `${node.className}` : `node-${node.nodeName}`
+    return node.classList.length > 0 ? `${node.className}` : `${node.nodeName}`
   } else
     return `node-${node.nodeName}`;
 }

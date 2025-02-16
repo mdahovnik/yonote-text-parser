@@ -8,9 +8,9 @@ export type TDocument = {
 }
 
 export type TParsedData = {
-  type: string,
-  text: string[],
-  nodePath: string,
+  nodeType: string,
+  data: TData[],
+  // nodePath: string,
   words: number,
   symbols: number,
   raw: string,
@@ -32,4 +32,7 @@ export type TStorage = {
   documents: TDocument[],
   settings: TSettingList
 }
-
+export type TData = {
+  text: string,
+  path: string
+}
