@@ -1,12 +1,12 @@
-import {TSetting, TSettingList} from "../types.ts";
+import {Setting, SettingList} from "../types.ts";
 import {HTMLInputTypeAttribute} from "react";
 
 type TSettingsBlock = {
   type: HTMLInputTypeAttribute;
   title: string;
-  settings: TSetting[];
-  categorySettings: keyof TSettingList
-  onSettingsChange: (key: keyof TSettingList, type: string) => void;
+  settings: Setting[];
+  categorySettings: keyof SettingList
+  onSettingsChange: (key: keyof SettingList, type: string) => void;
 }
 
 export function Settings(

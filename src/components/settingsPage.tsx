@@ -1,11 +1,11 @@
-import {TSettingList} from "../types.ts";
+import {SettingList} from "../types.ts";
 import {Settings} from "./settings.tsx";
 import {ButtonAction} from "./buttonAction.tsx";
 
 type TSettingPage = {
   onBackButtonClick: () => void;
-  onSettingsChange: (category: keyof TSettingList, type: string) => void;
-  settings: TSettingList;
+  onSettingsChange: (category: keyof SettingList, type: string) => void;
+  settings: SettingList;
 }
 
 export function SettingsPage(

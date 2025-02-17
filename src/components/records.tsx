@@ -1,10 +1,10 @@
-import {TSetting, TDocument} from "../types.ts";
+import {Setting, Document} from "../types.ts";
 import {ButtonAction} from "./buttonAction.tsx";
 
 
 type TRecordList = {
-  data: TDocument[];
-  countTypeSettings: TSetting[];
+  data: Document[];
+  countTypeSettings: Setting[];
   onDeleteClick: (id: string) => void;
 }
 

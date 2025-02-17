@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react'
 import './App.css'
 import {SettingsPage} from "./components/settingsPage.tsx";
 import {MainPage} from "./components/mainPage.tsx";
-import {TDocument, TSettingList} from "./types.ts";
+import {Document, SettingList} from "./types.ts";
 import {appSettings} from "./constants.ts";
 
 const ACT = {
@@ -43,22 +43,23 @@ async function getUrl() {
 
 function App() {
   const [isSettingOpen, setIsSettingOpen] = useState(false);
-  const [settings, setSettings] = useState<TSettingList>(appSettings);
+  const [settings, setSettings] = useState<SettingList>(appSettings);
   const [isActive, setIsActive] = useState(false);
-  const [documents, setDocuments] = useState<TDocument[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  // const [totals, setTotals] = useState<{ words: number, symbols: number }>({words: 0, symbols: 0});
 
   useEffect(() => {
     getUrl()
       .then((host: string) => setIsActive(host === "yppm.yonote.ru"));
 
-    fetchFromLocalStorage<TSettingList>("GET_SETTINGS")
+    fetchFromLocalStorage<SettingList>("GET_SETTINGS")
       .then((data) => setSettings(data));
 
-    fetchFromLocalStorage<TDocument[]>("GET_RECORDS")
+    fetchFromLocalStorage<Document[]>("GET_RECORDS")
       .then((data) => setDocuments(data))
   }, [])
 
-  const handleSettingsChange = async (category: keyof TSettingList, title: string) => {
+  const handleSettingsChange = async (category: keyof SettingList, title: string) => {
     const updatedSettings = {
       ...settings,
       [category]: settings[category].map((item) => {
@@ -73,7 +74,8 @@ function App() {
     chrome.tabs.sendMessage(tabId, {
       action: ACT.SAVE_SETTINGS,
       data: {newSettings: {...updatedSettings}}
-    }, (savedSettings: TSettingList) => {
+    }, (savedSettings: SettingList) => {
+      // setTotals({words, symbols});
       setSettings(savedSettings);
     })
   }
@@ -85,14 +87,14 @@ function App() {
 
   const handlePlusClick = async () => {
     const tabId = await getTabId()
-    chrome.tabs.sendMessage(tabId, {action: ACT.SAVE_DOCUMENT}, (documents: TDocument[]) => {
+    chrome.tabs.sendMessage(tabId, {action: ACT.SAVE_DOCUMENT}, (documents: Document[]) => {
       setDocuments(documents);
     })
   }
 
   const handleClearClick = async () => {
     const tabId = await getTabId();
-    chrome.tabs.sendMessage(tabId, {action: ACT.CLEAR_RECORDS}, (documents: TDocument[]) => {
+    chrome.tabs.sendMessage(tabId, {action: ACT.CLEAR_RECORDS}, (documents: Document[]) => {
       if (!documents)
         setDocuments([]);
     })
@@ -101,7 +103,7 @@ function App() {
   const handleDeleteClick = async (id: string) => {
     // console.log(id)
     const tabId = await getTabId();
-    chrome.tabs.sendMessage(tabId, {action: ACT.REMOVE_DOCUMENT, data: {id: id}}, (documents: TDocument[]) => {
+    chrome.tabs.sendMessage(tabId, {action: ACT.REMOVE_DOCUMENT, data: {id: id}}, (documents: Document[]) => {
       setDocuments(documents);
     })
   }

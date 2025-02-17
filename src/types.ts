@@ -1,38 +1,39 @@
-export type TDocument = {
-  id: string,
-  time: string,
-  title: string,
-  words: number,
-  symbols: number,
-  rawString: string,
+export type TextNodeData = {
+  text: string,
+  path: string
 }
 
-export type TParsedData = {
+export type ParsedData = {
   nodeType: string,
-  data: TData[],
-  // nodePath: string,
+  data: TextNodeData[],
   words: number,
   symbols: number,
   raw: string,
 }
 
-export type TSetting = {
+export type Document = {
+  id: string,
+  parsedData: ParsedData[],
+  raw: string,
+  symbols: number,
+  time: string,
+  title: string,
+  words: number,
+}
+
+export type Setting = {
   name: string,
   title: string,
   checked: boolean
 }
 
-export type TSettingList = {
-  block: TSetting[],
-  text: TSetting[],
-  count: TSetting[]
+export type SettingList = {
+  block: Setting[],
+  text: Setting[],
+  count: Setting[]
 }
 
-export type TStorage = {
-  documents: TDocument[],
-  settings: TSettingList
-}
-export type TData = {
-  text: string,
-  path: string
+export type Storage = {
+  documents: Document[],
+  settings: SettingList
 }

@@ -1,6 +1,6 @@
 // import {TSetting} from "./types.ts";
 
-import {TSettingList} from "./types.ts";
+import {SettingList} from "./types.ts";
 
 export const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
@@ -79,7 +79,7 @@ export const ACT = {
 // ]
 
 
-export const appSettings: TSettingList = {
+export const appSettings: SettingList = {
   block: [
     {name: "allow_title", title: "Page title", checked: false},
     {name: "allow_quote", title: "Quote block", checked: false},

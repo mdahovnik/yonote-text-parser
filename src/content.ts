@@ -1,10 +1,10 @@
-import {TDocument, TParsedData, TSetting, TStorage, TData} from "./types.ts";
+import {Document, ParsedData, Setting, Storage, TextNodeData} from "./types.ts";
 
 type TMessage = {
   action: keyof typeof ACT;
   data: {
     id?: string,
-    newSettings?: TSetting[]
+    newSettings?: Setting[]
   }
 }
 
@@ -42,12 +42,12 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
   // let textContent: string[] = [];
   let nodePath = '';
-  let nodeData: TData[] = []
+  let nodeData: TextNodeData[] = []
 
-  function extractNodeData(nodeElement: ChildNode): TParsedData {
+  function extractNodeData(nodeElement: ChildNode): ParsedData {
     nodeElement.childNodes?.forEach((node) => {
       if (node && node.nodeType === Node.TEXT_NODE) {
-        nodePath += node.parentNode?.nodeName + ',';
+        nodePath += node.parentNode?.nodeName;
         nodeData.push({
           text: node.textContent ?? '',
           path: nodePath//node.parentNode?.nodeName + ','
@@ -56,7 +56,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
       } else if (node.nodeType === Node.ELEMENT_NODE) {
         if (node.nodeName !== NODE_NAME.OPTION && node.nodeName !== NODE_NAME.BUTTON) { // узлы которые не надо парсить
-          nodePath += node.parentNode?.nodeName + ',';
+          nodePath += node.parentNode?.nodeName + ' ';
           extractNodeData(node)
         }
       }
@@ -67,7 +67,6 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     return {
       nodeType: extractNodeType(nodeElement),
       data: nodeData,
-      // nodePath: nodePath,
       words: getWordCount(textContent.join(' ')),
       symbols: textContent.join('').length,
       raw: textContent.join(' ')
@@ -75,39 +74,62 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 
   if (message.action === ACT.SAVE_DOCUMENT) {
-    chrome.storage.local.get("documents", (storage: TStorage) => {
+    chrome.storage.local.get("documents", (storage: Storage) => {
       if (!storage.documents) return;
 
       // парсим данные
-      let parsedDocument: TParsedData[] = [];
+      let parsedData: ParsedData[] = [];
+
       textBoxNodes.forEach(textBoxNode => {
-        parsedDocument = [];
+        parsedData = [];
         textBoxNode.childNodes.forEach((node) => {
-          if (node instanceof Element && node.textContent) parsedDocument.push(extractNodeData(node));
-          // textContent = [];
+          if (node instanceof Element && node.textContent) {
+            parsedData.push(extractNodeData(node));
+          }
+
           nodePath = '';
           nodeData = [];
         })
-        console.log(parsedDocument)
+        console.dir(parsedData)
+
+        // const key: string = '';
+        const totalTree: Record<string, string> = {};
+        parsedData.forEach((item) => {
+          item.data.forEach((k) => {
+            const {text, path} = k;
+            // let count = getWordCount(text);
+            if (!totalTree[path]) {
+              totalTree[path] = ''
+            }
+            totalTree[path] += text + ' ';
+          })
+        })
+        console.log(totalTree)
       })
 
       // создаем новый документ
-      const id = getDocumentId();
-      let title: string = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
-      const {words, symbols} = getTotals(parsedDocument);
-      const {raw} = getRawString(parsedDocument);
-      const newDocument: TDocument = {
-        id: id,
-        time: new Date().toLocaleTimeString(),
-        title: title,
-        words: words,
-        symbols: symbols,
-        rawString: raw
-      }
+      // const id = getDocumentId();
+      // let title: string = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
+      // const {words, symbols} = getTotals(parsedData);
+      // const {raw} = getRawString(parsedData);
+      // const newDocument: TDocument = {
+      //   id: id,
+      //   time: new Date().toLocaleTimeString(),
+      //   title: title,
+      //   words: words,
+      //   symbols: symbols,
+      //   rawString: raw
+      // }
 
-      // проверяем наличие созданного документа в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
+      // проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
       const documents = storage.documents;
-      const foundDocument = findDocumentById(documents, id);
+      const foundDocument = findDocumentById(documents, getDocumentId());
+
+      const title = textBoxNodes[0].textContent
+        ? textBoxNodes[0].textContent
+        : 'No title';
+      const newDocument = createNewDocument(parsedData, title);
+
       if (foundDocument) {
         const updatedDocument = updateFoundDocument(foundDocument, newDocument);
         documents.splice(documents.indexOf(foundDocument), 1, updatedDocument);
@@ -122,7 +144,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 
   if (message.action === ACT.REMOVE_DOCUMENT) {
-    chrome.storage.local.get("documents", (storage: TStorage) => {
+    chrome.storage.local.get("documents", (storage: Storage) => {
       const filteredRecords = storage.documents.filter((document) => document.id !== message.data.id);
 
       chrome.storage.local.set({"documents": filteredRecords}, () => {
@@ -132,7 +154,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 
   if (message.action === ACT.GET_RECORDS) {
-    chrome.storage.local.get("documents", (storage: TStorage) => {
+    chrome.storage.local.get("documents", (storage: Storage) => {
       const records = storage.documents;
       sendResponse(records);
     })
@@ -145,17 +167,20 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 
   if (message.action === ACT.GET_SETTINGS) {
-    chrome.storage.local.get("settings", (storage: TStorage) => {
+    chrome.storage.local.get("settings", (storage: Storage) => {
       const settings = storage.settings;
       sendResponse(settings);
     })
   }
 
   if (message.action === ACT.SAVE_SETTINGS) {
-    const newCountTypeSettings = message.data.newSettings;
-    chrome.storage.local.set({"settings": newCountTypeSettings}, () => {
-      chrome.storage.local.get("settings", (storage: TStorage) => {
-        sendResponse(storage.settings)
+    const newSettings = message.data.newSettings;
+    chrome.storage.local.set({"settings": newSettings}, () => {
+      chrome.storage.local.get(["settings"], (storage: Storage) => {
+        // const parsedData = storage.documents[0]?.parsedData;
+        // let {words, symbols} = getApplySettingsTotal(parsedData, 'STRONG');
+        // sendResponse({savedSettings: storage.settings, words: words, symbols: symbols});
+        sendResponse(storage.settings);
       })
     })
   }
@@ -173,18 +198,18 @@ function getDocumentId() {
   return mainDocContainer[0].getAttribute("id") ?? crypto.randomUUID();
 }
 
-function getTotals(data: TParsedData[]) {
+function getTotals(data: ParsedData[]) {
   return data.reduce((a, b) => ({
     words: a.words + b.words,
     symbols: a.symbols + b.symbols
   }), {words: 0, symbols: 0});
 }
 
-function findDocumentById(documents: TDocument[], id: string) {
+function findDocumentById(documents: Document[], id: string) {
   return documents.find((document) => document.id === id);
 }
 
-function updateFoundDocument(foundDocument: TDocument, parsedDocument: TDocument) {
+function updateFoundDocument(foundDocument: Document, parsedDocument: Document) {
   if (!foundDocument) return parsedDocument;
   return {
     ...foundDocument,
@@ -192,7 +217,7 @@ function updateFoundDocument(foundDocument: TDocument, parsedDocument: TDocument
     title: parsedDocument.title,
     words: parsedDocument.words,
     symbols: parsedDocument.symbols,
-    raw: parsedDocument.rawString
+    raw: parsedDocument.raw
   }
 }
 
@@ -203,6 +228,38 @@ function extractNodeType(node: ChildNode) {
     return `node-${node.nodeName}`;
 }
 
-function getRawString(parsedDocument: TParsedData[]) {
+function getRawString(parsedDocument: ParsedData[]) {
   return parsedDocument.reduce((a, b) => ({raw: a.raw + ' ' + b.raw}), {raw: ''})
 }
+
+function createNewDocument(data: ParsedData[], title: string) {
+  const id = getDocumentId();
+  const {words, symbols} = getTotals(data);
+  const {raw} = getRawString(data);
+  const newDocument: Document = {
+    id: id,
+    parsedData: data,
+    raw: raw,
+    symbols: symbols,
+    time: new Date().toLocaleTimeString(),
+    title: title,
+    words: words
+  }
+  return newDocument;
+}
+
+// function getApplySettingsTotal(parsedData: ParsedData[], setting: string) {
+//   let {words, symbols} = {words: 0, symbols: 0}
+//   // const raw: string = "";
+//
+//   parsedData.forEach((node) => {
+//     node.data.forEach((item) => {
+//       if (item.path.includes(setting)) {
+//         words += getWordCount(item.text);
+//         symbols += item.text.length;
+//         console.log({words, symbols, raw: item.text})
+//       }
+//     })
+//   })
+//   return {words, symbols}
+// }

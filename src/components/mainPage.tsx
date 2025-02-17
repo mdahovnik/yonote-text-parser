@@ -1,19 +1,20 @@
 import {ButtonAction} from "./buttonAction.tsx";
-import {TSetting, TDocument, TSettingList} from "../types.ts";
+import {Setting, Document, SettingList} from "../types.ts";
 import {Records} from "./records.tsx";
 
 type TMainPage = {
   isActive: boolean;
-  data: TDocument[];
-  countTypeSettings: TSetting[];
-  settings: TSettingList;
+  data: Document[];
+  countTypeSettings: Setting[];
+  settings: SettingList;
   onSettingClick: () => void;
   onPlusClick: () => void;
   onClearClick: () => void;
   onDeleteClick: (id: string) => void;
+  // totals: {words: number, symbols: number};
 }
 
-function getTotals(data: TDocument[]) {
+function getTotals(data: Document[]) {
   return data.reduce((a, b) => ({
     words: a.words + b.words,
     symbols: a.symbols + b.symbols
@@ -29,7 +30,8 @@ export function MainPage(
     onSettingClick,
     onPlusClick,
     onClearClick,
-    onDeleteClick
+    onDeleteClick,
+    // totals
   }: TMainPage) {
 
   return (
