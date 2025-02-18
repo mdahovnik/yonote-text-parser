@@ -30,7 +30,7 @@ export function Settings(
             <div key={index}>
               <input className={item.tagName}
                      type={type}
-                     checked={item.isSelected}
+                     checked={item.isAllowed}
                      onChange={() => {
                        onSettingsChange(categorySettings, item.label);
                      }}/>

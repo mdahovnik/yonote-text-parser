@@ -42,7 +42,7 @@ const ACT = {
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
   const NEUTRAL_TAGS = ["SPAN", "LI", "P"];
-  const IGNORED_NODE = ["BUTTON", "OPTION"];
+  const IGNORED_NODE = ['BUTTON', 'OPTION', 'TBODY', 'TR', 'TH'];
   const VALID_CLASS_NAMES = [
     'notice-block info',
     'ordered_list',
@@ -53,7 +53,6 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     'code-block',
     // 'scrollable-wrapper table-wrapper'
   ]
-
 
   // рекурсивно обходим текстовый блок документа и строим узловое дерево
   function createNodeTree(nodeElement: ChildNode, parentNodeNames: string[] = []) {
@@ -87,29 +86,36 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   // рекурсивно собираем форматированный текст в объект
   function extractDataFromNodeTree(
     nodeTree: TextNodeTree,
-    totalTree: Record<string, string> = {}) {//, settings: SettingList) {
+    totalTree: Record<string, string> = {},
+    settings: string[]
+  ) {
+
+    let filteredTags = [''];
     nodeTree.words.forEach(({word, tags}) => {
-      // const filterdTags = tags.filter(tag => settings.text.forEach(item => tag === item.tagName && item.isSelected));
-      // console.log(filterdTags);
-      const key = tags.slice(1).join(',') || "PLAIN"; // убираем первый div
+      const isTagsRespondSettings = tags.every(item => settings.includes(item));
+      if (isTagsRespondSettings) {
+        filteredTags = tags;
+      }
+      console.log(isTagsRespondSettings, 'Все tags', word, tags, "Содержатся в", settings);
+      const key = filteredTags.join(',') || "UNREAD";
 
       if (!totalTree[key]) totalTree[key] = '';
-
       totalTree[key] += word + ' ';
     })
-    nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree))//, settings))
+
+    nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree, settings))
     return totalTree;
   }
 
 
   // парсим данные
-  function saveOrUpdateDocument(documents: Document[]) {//, settings: SettingList) {
+  function saveOrUpdateDocument(documents: Document[], settings: string[]) {
     let parsedData: Record<string, string> = {};
 
     textBoxNodes.forEach(textBoxNode => {
       const nodeTree = createNodeTree(textBoxNode);
       console.dir(nodeTree);
-      parsedData = extractDataFromNodeTree(nodeTree, parsedData)//, settings);
+      parsedData = extractDataFromNodeTree(nodeTree, parsedData, settings);
     })
 
     console.dir(parsedData);
@@ -131,9 +137,26 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     chrome.storage.local.get("documents", (storage: Storage) => {
       if (!storage.documents) return;
 
-      // const settings = message.data.settings || storage.settings;
+      const currentSettings = message.data.newSettings || storage.settings;
+      // console.log('settings', currentSettings.text ?? 'no settings');//TODO: console settings
 
-      const documents = saveOrUpdateDocument(storage.documents)//, settings);
+      let settingsDataSet = Object.values(currentSettings)
+        .flatMap(array => array
+          .filter(item => item.isAllowed)
+          .map(item => item.tagName))
+
+      // Object.keys(currentSettings).forEach(key => {
+      //   settingsDataSet = currentSettings[key as keyof typeof currentSettings].reduce((a, b) => {
+      //     if (b.isAllowed) a.push(b.tagName);
+      //     return a;
+      //   }, [] as string[]);
+      // })
+      // const settingsDataSet = currentSettings.text.reduce((a, b) => {
+      //   if (b.isAllowed) a.push(b.tagName);
+      //   return a;
+      // }, ['DIV']);
+
+      const documents = saveOrUpdateDocument(storage.documents, settingsDataSet);
 
       chrome.storage.local.set({"documents": documents}, () => {
         sendResponse(storage.documents);

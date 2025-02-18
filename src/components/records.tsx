@@ -32,7 +32,7 @@ export function Records(
                               onClick={() => {
                               }}
                               type={"copy"}
-                              text={`${countTypeSettings[0].isSelected ? item.words : item.symbols}`}/>
+                              text={`${countTypeSettings[0].isAllowed ? item.words : item.symbols}`}/>
               </div>
             )
           )}

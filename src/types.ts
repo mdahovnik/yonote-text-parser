@@ -24,7 +24,7 @@ export type Document = {
 export type Setting = {
   tagName: string,
   label: string,
-  isSelected: boolean
+  isAllowed: boolean
 }
 
 export type SettingList = {

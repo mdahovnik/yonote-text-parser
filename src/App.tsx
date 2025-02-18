@@ -68,9 +68,9 @@ function App() {
       ...settings,
       [category]: settings[category].map((item) => {
         if (category === "count")
-          return {...item, isSelected: item.label === label};
+          return {...item, isAllowed: item.label === label};
         else
-          return {...item, isSelected: item.label === label ? !item.isSelected : item.isSelected};
+          return {...item, isAllowed: item.label === label ? !item.isAllowed : item.isAllowed};
       })
     };
 

@@ -3,38 +3,114 @@ import {SettingList} from "./types.ts";
 chrome.runtime.onInstalled.addListener(() => {
   const settings: SettingList = {
     block: [
-      {tagName: "allow_title", label: "Page title", isSelected: false},
-      {tagName: "allow_quote", label: "Quote block", isSelected: false},
-      {tagName: "allow_text", label: "Text block", isSelected: false},
-      {tagName: "allow_callout", label: "Callout block", isSelected: false},
-      {tagName: "allow_h1", label: "Heading 1", isSelected: false},
-      {tagName: "allow_toggle_h1_title", label: "H1 title", isSelected: false},
-      {tagName: "allow_h2", label: "Heading 2", isSelected: false},
-      {tagName: "allow_toggle_h1_content", label: "H1 content", isSelected: false},
-      {tagName: "allow_h3", label: "Heading 3", isSelected: false},
-      {tagName: "allow_toggle_h2_title", label: "H2 title", isSelected: false},
-      {tagName: "allow_to_do", label: "To-do list", isSelected: false},
-      {tagName: "allow_toggle_h2_content", label: "H2 content", isSelected: false},
-      {tagName: "allow_bulleted_list", label: "Bulleted list", isSelected: false},
-      {tagName: "allow_toggle_h3_title", label: "H3 title", isSelected: false},
-      {tagName: "allow_numbered_list", label: "Numbered list", isSelected: false},
-      {tagName: "allow_toggle_h3_content", label: "H3 content", isSelected: false},
-      {tagName: "allow_toggle_title", label: "Title", isSelected: false},
-      {tagName: "allow_column", label: "Columns", isSelected: false},
-      {tagName: "allow_toggle_content", label: "Content", isSelected: false},
-      {tagName: "allow_table", label: "Table", isSelected: false},
-      {tagName: "allow_code", label: "Code block", isSelected: false},
+      {tagName: "allow_title", label: "Page title", isAllowed: false},
+      {
+        tagName: "BLOCKQUOTE",
+        label: "Quote block",
+        isAllowed: false
+      },
+      {
+        tagName: "DIV",
+        label: "Text block",
+        isAllowed: true
+      },
+      // {tagName: "allow_callout", label: "Callout block", isAllowed: false},
+      {
+        tagName: "H1",
+        label: "Heading 1",
+        isAllowed: false
+      },
+      // {tagName: "allow_toggle_h1_title", label: "H1 title", isAllowed: false},
+      {
+        tagName: "H2",
+        label: "Heading 2",
+        isAllowed: false
+      },
+      // {tagName: "allow_toggle_h1_content", label: "H1 content", isAllowed: false},
+      {
+        tagName: "H3",
+        label: "Heading 3",
+        isAllowed: false
+      },
+      // {tagName: "allow_toggle_h2_title", label: "H2 title", isAllowed: false},
+      {
+        tagName: "CHECKBOX_LIST",
+        label: "To-do list",
+        isAllowed: false
+      },
+      {tagName: "allow_toggle_h2_content", label: "H2 content", isAllowed: false},
+      {
+        tagName: "BULLET_LIST",
+        label: "Bulleted list",
+        isAllowed: false
+      },
+      {tagName: "allow_toggle_h3_title", label: "H3 title", isAllowed: false},
+      {
+        tagName: "ORDERED_LIST",
+        label: "Numbered list",
+        isAllowed: false
+      },
+      {tagName: "allow_toggle_h3_content", label: "H3 content", isAllowed: false},
+      {
+        tagName: "TOGGLE",
+        label: "Toggle block",
+        isAllowed: false
+      },
+      {
+        tagName: "COLUMNS",
+        label: "Columns",
+        isAllowed: false
+      },
+      {tagName: "allow_toggle_content", label: "Content", isAllowed: false},
+      {
+        tagName: "TABLE",
+        label: "Table",
+        isAllowed: false
+      },
+      {
+        tagName: "CODE-BLOCK",
+        label: "Code block",
+        isAllowed: false
+      },
     ],
     text: [
-      {tagName: "STRONG", label: "Bold", isSelected: true},
-      {tagName: "EM", label: "Italic", isSelected: true},
-      {tagName: "U", label: "Underline", isSelected: true},
-      {tagName: "DEL", label: "Strike", isSelected: true},
-      {tagName: "CODE", label: "Code", isSelected: true},
+      {
+        tagName: "STRONG",
+        label: "Bold",
+        isAllowed: true
+      },
+      {
+        tagName: "EM",
+        label: "Italic",
+        isAllowed: true
+      },
+      {
+        tagName: "U",
+        label: "Underline",
+        isAllowed: false
+      },
+      {
+        tagName: "DEL",
+        label: "Strike",
+        isAllowed: false
+      },
+      {
+        tagName: "CODE",
+        label: "Code",
+        isAllowed: false
+      },
     ],
     count: [
-      {tagName: "count_words", label: "Words", isSelected: true},
-      {tagName: "count_symbols", label: "Symbols", isSelected: false}]
+      {
+        tagName: "count_words",
+        label: "Words",
+        isAllowed: true
+      },
+      {
+        tagName: "count_symbols",
+        label: "Symbols",
+        isAllowed: false
+      }]
   }
 
   chrome.storage.local.set({
