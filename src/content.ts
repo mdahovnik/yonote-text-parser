@@ -1,10 +1,11 @@
-import {Document, Setting, Storage, TextNodeTree} from "./types.ts";
+import {Document, SettingList, Storage, TextNodeTree} from "./types.ts";
 
 type TMessage = {
   action: keyof typeof ACT;
   data: {
     id?: string,
-    newSettings?: Setting[]
+    newSettings?: SettingList,
+    // settings?: SettingList,
   }
 }
 
@@ -40,7 +41,7 @@ const ACT = {
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-  const NEUTRAL_TAGS = ["SPAN", "P", "LI"];
+  const NEUTRAL_TAGS = ["SPAN", "LI", "P"];
   const IGNORED_NODE = ["BUTTON", "OPTION"];
   const VALID_CLASS_NAMES = [
     'notice-block info',
@@ -53,21 +54,17 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     // 'scrollable-wrapper table-wrapper'
   ]
 
+
   // рекурсивно обходим текстовый блок документа и строим узловое дерево
   function createNodeTree(nodeElement: ChildNode, parentNodeNames: string[] = []) {
-    let nodeNames: string[] = [];
     const isNodeNameNeutral = NEUTRAL_TAGS.includes(nodeElement.nodeName);
     const isNodeContainClass = VALID_CLASS_NAMES.includes(getNodeNameFromClass(nodeElement));
-
-    nodeNames = isNodeNameNeutral
-      ? [...parentNodeNames]
-      : [...parentNodeNames,
-        isNodeContainClass
-          ? getNodeNameFromClass(nodeElement).toUpperCase()
-          : nodeElement.nodeName]
+    const nodeNames = isNodeNameNeutral ? [...parentNodeNames] : [...parentNodeNames, isNodeContainClass
+      ? getNodeNameFromClass(nodeElement).toUpperCase()
+      : nodeElement.nodeName]
 
     const el: TextNodeTree = {
-      tag: nodeElement.nodeName, // Название тега
+      tag: nodeElement.nodeName,
       words: [],
       children: []
     };
@@ -86,41 +83,57 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     return el;
   }
 
+
   // рекурсивно собираем форматированный текст в объект
-  function extractDataFromNodeTree(nodeTree: TextNodeTree, totalTree: Record<string, string> = {}) {
+  function extractDataFromNodeTree(
+    nodeTree: TextNodeTree,
+    totalTree: Record<string, string> = {}) {//, settings: SettingList) {
     nodeTree.words.forEach(({word, tags}) => {
+      // const filterdTags = tags.filter(tag => settings.text.forEach(item => tag === item.tagName && item.isSelected));
+      // console.log(filterdTags);
       const key = tags.slice(1).join(',') || "PLAIN"; // убираем первый div
 
       if (!totalTree[key]) totalTree[key] = '';
 
       totalTree[key] += word + ' ';
     })
-    nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree))
+    nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree))//, settings))
     return totalTree;
   }
+
+
+  // парсим данные
+  function saveOrUpdateDocument(documents: Document[]) {//, settings: SettingList) {
+    let parsedData: Record<string, string> = {};
+
+    textBoxNodes.forEach(textBoxNode => {
+      const nodeTree = createNodeTree(textBoxNode);
+      console.dir(nodeTree);
+      parsedData = extractDataFromNodeTree(nodeTree, parsedData)//, settings);
+    })
+
+    console.dir(parsedData);
+    //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
+    const foundDocument = findDocumentById(documents, getDocumentId());
+    const title = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
+    const newDocument = createNewDocument(parsedData, title);
+
+    if (foundDocument)
+      documents.splice(documents.indexOf(foundDocument), 1, newDocument);
+    else
+      documents.push(newDocument);
+
+    return documents;
+  }
+
 
   if (message.action === ACT.SAVE_DOCUMENT) {
     chrome.storage.local.get("documents", (storage: Storage) => {
       if (!storage.documents) return;
 
-      // парсим данные
-      let parsedData: Record<string, string> = {};
+      // const settings = message.data.settings || storage.settings;
 
-      textBoxNodes.forEach(textBoxNode => {
-        const nodeTree = createNodeTree(textBoxNode);
-        parsedData = extractDataFromNodeTree(nodeTree);
-      })
-
-      //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
-      const documents = storage.documents;
-      const foundDocument = findDocumentById(documents, getDocumentId());
-      const title = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
-      const newDocument = createNewDocument(parsedData, title);
-
-      if (foundDocument)
-        documents.splice(documents.indexOf(foundDocument), 1, newDocument);
-      else
-        documents.push(newDocument);
+      const documents = saveOrUpdateDocument(storage.documents)//, settings);
 
       chrome.storage.local.set({"documents": documents}, () => {
         sendResponse(storage.documents);
@@ -185,7 +198,9 @@ function getDocumentId() {
 
 function getTotalsFromRecordType(data: Record<string, string>) {
   let total = {words: 0, symbols: 0, raw: ''};
-  for (const value of Object.values(data)) {
+  for (const [key, value] of Object.entries(data)) {
+    if (key.includes('STRONG')) {
+    }
     total.words += getWordCount(value);
     total.symbols += value.length;
     total.raw += value;
@@ -200,7 +215,7 @@ function findDocumentById(documents: Document[], id: string) {
 function getNodeNameFromClass(node: ChildNode) {
   if (node instanceof Element) {
     return node.classList.length > 0
-      ? `${node.className.toUpperCase()}`
+      ? `${node.className}`
       : `${node.nodeName}`
   } else
     return node.nodeName;

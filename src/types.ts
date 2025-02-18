@@ -22,9 +22,9 @@ export type Document = {
 }
 
 export type Setting = {
-  name: string,
-  title: string,
-  checked: boolean
+  tagName: string,
+  label: string,
+  isSelected: boolean
 }
 
 export type SettingList = {

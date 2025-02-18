@@ -28,14 +28,14 @@ export function Settings(
         {settings.map((item, index) => {
           return (
             <div key={index}>
-              <input className={item.name}
+              <input className={item.tagName}
                      type={type}
-                     checked={item.checked}
+                     checked={item.isSelected}
                      onChange={() => {
-                       onSettingsChange(categorySettings, item.title)
+                       onSettingsChange(categorySettings, item.label);
                      }}/>
               <label>
-                {item.title}
+                {item.label}
               </label>
             </div>
           )

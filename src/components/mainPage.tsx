@@ -64,8 +64,8 @@ export function MainPage(
               {
                 (() => {
                   const {words, symbols} = getTotals(data);
-                  const isWordsSelected = settings.count.find((item) => item.title === "Words");
-                  return isWordsSelected?.checked
+                  const isWordsSelected = settings.count.find((item) => item.label === "Words");
+                  return isWordsSelected?.isSelected
                     ? <div>Words:<span className="count-bold">{words}</span></div>
                     : <div>Symbols:<span className="count-bold">{symbols}</span></div>
 
