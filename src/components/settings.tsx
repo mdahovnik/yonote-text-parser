@@ -28,7 +28,7 @@ export function Settings(
         {settings.map((item, index) => {
           return (
             <div key={index}>
-              <input className={item.tagName}
+              <input className={item.tagName[0]}
                      type={type}
                      checked={item.isAllowed}
                      onChange={() => {

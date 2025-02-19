@@ -10,7 +10,8 @@
     "192": "icon-192.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -20,8 +21,7 @@
       "run_at": "document_end",
       "js": [
         "content.js"
-      ],
-      "type": "module"
+      ]
     }
   ],
   "action": {

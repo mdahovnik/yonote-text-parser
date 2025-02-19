@@ -1,11 +1,11 @@
 import {Document, SettingList, Storage, TextNodeTree} from "./types.ts";
+// import {ACT} from "./constants.ts";
 
 type TMessage = {
   action: keyof typeof ACT;
   data: {
     id?: string,
-    newSettings?: SettingList,
-    // settings?: SettingList,
+    newSettings?: SettingList
   }
 }
 
@@ -13,6 +13,7 @@ const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
   GET_RECORDS: 'GET_RECORDS',
   GET_SETTINGS: 'GET_SETTINGS',
+  GET_DOCUMENT_ID: 'GET_DOCUMENT_ID',
   CLEAR_RECORDS: 'CLEAR_RECORDS',
   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
   SAVE_SETTINGS: 'SAVE_SETTINGS',
@@ -41,8 +42,8 @@ const ACT = {
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-  const NEUTRAL_TAGS = ["SPAN", "LI", "P"];
-  const IGNORED_NODE = ['BUTTON', 'OPTION', 'TBODY', 'TR', 'TH'];
+  const NEUTRAL_TAGS = ["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD'];
+  const IGNORED_TAGS = ['BUTTON', 'OPTION'];
   const VALID_CLASS_NAMES = [
     'notice-block info',
     'ordered_list',
@@ -58,11 +59,13 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   function createNodeTree(nodeElement: ChildNode, parentNodeNames: string[] = []) {
     const isNodeNameNeutral = NEUTRAL_TAGS.includes(nodeElement.nodeName);
     const isNodeContainClass = VALID_CLASS_NAMES.includes(getNodeNameFromClass(nodeElement));
-    const nodeNames = isNodeNameNeutral ? [...parentNodeNames] : [...parentNodeNames, isNodeContainClass
-      ? getNodeNameFromClass(nodeElement).toUpperCase()
-      : nodeElement.nodeName]
+    const nodeNames = isNodeNameNeutral
+      ? [...parentNodeNames]
+      : [...parentNodeNames, isNodeContainClass
+        ? getNodeNameFromClass(nodeElement)
+        : nodeElement.nodeName]
 
-    const el: TextNodeTree = {
+    const nodeTreeElement: TextNodeTree = {
       tag: nodeElement.nodeName,
       words: [],
       children: []
@@ -70,33 +73,28 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
     nodeElement.childNodes.forEach((node) => {
       if (node.nodeType === Node.TEXT_NODE) {
-        // Разбиваем текст на слова и сохраняем их
+        // Разбиваем текст на слова, фильтром убираем пустые строки и сохраняем их
         const words = node.textContent?.trim().split(/\s+/).filter(w => w) || [];
-        words.forEach(word => el.words.push({word, tags: nodeNames}));
+        // В tags с помощью new Set() оставляем только уникальные теги
+        words.forEach(word => nodeTreeElement.words.push({word, tags: [...new Set(nodeNames)]}));
 
       } else if (node.nodeType === Node.ELEMENT_NODE) {
-        if (!IGNORED_NODE.includes(node.nodeName))
-          el.children.push(createNodeTree(node, nodeNames));// Рекурсивно обрабатываем вложенные элементы
+        if (!IGNORED_TAGS.includes(node.nodeName))
+          nodeTreeElement.children.push(createNodeTree(node, nodeNames));// Рекурсивно обрабатываем вложенные элементы
       }
     })
-    return el;
+    return nodeTreeElement;
   }
 
-
   // рекурсивно собираем форматированный текст в объект
-  function extractDataFromNodeTree(
-    nodeTree: TextNodeTree,
-    totalTree: Record<string, string> = {},
-    settings: string[]
-  ) {
-
+  function extractDataFromNodeTree(nodeTree: TextNodeTree, totalTree: Record<string, string> = {}, settings: string[]) {
     let filteredTags = [''];
     nodeTree.words.forEach(({word, tags}) => {
       const isTagsRespondSettings = tags.every(item => settings.includes(item));
       if (isTagsRespondSettings) {
         filteredTags = tags;
       }
-      console.log(isTagsRespondSettings, 'Все tags', word, tags, "Содержатся в", settings);
+      console.log(isTagsRespondSettings, word, '==>', tags, "==>", settings);//TODO: Все tags, word, tags, Содержатся в settings
       const key = filteredTags.join(',') || "UNREAD";
 
       if (!totalTree[key]) totalTree[key] = '';
@@ -107,22 +105,22 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     return totalTree;
   }
 
-
   // парсим данные
   function saveOrUpdateDocument(documents: Document[], settings: string[]) {
     let parsedData: Record<string, string> = {};
 
     textBoxNodes.forEach(textBoxNode => {
       const nodeTree = createNodeTree(textBoxNode);
-      console.dir(nodeTree);
+      // console.dir(nodeTree);//TODO:console.dir(nodeTree)
       parsedData = extractDataFromNodeTree(nodeTree, parsedData, settings);
     })
 
-    console.dir(parsedData);
-    //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
-    const foundDocument = findDocumentById(documents, getDocumentId());
     const title = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
     const newDocument = createNewDocument(parsedData, title);
+
+    // console.dir(parsedData);//TODO:console.dir(parsedData)
+    //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
+    const foundDocument = findDocumentById(documents, getOpenedDocumentId());
 
     if (foundDocument)
       documents.splice(documents.indexOf(foundDocument), 1, newDocument);
@@ -131,6 +129,12 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
     return documents;
   }
+
+  // function updateDocumentById(documents: Document[], id: string) {
+  //
+  //   const foundDocument = findDocumentById(documents, getDocumentId());
+  //     documents.splice(documents.indexOf(foundDocument), 1, newDocument);
+  // }
 
 
   if (message.action === ACT.SAVE_DOCUMENT) {
@@ -143,7 +147,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
       let settingsDataSet = Object.values(currentSettings)
         .flatMap(array => array
           .filter(item => item.isAllowed)
-          .map(item => item.tagName))
+          .map(item => item.tagName)).flat();
 
       // Object.keys(currentSettings).forEach(key => {
       //   settingsDataSet = currentSettings[key as keyof typeof currentSettings].reduce((a, b) => {
@@ -164,6 +168,11 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     });
   }
 
+  if (message.action === ACT.GET_DOCUMENT_ID) {
+    const documentId = getOpenedDocumentId();
+    sendResponse(documentId);
+  }
+
   if (message.action === ACT.REMOVE_DOCUMENT) {
     chrome.storage.local.get("documents", (storage: Storage) => {
       const filteredRecords = storage.documents.filter((document) => document.id !== message.data.id);
@@ -181,16 +190,16 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     })
   }
 
-  if (message.action === ACT.CLEAR_RECORDS) {
-    chrome.storage.local.set({"documents": []}, () => {
-      sendResponse(null)
-    })
-  }
-
   if (message.action === ACT.GET_SETTINGS) {
     chrome.storage.local.get("settings", (storage: Storage) => {
       const settings = storage.settings;
       sendResponse(settings);
+    })
+  }
+
+  if (message.action === ACT.CLEAR_RECORDS) {
+    chrome.storage.local.set({"documents": []}, () => {
+      sendResponse(null)
     })
   }
 
@@ -214,7 +223,7 @@ function getWordCount(string: string) {
   return matches.length;
 }
 
-function getDocumentId() {
+function getOpenedDocumentId() {
   const mainDocContainer = document.getElementsByClassName("main-document-container");
   return mainDocContainer[0].getAttribute("id") ?? crypto.randomUUID();
 }
@@ -245,7 +254,7 @@ function getNodeNameFromClass(node: ChildNode) {
 }
 
 function createNewDocument(data: Record<string, string>, title: string) {
-  const id = getDocumentId();
+  const id = getOpenedDocumentId();
   const {words, symbols, raw} = getTotalsFromRecordType(data);
   return {
     id: id,

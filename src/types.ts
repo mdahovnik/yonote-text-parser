@@ -22,7 +22,7 @@ export type Document = {
 }
 
 export type Setting = {
-  tagName: string,
+  tagName: string[],
   label: string,
   isAllowed: boolean
 }

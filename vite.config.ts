@@ -13,6 +13,7 @@ export default defineConfig({
         background: "src/background.ts"
       },
       output: {
+        format: "esm",
         entryFileNames: "[name].js"
       }
     }

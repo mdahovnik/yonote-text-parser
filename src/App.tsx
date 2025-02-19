@@ -3,18 +3,18 @@ import './App.css'
 import {SettingsPage} from "./components/settingsPage.tsx";
 import {MainPage} from "./components/mainPage.tsx";
 import {Document, SettingList} from "./types.ts";
-import {appSettings} from "./constants.ts";
-
-const ACT = {
-  GET_DOCUMENT: 'GET_DOCUMENT',
-  GET_RECORDS: 'GET_RECORDS',
-  GET_SETTINGS: 'GET_SETTINGS',
-  CLEAR_RECORDS: 'CLEAR_RECORDS',
-  SAVE_DOCUMENT: 'SAVE_DOCUMENT',
-  SAVE_SETTINGS: 'SAVE_SETTINGS',
-  REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
-  APPLY_SETTINGS: 'APPLY_SETTINGS',
-}
+import {ACT, appSettings} from "./constants.ts";
+//
+// const ACT = {
+//   GET_DOCUMENT: 'GET_DOCUMENT',
+//   GET_RECORDS: 'GET_RECORDS',
+//   GET_SETTINGS: 'GET_SETTINGS',
+//   CLEAR_RECORDS: 'CLEAR_RECORDS',
+//   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
+//   SAVE_SETTINGS: 'SAVE_SETTINGS',
+//   REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
+//   APPLY_SETTINGS: 'APPLY_SETTINGS',
+// }
 
 async function getTabId() {
   const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
@@ -45,22 +45,35 @@ function App() {
   const [tabId, setTabId] = useState<number>(0);
   const [isSettingOpen, setIsSettingOpen] = useState(false);
   const [settings, setSettings] = useState<SettingList>(appSettings);
-  const [isActive, setIsActive] = useState(false);
+  const [isValidPageOpen, setIsValidPageOpen] = useState(false);
+  const [documentId, setDocumentId] = useState<string>("");
   const [documents, setDocuments] = useState<Document[]>([]);
   // const [totals, setTotals] = useState<{ words: number, symbols: number }>({words: 0, symbols: 0});
 
   useEffect(() => {
     getTabId()
-      .then((tabId: number) => setTabId(tabId));
+      .then((tabId: number) =>
+        setTabId(tabId));
 
     getUrl()
-      .then((host: string) => setIsActive(host === "yppm.yonote.ru"));
+      .then((host: string) =>
+        setIsValidPageOpen(host === "yppm.yonote.ru"));
 
     fetchFromLocalStorage<SettingList>("GET_SETTINGS")
-      .then((data) => setSettings(data));
+      .then((data) =>
+        setSettings(data));
 
     fetchFromLocalStorage<Document[]>("GET_RECORDS")
-      .then((data) => setDocuments(data))
+      .then((data) =>
+        setDocuments(data));
+
+    fetchFromLocalStorage<string>("GET_DOCUMENT_ID")
+      .then((data) =>
+        setDocumentId(data));
+
+    // if (isValidPageOpen) {
+    // setDocumentId(getDocumentId());
+    // }
   }, [])
 
   const handleSettingsChange = async (category: keyof SettingList, label: string) => {
@@ -94,6 +107,8 @@ function App() {
     }, (documents: Document[]) => {
       setDocuments(documents);
     })
+    // console.log(isValidPageOpen)
+    // console.log(documentId)
   }
 
   const handleClearClick = async () => {
@@ -121,8 +136,8 @@ function App() {
                       onDeleteClick={handleDeleteClick}
                       onSettingClick={handleSettingsClick}
                       data={documents}
-                      isActive={isActive}
-                      countTypeSettings={settings.count}
+                      documentId={documentId}
+                      isActive={isValidPageOpen}
                       settings={settings}/>
       }
     </>

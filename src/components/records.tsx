@@ -4,7 +4,7 @@ import {ButtonAction} from "./buttonAction.tsx";
 
 type TRecordList = {
   data: Document[];
-  countTypeSettings: Setting[];
+  settings: Setting[];
   onDeleteClick: (id: string) => void;
 }
 
@@ -12,7 +12,7 @@ export function Records(
   {
     data,
     onDeleteClick,
-    countTypeSettings
+    settings
   }: TRecordList) {
   return (
     <>
@@ -32,7 +32,7 @@ export function Records(
                               onClick={() => {
                               }}
                               type={"copy"}
-                              text={`${countTypeSettings[0].isAllowed ? item.words : item.symbols}`}/>
+                              text={`${settings[0].isAllowed ? item.words : item.symbols}`}/>
               </div>
             )
           )}

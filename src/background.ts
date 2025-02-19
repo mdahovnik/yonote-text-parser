@@ -1,120 +1,8 @@
-import {SettingList} from "./types.ts";
+import {appSettings} from "./constants.ts";
 
 chrome.runtime.onInstalled.addListener(() => {
-  const settings: SettingList = {
-    block: [
-      {tagName: "allow_title", label: "Page title", isAllowed: false},
-      {
-        tagName: "BLOCKQUOTE",
-        label: "Quote block",
-        isAllowed: false
-      },
-      {
-        tagName: "DIV",
-        label: "Text block",
-        isAllowed: true
-      },
-      // {tagName: "allow_callout", label: "Callout block", isAllowed: false},
-      {
-        tagName: "H1",
-        label: "Heading 1",
-        isAllowed: false
-      },
-      // {tagName: "allow_toggle_h1_title", label: "H1 title", isAllowed: false},
-      {
-        tagName: "H2",
-        label: "Heading 2",
-        isAllowed: false
-      },
-      // {tagName: "allow_toggle_h1_content", label: "H1 content", isAllowed: false},
-      {
-        tagName: "H3",
-        label: "Heading 3",
-        isAllowed: false
-      },
-      // {tagName: "allow_toggle_h2_title", label: "H2 title", isAllowed: false},
-      {
-        tagName: "CHECKBOX_LIST",
-        label: "To-do list",
-        isAllowed: false
-      },
-      {tagName: "allow_toggle_h2_content", label: "H2 content", isAllowed: false},
-      {
-        tagName: "BULLET_LIST",
-        label: "Bulleted list",
-        isAllowed: false
-      },
-      {tagName: "allow_toggle_h3_title", label: "H3 title", isAllowed: false},
-      {
-        tagName: "ORDERED_LIST",
-        label: "Numbered list",
-        isAllowed: false
-      },
-      {tagName: "allow_toggle_h3_content", label: "H3 content", isAllowed: false},
-      {
-        tagName: "TOGGLE",
-        label: "Toggle block",
-        isAllowed: false
-      },
-      {
-        tagName: "COLUMNS",
-        label: "Columns",
-        isAllowed: false
-      },
-      {tagName: "allow_toggle_content", label: "Content", isAllowed: false},
-      {
-        tagName: "TABLE",
-        label: "Table",
-        isAllowed: false
-      },
-      {
-        tagName: "CODE-BLOCK",
-        label: "Code block",
-        isAllowed: false
-      },
-    ],
-    text: [
-      {
-        tagName: "STRONG",
-        label: "Bold",
-        isAllowed: true
-      },
-      {
-        tagName: "EM",
-        label: "Italic",
-        isAllowed: true
-      },
-      {
-        tagName: "U",
-        label: "Underline",
-        isAllowed: false
-      },
-      {
-        tagName: "DEL",
-        label: "Strike",
-        isAllowed: false
-      },
-      {
-        tagName: "CODE",
-        label: "Code",
-        isAllowed: false
-      },
-    ],
-    count: [
-      {
-        tagName: "count_words",
-        label: "Words",
-        isAllowed: true
-      },
-      {
-        tagName: "count_symbols",
-        label: "Symbols",
-        isAllowed: false
-      }]
-  }
-
   chrome.storage.local.set({
-    "settings": settings,
+    "settings": appSettings,
     "documents": []
   });
 
@@ -147,7 +35,6 @@ chrome.runtime.onInstalled.addListener(() => {
   // });
 
 });
-
 
 // const settings: SettingList = {
 //   block: [
