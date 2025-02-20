@@ -34,6 +34,10 @@ export function MainPage(
     // totals
   }: TMainPage) {
 
+  const handleCopyClick = async (totalCount: number) => {
+    await navigator.clipboard.writeText(totalCount.toString());
+  }
+
   return (
     <div id="main-page">
       <div className="menu">
@@ -59,31 +63,36 @@ export function MainPage(
           ? <div id="table">
             <Records data={data}
                      onDeleteClick={onDeleteClick}
+                     onCopyClick={handleCopyClick}
                      settings={settings.count}/>
             <hr/>
             <div className="menu">
-              <ButtonAction onClick={onClearClick}
+              <ButtonAction className={"danger"}
+                            onClick={onClearClick}
                             id={"clear-all"}
                             type={"trash"}
-                            text={"Clear all"}
-                            className={"danger"}/>
+                            isActive={data.length > 0}
+                            text={"Clear all"}/>
               {
                 (() => {
                   const {words, symbols} = getTotals(data);
                   const isCountWordsAllowed = settings.count.find((item) => item.label === "Words")?.isAllowed;
-                  return isCountWordsAllowed
-                    ? <div>Words:<span className="count-bold">{words}</span></div>
-                    : <div>Symbols:<span className="count-bold">{symbols}</span></div>
-
+                  return (
+                    <ButtonAction className={"record-counter"}
+                                  text={isCountWordsAllowed ? `Words:${words}` : `Symbols:${symbols}`}
+                                  onClick={() => handleCopyClick(isCountWordsAllowed ? words : symbols)}
+                                  type={"copy"}/>
+                  )
                 })()
               }
             </div>
           </div>
           : <div className="placeholder" id="clear">
             <hr/>
-            To start counting click the <span className="button"><svg><use
-            href="icons.svg#plus"></use></svg></span> sign <br/>
-            when Yonote tab is active.
+            <p> To start counting click the <span className="button"><svg><use
+              href="icons.svg#plus"></use></svg></span> sign <br/>
+              when Yonote tab is active.
+            </p>
           </div>
       }
     </div>

@@ -6,12 +6,14 @@ type TRecordList = {
   data: Document[];
   settings: Setting[];
   onDeleteClick: (id: string) => void;
+  onCopyClick: (count: number) => void;
 }
 
 export function Records(
   {
     data,
     onDeleteClick,
+    onCopyClick,
     settings
   }: TRecordList) {
   return (
@@ -29,8 +31,7 @@ export function Records(
                   <span className="record title">{item.title}</span>
                 </div>
                 <ButtonAction className={"record-counter"}
-                              onClick={() => {
-                              }}
+                              onClick={() => onCopyClick(settings[0].isAllowed ? item.words : item.symbols)}
                               type={"copy"}
                               text={`${settings[0].isAllowed ? item.words : item.symbols}`}/>
               </div>

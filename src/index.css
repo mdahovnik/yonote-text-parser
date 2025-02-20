@@ -13,7 +13,7 @@ body {
 
     user-select: none;
     -webkit-user-select: none;
-    cursor: default;
+    /*cursor: default;*/
 }
 
 /* Строка верхнего или нижнего меню */
@@ -33,9 +33,9 @@ body {
 
 /* Иконка в кнопке */
 .button svg {
-    height: 1.2em;
-    width: 1.2em;
-    /*margin-bottom: -0.12em;*/
+    height: 1.3em;
+    width: 1.3em;
+    margin-bottom: -0.13em;
     fill: rgb(0, 0, 0);
     display: flex;
 }
@@ -105,15 +105,30 @@ body {
 
 /* Настройки заглушки когда нет записей */
 .placeholder {
+    display: flex;
+    flex-direction: column;
     text-align: center;
-    width: 100%;
-    user-select: none;
-    cursor: default;
+    /*width: 100%;*/
+    /*user-select: none;*/
+    /*cursor: default;*/
 }
+
+.placeholder svg {
+    display: inline-block;
+}
+
+input, label {
+    cursor: pointer;
+}
+
+/*.action .setting {*/
+/*    cursor: pointer;*/
+/*}*/
 
 /* Цвет кнопок при наведении  */
 .action:hover {
     color: rgb(0, 122, 255);
+    cursor: pointer;
 }
 
 .action:hover svg {
@@ -139,6 +154,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     justify-items: start;
+    gap: 0.6em;
 }
 
 /* Заголовок раздела настроек */
@@ -152,7 +168,8 @@ body {
 .setting {
     display: flex;
     flex-direction: row;
-    padding-bottom: 0.6em;
+    align-items: center;
+    /*padding-bottom: 0.3em;*/
 }
 
 .record-wrapper {
@@ -202,6 +219,7 @@ hr {
 @media (prefers-color-scheme: dark) {
     .button svg {
         fill: rgb(255, 255, 255);
+        cursor: pointer;
     }
 
     label svg {

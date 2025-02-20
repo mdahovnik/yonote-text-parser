@@ -14,7 +14,10 @@ export default defineConfig({
       },
       output: {
         format: "esm",
-        entryFileNames: "[name].js"
+        entryFileNames: "[name].js",
+        chunkFileNames: `assets/[name].js`,
+        assetFileNames: "assets/[name].[ext]",
+        manualChunks: undefined,
       }
     }
   },

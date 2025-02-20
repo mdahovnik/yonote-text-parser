@@ -1,3 +1,5 @@
+import {SettingList} from "./types.ts";
+
 export const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
   GET_RECORDS: 'GET_RECORDS',
@@ -9,8 +11,6 @@ export const ACT = {
   REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
   APPLY_SETTINGS: 'APPLY_SETTINGS',
 }
-
-import {SettingList} from "./types.ts";
 
 export const appSettings: SettingList = {
   block: [
@@ -123,8 +123,3 @@ export const appSettings: SettingList = {
       isAllowed: false
     }]
 }
-//
-// chrome.storage.local.set({
-//   "settings": settings,
-//   "documents": []
-// });

@@ -27,14 +27,15 @@ export function Settings(
            id="settings-formatting">
         {settings.map((item, index) => {
           return (
-            <div key={index}>
+            <div key={index} className={'action setting'} >
               <input className={item.tagName[0]}
+                     id={item.label}
                      type={type}
                      checked={item.isAllowed}
                      onChange={() => {
                        onSettingsChange(categorySettings, item.label);
                      }}/>
-              <label>
+              <label htmlFor={item.label}>
                 {item.label}
               </label>
             </div>

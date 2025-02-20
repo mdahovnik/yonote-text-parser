@@ -70,13 +70,9 @@ function App() {
     fetchFromLocalStorage<string>("GET_DOCUMENT_ID")
       .then((data) =>
         setDocumentId(data));
-
-    // if (isValidPageOpen) {
-    // setDocumentId(getDocumentId());
-    // }
   }, [])
 
-  const handleSettingsChange = async (category: keyof SettingList, label: string) => {
+  const handleSettingsChange = (category: keyof SettingList, label: string) => {
     const updatedSettings = {
       ...settings,
       [category]: settings[category].map((item) => {
@@ -95,30 +91,28 @@ function App() {
     })
   }
 
-  const handleSettingsClick = async () => {
+  const handleSettingsClick = () => {
     const isOpen = !isSettingOpen;
     setIsSettingOpen(isOpen);
   }
 
-  const handlePlusClick = async () => {
+  const handlePlusClick = () => {
     chrome.tabs.sendMessage(tabId, {
       action: ACT.SAVE_DOCUMENT,
       data: {newSettings: settings}
     }, (documents: Document[]) => {
       setDocuments(documents);
     })
-    // console.log(isValidPageOpen)
-    // console.log(documentId)
   }
 
-  const handleClearClick = async () => {
+  const handleClearClick = () => {
     chrome.tabs.sendMessage(tabId, {action: ACT.CLEAR_RECORDS}, (documents: Document[]) => {
       if (!documents)
         setDocuments([]);
     })
   }
 
-  const handleDeleteClick = async (id: string) => {
+  const handleDeleteClick = (id: string) => {
     chrome.tabs.sendMessage(tabId, {action: ACT.REMOVE_DOCUMENT, data: {id: id}}, (documents: Document[]) => {
       setDocuments(documents);
     })

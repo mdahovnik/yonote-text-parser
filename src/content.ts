@@ -1,5 +1,4 @@
 import {Document, SettingList, Storage, TextNodeTree} from "./types.ts";
-// import {ACT} from "./constants.ts";
 
 type TMessage = {
   action: keyof typeof ACT;
@@ -42,7 +41,7 @@ const ACT = {
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-  const NEUTRAL_TAGS = ["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD'];
+  const NEUTRAL_TAGS = ["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD', 'PRE'];
   const IGNORED_TAGS = ['BUTTON', 'OPTION'];
   const VALID_CLASS_NAMES = [
     'notice-block info',
@@ -118,7 +117,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     const title = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
     const newDocument = createNewDocument(parsedData, title);
 
-    // console.dir(parsedData);//TODO:console.dir(parsedData)
+    console.dir(parsedData);//TODO:console.dir(parsedData)
     //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
     const foundDocument = findDocumentById(documents, getOpenedDocumentId());
 
@@ -136,8 +135,9 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   //     documents.splice(documents.indexOf(foundDocument), 1, newDocument);
   // }
 
-
   if (message.action === ACT.SAVE_DOCUMENT) {
+    console.log("Импортируем:", chrome.runtime.getURL("assets/constants.js"));
+
     chrome.storage.local.get("documents", (storage: Storage) => {
       if (!storage.documents) return;
 
@@ -218,6 +218,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   return true;
 });
 
+
 function getWordCount(string: string) {
   const matches = string.match(/[\p{L}\d]+/gu) || [];  //(/\b\w+\b/g)    //(/\b[\w\dА-Яа-яЁё]+\b/g)   //(/\S+/g);
   return matches.length;
@@ -231,11 +232,11 @@ function getOpenedDocumentId() {
 function getTotalsFromRecordType(data: Record<string, string>) {
   let total = {words: 0, symbols: 0, raw: ''};
   for (const [key, value] of Object.entries(data)) {
-    if (key.includes('STRONG')) {
+    if (key !== 'UNREAD') {
+      total.words += getWordCount(value);
+      total.symbols += value.length;
+      total.raw += value;
     }
-    total.words += getWordCount(value);
-    total.symbols += value.length;
-    total.raw += value;
   }
   return total;
 }
