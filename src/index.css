@@ -59,6 +59,11 @@ body {
     padding: 0.25em 0 0.25em 0;
 }
 
+.opened {
+    font-size: 1.5em;
+    color: rgb(0, 122, 255);
+}
+
 /* Заголовок записи */
 .record .title {
     padding: 0 0.25em 0 0.25em;
@@ -121,10 +126,6 @@ input, label {
     cursor: pointer;
 }
 
-/*.action .setting {*/
-/*    cursor: pointer;*/
-/*}*/
-
 /* Цвет кнопок при наведении  */
 .action:hover {
     color: rgb(0, 122, 255);
@@ -133,11 +134,14 @@ input, label {
 
 .action:hover svg {
     fill: rgb(0, 122, 255);
-
 }
 
 .danger:hover {
     color: rgb(255, 59, 48);
+}
+
+.danger:focus {
+    color: rgb(0, 0, 0);
 }
 
 .danger:hover svg {
@@ -169,7 +173,8 @@ input, label {
     display: flex;
     flex-direction: row;
     align-items: center;
-    /*padding-bottom: 0.3em;*/
+    font-size: 1.2em;
+    gap: 0.25em;
 }
 
 .record-wrapper {

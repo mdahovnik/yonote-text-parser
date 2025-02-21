@@ -54,6 +54,31 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     // 'scrollable-wrapper table-wrapper'
   ]
 
+  // парсим данные
+  function saveOrUpdateDocument(documents: Document[], settings: string[]) {
+    let parsedData: Record<string, string> = {};
+
+    textBoxNodes.forEach(textBoxNode => {
+      const nodeTree = createNodeTree(textBoxNode);
+      // console.dir(nodeTree);//TODO:console.dir(nodeTree)
+      parsedData = extractDataFromNodeTree(nodeTree, parsedData, settings);
+    })
+
+    const title = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
+    const newDocument = createNewDocument(parsedData, title);
+
+    console.dir(parsedData);//TODO:console.dir(parsedData)
+    //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
+    const foundDocument = findDocumentById(documents, getOpenedDocumentId());
+
+    if (foundDocument)
+      documents.splice(documents.indexOf(foundDocument), 1, newDocument);
+    else
+      documents.push(newDocument);
+
+    return documents;
+  }
+
   // рекурсивно обходим текстовый блок документа и строим узловое дерево
   function createNodeTree(nodeElement: ChildNode, parentNodeNames: string[] = []) {
     const isNodeNameNeutral = NEUTRAL_TAGS.includes(nodeElement.nodeName);
@@ -102,31 +127,6 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
     nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree, settings))
     return totalTree;
-  }
-
-  // парсим данные
-  function saveOrUpdateDocument(documents: Document[], settings: string[]) {
-    let parsedData: Record<string, string> = {};
-
-    textBoxNodes.forEach(textBoxNode => {
-      const nodeTree = createNodeTree(textBoxNode);
-      // console.dir(nodeTree);//TODO:console.dir(nodeTree)
-      parsedData = extractDataFromNodeTree(nodeTree, parsedData, settings);
-    })
-
-    const title = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
-    const newDocument = createNewDocument(parsedData, title);
-
-    console.dir(parsedData);//TODO:console.dir(parsedData)
-    //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
-    const foundDocument = findDocumentById(documents, getOpenedDocumentId());
-
-    if (foundDocument)
-      documents.splice(documents.indexOf(foundDocument), 1, newDocument);
-    else
-      documents.push(newDocument);
-
-    return documents;
   }
 
   // function updateDocumentById(documents: Document[], id: string) {
@@ -283,3 +283,5 @@ function createNewDocument(data: Record<string, string>, title: string) {
 //   })
 //   return {words, symbols}
 //
+
+

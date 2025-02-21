@@ -62,6 +62,7 @@ export function MainPage(
         data.length > 0
           ? <div id="table">
             <Records data={data}
+                     documentId={documentId}
                      onDeleteClick={onDeleteClick}
                      onCopyClick={handleCopyClick}
                      settings={settings.count}/>

@@ -5,6 +5,7 @@ import {ButtonAction} from "./buttonAction.tsx";
 type TRecordList = {
   data: Document[];
   settings: Setting[];
+  documentId: string;
   onDeleteClick: (id: string) => void;
   onCopyClick: (count: number) => void;
 }
@@ -12,6 +13,7 @@ type TRecordList = {
 export function Records(
   {
     data,
+    documentId,
     onDeleteClick,
     onCopyClick,
     settings
@@ -22,13 +24,13 @@ export function Records(
         <hr/>
         {
           data.map((item, index) => (
-              <div className="record"
+              <div className={"record"}
                    key={index}>
                 <ButtonAction className={"record-remove danger"}
                               onClick={() => onDeleteClick(item.id)}
                               type={"remove"}/>
                 <div className="title">
-                  <span className="record title">{item.title}</span>
+                  <span className={item.id === documentId ? "record opened" : "record"}>{item.title}</span>
                 </div>
                 <ButtonAction className={"record-counter"}
                               onClick={() => onCopyClick(settings[0].isAllowed ? item.words : item.symbols)}

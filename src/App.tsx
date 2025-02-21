@@ -48,7 +48,6 @@ function App() {
   const [isValidPageOpen, setIsValidPageOpen] = useState(false);
   const [documentId, setDocumentId] = useState<string>("");
   const [documents, setDocuments] = useState<Document[]>([]);
-  // const [totals, setTotals] = useState<{ words: number, symbols: number }>({words: 0, symbols: 0});
 
   useEffect(() => {
     getTabId()
