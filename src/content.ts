@@ -136,7 +136,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   // }
 
   if (message.action === ACT.SAVE_DOCUMENT) {
-    console.log("Импортируем:", chrome.runtime.getURL("assets/constants.js"));
+    console.log("Импортируем:", chrome.runtime.getURL("assets/constants.js"));//TODO: console импорт констант
 
     chrome.storage.local.get("documents", (storage: Storage) => {
       if (!storage.documents) return;

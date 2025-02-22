@@ -1,3 +1,5 @@
+import {useState} from "react";
+
 type TButtonAction = {
   id?: string;
   type: string;
@@ -16,11 +18,20 @@ export function ButtonAction(
     type,
     text
   }: TButtonAction) {
+  const [isShrunk, setIsShrunk] = useState(false);
+
+  const handleOnClick = () => {
+    onClick();
+    setIsShrunk(true); // Устанавливаем состояние "уменьшено"
+    setTimeout(() => {
+      setIsShrunk(false); // Возвращаем исходное состояние через 300 мс
+    }, 200);
+  }
   return (
     <div className={`button ${className} ${isActive ? "action" : "disabled"}`}
          id={id}
-         onClick={onClick}>
-      <div className="button-icon">
+         onClick={handleOnClick}>
+      <div className={`button-icon clickable-icon ${isShrunk ? "shrink" : ""}`}>
         <svg>
           <use href={`icons.svg#${type}`}></use>
         </svg>
@@ -29,5 +40,3 @@ export function ButtonAction(
     </div>
   )
 }
-
-//TODO: значёк svg должен появляться у лейбла по наведению

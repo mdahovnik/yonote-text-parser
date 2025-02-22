@@ -40,6 +40,17 @@ body {
     display: flex;
 }
 
+/* Стили для SVG */
+.clickable-icon {
+    cursor: pointer;
+    transition: transform 0.3s ease; /* Плавное изменение размера */
+}
+
+/* Класс для уменьшения размера */
+.shrink {
+    transform: scale(0.8); /* Уменьшаем размер до 80% */
+}
+
 .button-icon {
     display: flex;
     gap: 0.25em;
@@ -129,7 +140,7 @@ input, label {
 /* Цвет кнопок при наведении  */
 .action:hover {
     color: rgb(0, 122, 255);
-    cursor: pointer;
+    /*cursor: pointer;*/
 }
 
 .action:hover svg {
@@ -175,6 +186,14 @@ input, label {
     align-items: center;
     font-size: 1.2em;
     gap: 0.25em;
+}
+
+.setting-copy-rawtext {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1.0em;
 }
 
 .record-wrapper {

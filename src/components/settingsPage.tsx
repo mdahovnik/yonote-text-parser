@@ -44,10 +44,12 @@ export function SettingsPage(
                 categorySettings={"count"}
                 onSettingsChange={onSettingsChange}/>
       <hr/>
-      <ButtonAction onClick={onCopyHandler}
-                    id={"debug"}
-                    type={"copy"}
-                    text={"Copy raw text to check your settings"}/>
+      <div className="setting-copy-rawtext">
+        <ButtonAction onClick={onCopyHandler}
+                      id={"debug"}
+                      type={"copy"}
+                      text={"Copy raw text"}/>
+      </div>
     </div>
   )
 }
