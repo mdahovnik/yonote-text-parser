@@ -19,14 +19,20 @@ export function ButtonAction(
     text
   }: TButtonAction) {
   const [isShrunk, setIsShrunk] = useState(false);
+  let timeoutId: number;
 
   const handleOnClick = () => {
+    if (!isActive) return;
+
     onClick();
-    setIsShrunk(true); // Устанавливаем состояние "уменьшено"
-    setTimeout(() => {
-      setIsShrunk(false); // Возвращаем исходное состояние через 300 мс
+    setIsShrunk(true);
+
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => {
+      setIsShrunk(false);
     }, 200);
   }
+
   return (
     <div className={`button ${className} ${isActive ? "action" : "disabled"}`}
          id={id}
@@ -40,3 +46,5 @@ export function ButtonAction(
     </div>
   )
 }
+
+

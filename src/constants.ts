@@ -10,6 +10,8 @@ export const ACT = {
   SAVE_SETTINGS: 'SAVE_SETTINGS',
   REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
   APPLY_SETTINGS: 'APPLY_SETTINGS',
+  SET_BADGE: 'SET_BADGE',
+  TEXT_CHANGED: 'TEXT_CHANGED'
 }
 
 export const appSettings: SettingList = {

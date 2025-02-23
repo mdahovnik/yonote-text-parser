@@ -101,7 +101,9 @@ function App() {
       data: {newSettings: settings}
     }, (documents: Document[]) => {
       setDocuments(documents);
+      // chrome.runtime.sendMessage({action: ACT.SET_BADGE, data: {words: documents[0].words}})//TODO: вывод счетчика на иконку
     })
+
   }
 
   const handleClearClick = () => {

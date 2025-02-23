@@ -4,7 +4,8 @@ type TMessage = {
   action: keyof typeof ACT;
   data: {
     id?: string,
-    newSettings?: SettingList
+    newSettings?: SettingList,
+    words?: number
   }
 }
 
@@ -18,6 +19,8 @@ const ACT = {
   SAVE_SETTINGS: 'SAVE_SETTINGS',
   REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
   APPLY_SETTINGS: 'APPLY_SETTINGS',
+  SET_BADGE: 'SET_BADGE',
+  TEXT_CHANGED: 'TEXT_CHANGED'
 }
 
 // enum NODE_NAME {
@@ -39,129 +42,136 @@ const ACT = {
 //   U = "U",
 // }
 
+const NEUTRAL_TAGS = ["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD', 'PRE'];
+const IGNORED_TAGS = ['BUTTON', 'OPTION'];
+const VALID_CLASS_NAMES = [
+  'notice-block info',
+  'ordered_list',
+  'bullet_list',
+  'toggle',
+  'checkbox_list',
+  'columns',
+  'code-block',
+  // 'scrollable-wrapper table-wrapper'
+]
+
+// watchTextChanges();
+//
+// // Функция для запуска наблюдателя
+// function watchTextChanges() {
+//   const observer = new MutationObserver((mutations) => {
+//     // textBoxNodes = document.querySelectorAll('[role="textbox"]');
+//     mutations.forEach((mutation) => {
+//       if (mutation.type === "characterData") {
+//         // console.log("Текст изменился:", mutation.target.nodeValue);
+//         // chrome.runtime.sendMessage({textChanged: mutation.target.nodeValue});
+//         chrome.runtime.sendMessage({action: ACT.SAVE_DOCUMENT, data: {words: 10}}, () => {
+//           console.log("Текст изменился:", mutation.target.nodeValue);
+//         });
+//       }
+//     });
+//   });
+//   // Запускаем слежение за всеми текстовыми узлами страницы
+//   const config = {characterData: true, subtree: true};
+//   observer.observe(document.body, config);
+// }
+
+// парсим данные
+function saveOrUpdateDocument(textBoxNodes: NodeListOf<Element>, documents: Document[], settings: string[]) {
+  let parsedData: Record<string, string> = {};
+
+  textBoxNodes.forEach(textBoxNode => {
+    const nodeTree = createNodeTree(textBoxNode);
+    // console.dir(nodeTree);//TODO:console.dir(nodeTree)
+    parsedData = extractDataFromNodeTree(nodeTree, parsedData, settings);
+  })
+
+  const title = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
+  const newDocument = createNewDocument(parsedData, title);
+
+  console.dir(parsedData);//TODO:console.dir(parsedData)
+  //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
+  const foundDocument = findDocumentById(documents, getOpenedDocumentId());
+
+  if (foundDocument)
+    documents.splice(documents.indexOf(foundDocument), 1, newDocument);
+  else
+    documents.push(newDocument);
+
+  return documents;
+}
+
+// рекурсивно обходим текстовый блок документа и строим узловое дерево
+function createNodeTree(nodeElement: ChildNode, parentNodeNames: string[] = []) {
+  const isNodeNameNeutral = NEUTRAL_TAGS.includes(nodeElement.nodeName);
+  const isNodeContainClass = VALID_CLASS_NAMES.includes(getNodeNameFromClass(nodeElement));
+  const nodeNames = isNodeNameNeutral
+    ? [...parentNodeNames]
+    : [...parentNodeNames, isNodeContainClass
+      ? getNodeNameFromClass(nodeElement)
+      : nodeElement.nodeName]
+
+  const nodeTreeElement: TextNodeTree = {
+    tag: nodeElement.nodeName,
+    words: [],
+    children: []
+  };
+
+  nodeElement.childNodes.forEach((node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      // Разбиваем текст на слова, фильтром убираем пустые строки и сохраняем их
+      const words = node.textContent?.trim().split(/\s+/).filter(w => w) || [];
+      // В tags с помощью new Set() оставляем только уникальные теги
+      words.forEach(word => nodeTreeElement.words.push({word, tags: [...new Set(nodeNames)]}));
+
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      if (!IGNORED_TAGS.includes(node.nodeName))
+        nodeTreeElement.children.push(createNodeTree(node, nodeNames));// Рекурсивно обрабатываем вложенные элементы
+    }
+  })
+  return nodeTreeElement;
+}
+
+// рекурсивно собираем форматированный текст в объект
+function extractDataFromNodeTree(nodeTree: TextNodeTree, totalTree: Record<string, string> = {}, settings: string[]) {
+  let filteredTags = [''];
+  nodeTree.words.forEach(({word, tags}) => {
+    const isTagsRespondSettings = tags.every(item => settings.includes(item));
+    if (isTagsRespondSettings) {
+      filteredTags = tags;
+    }
+    console.log(isTagsRespondSettings, word, '==>', tags, "==>", settings);//TODO: Все tags, word, tags, Содержатся в settings
+    const key = filteredTags.join(',') || "UNREAD";
+
+    if (!totalTree[key]) totalTree[key] = '';
+    totalTree[key] += word + ' ';
+  })
+
+  nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree, settings))
+  return totalTree;
+}
+
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-  const NEUTRAL_TAGS = ["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD', 'PRE'];
-  const IGNORED_TAGS = ['BUTTON', 'OPTION'];
-  const VALID_CLASS_NAMES = [
-    'notice-block info',
-    'ordered_list',
-    'bullet_list',
-    'toggle',
-    'checkbox_list',
-    'columns',
-    'code-block',
-    // 'scrollable-wrapper table-wrapper'
-  ]
 
-  // парсим данные
-  function saveOrUpdateDocument(documents: Document[], settings: string[]) {
-    let parsedData: Record<string, string> = {};
+  if (message.action === ACT.TEXT_CHANGED) {
 
-    textBoxNodes.forEach(textBoxNode => {
-      const nodeTree = createNodeTree(textBoxNode);
-      // console.dir(nodeTree);//TODO:console.dir(nodeTree)
-      parsedData = extractDataFromNodeTree(nodeTree, parsedData, settings);
-    })
-
-    const title = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
-    const newDocument = createNewDocument(parsedData, title);
-
-    console.dir(parsedData);//TODO:console.dir(parsedData)
-    //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
-    const foundDocument = findDocumentById(documents, getOpenedDocumentId());
-
-    if (foundDocument)
-      documents.splice(documents.indexOf(foundDocument), 1, newDocument);
-    else
-      documents.push(newDocument);
-
-    return documents;
   }
-
-  // рекурсивно обходим текстовый блок документа и строим узловое дерево
-  function createNodeTree(nodeElement: ChildNode, parentNodeNames: string[] = []) {
-    const isNodeNameNeutral = NEUTRAL_TAGS.includes(nodeElement.nodeName);
-    const isNodeContainClass = VALID_CLASS_NAMES.includes(getNodeNameFromClass(nodeElement));
-    const nodeNames = isNodeNameNeutral
-      ? [...parentNodeNames]
-      : [...parentNodeNames, isNodeContainClass
-        ? getNodeNameFromClass(nodeElement)
-        : nodeElement.nodeName]
-
-    const nodeTreeElement: TextNodeTree = {
-      tag: nodeElement.nodeName,
-      words: [],
-      children: []
-    };
-
-    nodeElement.childNodes.forEach((node) => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        // Разбиваем текст на слова, фильтром убираем пустые строки и сохраняем их
-        const words = node.textContent?.trim().split(/\s+/).filter(w => w) || [];
-        // В tags с помощью new Set() оставляем только уникальные теги
-        words.forEach(word => nodeTreeElement.words.push({word, tags: [...new Set(nodeNames)]}));
-
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        if (!IGNORED_TAGS.includes(node.nodeName))
-          nodeTreeElement.children.push(createNodeTree(node, nodeNames));// Рекурсивно обрабатываем вложенные элементы
-      }
-    })
-    return nodeTreeElement;
-  }
-
-  // рекурсивно собираем форматированный текст в объект
-  function extractDataFromNodeTree(nodeTree: TextNodeTree, totalTree: Record<string, string> = {}, settings: string[]) {
-    let filteredTags = [''];
-    nodeTree.words.forEach(({word, tags}) => {
-      const isTagsRespondSettings = tags.every(item => settings.includes(item));
-      if (isTagsRespondSettings) {
-        filteredTags = tags;
-      }
-      console.log(isTagsRespondSettings, word, '==>', tags, "==>", settings);//TODO: Все tags, word, tags, Содержатся в settings
-      const key = filteredTags.join(',') || "UNREAD";
-
-      if (!totalTree[key]) totalTree[key] = '';
-      totalTree[key] += word + ' ';
-    })
-
-    nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree, settings))
-    return totalTree;
-  }
-
-  // function updateDocumentById(documents: Document[], id: string) {
-  //
-  //   const foundDocument = findDocumentById(documents, getDocumentId());
-  //     documents.splice(documents.indexOf(foundDocument), 1, newDocument);
-  // }
 
   if (message.action === ACT.SAVE_DOCUMENT) {
-    console.log("Импортируем:", chrome.runtime.getURL("assets/constants.js"));//TODO: console импорт констант
 
     chrome.storage.local.get("documents", (storage: Storage) => {
       if (!storage.documents) return;
 
       const currentSettings = message.data.newSettings || storage.settings;
-      // console.log('settings', currentSettings.text ?? 'no settings');//TODO: console settings
 
       let settingsDataSet = Object.values(currentSettings)
         .flatMap(array => array
           .filter(item => item.isAllowed)
           .map(item => item.tagName)).flat();
 
-      // Object.keys(currentSettings).forEach(key => {
-      //   settingsDataSet = currentSettings[key as keyof typeof currentSettings].reduce((a, b) => {
-      //     if (b.isAllowed) a.push(b.tagName);
-      //     return a;
-      //   }, [] as string[]);
-      // })
-      // const settingsDataSet = currentSettings.text.reduce((a, b) => {
-      //   if (b.isAllowed) a.push(b.tagName);
-      //   return a;
-      // }, ['DIV']);
-
-      const documents = saveOrUpdateDocument(storage.documents, settingsDataSet);
-
+      const documents = saveOrUpdateDocument(textBoxNodes, storage.documents, settingsDataSet);
+      console.log(documents[0].raw);
       chrome.storage.local.set({"documents": documents}, () => {
         sendResponse(storage.documents);
       });
