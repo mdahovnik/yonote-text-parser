@@ -2,19 +2,9 @@ import {useEffect, useState} from 'react'
 import './App.css'
 import {SettingsPage} from "./components/settingsPage.tsx";
 import {MainPage} from "./components/mainPage.tsx";
-import {Document, SettingList} from "./types.ts";
+import {TDocument, TSettingList} from "./types.ts";
 import {ACT, appSettings} from "./constants.ts";
-//
-// const ACT = {
-//   GET_DOCUMENT: 'GET_DOCUMENT',
-//   GET_RECORDS: 'GET_RECORDS',
-//   GET_SETTINGS: 'GET_SETTINGS',
-//   CLEAR_RECORDS: 'CLEAR_RECORDS',
-//   SAVE_DOCUMENT: 'SAVE_DOCUMENT',
-//   SAVE_SETTINGS: 'SAVE_SETTINGS',
-//   REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
-//   APPLY_SETTINGS: 'APPLY_SETTINGS',
-// }
+
 
 async function getTabId() {
   const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
@@ -22,9 +12,9 @@ async function getTabId() {
 }
 
 async function fetchFromLocalStorage<T>(actionType: keyof typeof ACT) {
-  const tabId = await getTabId()
+  // const tabId = await getTabId()
   return new Promise<T>((resolve, reject) => {
-    chrome.tabs.sendMessage(tabId, {action: actionType}, (data: T) => {
+    chrome.runtime.sendMessage({action: actionType}, (data: T) => {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError)
       } else {
@@ -34,6 +24,20 @@ async function fetchFromLocalStorage<T>(actionType: keyof typeof ACT) {
   });
 }
 
+async function fetchDocumentId() {
+  const tabId = await getTabId()
+  return new Promise<string>((resolve, reject) => {
+    chrome.tabs.sendMessage(tabId, {action: ACT.GET_DOCUMENT_ID}, (openedDocumentId: string) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(openedDocumentId)
+      }
+    })
+  })
+}
+
+
 async function getUrl() {
   const tabs = await chrome.tabs.query({active: true, lastFocusedWindow: true});
   if (tabs.length > 0 && tabs[0]?.url) {
@@ -42,36 +46,35 @@ async function getUrl() {
 }
 
 function App() {
-  const [tabId, setTabId] = useState<number>(0);
+  // const [tabId, setTabId] = useState<number>(0);
   const [isSettingOpen, setIsSettingOpen] = useState(false);
-  const [settings, setSettings] = useState<SettingList>(appSettings);
+  const [settings, setSettings] = useState<TSettingList>(appSettings);
   const [isValidPageOpen, setIsValidPageOpen] = useState(false);
   const [documentId, setDocumentId] = useState<string>("");
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<TDocument[]>([]);
 
   useEffect(() => {
-    getTabId()
-      .then((tabId: number) =>
-        setTabId(tabId));
+    // getTabId()
+    //   .then((tabId: number) =>
+    //     setTabId(tabId));
 
     getUrl()
       .then((host: string) =>
         setIsValidPageOpen(host === "yppm.yonote.ru"));
 
-    fetchFromLocalStorage<SettingList>("GET_SETTINGS")
+    fetchFromLocalStorage<TSettingList>("GET_SETTINGS")
       .then((data) =>
         setSettings(data));
 
-    fetchFromLocalStorage<Document[]>("GET_RECORDS")
-      .then((data) =>
-        setDocuments(data));
+    fetchFromLocalStorage<TDocument[]>("GET_RECORDS")
+      .then((data) => setDocuments(data));
 
-    fetchFromLocalStorage<string>("GET_DOCUMENT_ID")
-      .then((data) =>
-        setDocumentId(data));
+    fetchDocumentId()
+      .then((id) =>
+        setDocumentId(id));
   }, [])
 
-  const handleSettingsChange = (category: keyof SettingList, label: string) => {
+  const handleSettingsChange = (category: keyof TSettingList, label: string) => {
     const updatedSettings = {
       ...settings,
       [category]: settings[category].map((item) => {
@@ -82,11 +85,15 @@ function App() {
       })
     };
 
-    chrome.tabs.sendMessage(tabId, {
+    chrome.runtime.sendMessage({
       action: ACT.SAVE_SETTINGS,
       data: {newSettings: {...updatedSettings}}
-    }, (savedSettings: SettingList) => {
-      setSettings(savedSettings);
+    }, (savedSettings: TSettingList) => {
+      if (chrome.runtime.lastError) {
+        console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError);
+      } else {
+        setSettings(savedSettings);
+      }
     })
   }
 
@@ -96,26 +103,37 @@ function App() {
   }
 
   const handlePlusClick = () => {
-    chrome.tabs.sendMessage(tabId, {
-      action: ACT.SAVE_DOCUMENT,
-      data: {newSettings: settings}
-    }, (documents: Document[]) => {
-      setDocuments(documents);
+    chrome.runtime.sendMessage({action: ACT.SAVE_DOCUMENT, data: {newSettings: settings}}, (documents: TDocument[]) => {
+      if (chrome.runtime.lastError) {
+        console.error("Ошибка при сохранении документа:", chrome.runtime.lastError);
+      } else {
+        setDocuments(documents);
+        console.log("✔️ document is saved");
+      }
       // chrome.runtime.sendMessage({action: ACT.SET_BADGE, data: {words: documents[0].words}})//TODO: вывод счетчика на иконку
     })
-
   }
 
   const handleClearClick = () => {
-    chrome.tabs.sendMessage(tabId, {action: ACT.CLEAR_RECORDS}, (documents: Document[]) => {
-      if (!documents)
-        setDocuments([]);
+    chrome.runtime.sendMessage({action: ACT.CLEAR_RECORDS}, (documents: TDocument[]) => {
+      if (chrome.runtime.lastError) {
+        console.error("Ошибка при удалении всех документов:", chrome.runtime.lastError);
+      } else {
+        if (!documents)
+          setDocuments([]);
+        console.log("💡 all documents are deleted")
+      }
     })
   }
 
   const handleDeleteClick = (id: string) => {
-    chrome.tabs.sendMessage(tabId, {action: ACT.REMOVE_DOCUMENT, data: {id: id}}, (documents: Document[]) => {
-      setDocuments(documents);
+    chrome.runtime.sendMessage({action: ACT.REMOVE_DOCUMENT, data: {id: id}}, (documents: TDocument[]) => {
+      if (chrome.runtime.lastError) {
+        console.error("Ошибка при удалении документа по id:", chrome.runtime.lastError);
+      } else {
+        setDocuments(documents);
+        console.log("✔💡️ document is deleted by id", id);
+      }
     })
   }
 

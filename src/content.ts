@@ -1,13 +1,6 @@
-import {Document, SettingList, Storage, TextNodeTree} from "./types.ts";
+import {TextNodeTree, TMessage} from "./types.ts";
 
-type TMessage = {
-  action: keyof typeof ACT;
-  data: {
-    id?: string,
-    newSettings?: SettingList,
-    words?: number
-  }
-}
+console.log("💡 content.ts is running:", document.readyState);
 
 const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
@@ -20,31 +13,12 @@ const ACT = {
   REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
   APPLY_SETTINGS: 'APPLY_SETTINGS',
   SET_BADGE: 'SET_BADGE',
-  TEXT_CHANGED: 'TEXT_CHANGED'
+  TEXT_CHANGED: 'TEXT_CHANGED',
+  GET_NODE_TREE: 'GET_NODE_TREE'
 }
-
-// enum NODE_NAME {
-//   A = "A",
-//   BLOCKQUOTE = "BLOCKQUOTE",
-//   BUTTON = "BUTTON",
-//   DEL = "DEL",
-//   DIV = "DIV",
-//   EM = "EM",
-//   CODE = "CODE",
-//   H1 = "H1",
-//   H2 = "H2",
-//   H3 = "H3",
-//   OPTION = "OPTION",
-//   P = "P",
-//   SPAN = "SPAN",
-//   STRONG = "STRONG",
-//   TABLE = "TABLE",
-//   U = "U",
-// }
-
-const NEUTRAL_TAGS = ["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD', 'PRE'];
-const IGNORED_TAGS = ['BUTTON', 'OPTION'];
-const VALID_CLASS_NAMES = [
+const NEUTRAL_TAGS = new Set(["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD', 'PRE']);
+const IGNORED_TAGS = new Set(['BUTTON', 'OPTION']);
+const VALID_CLASS_NAMES = new Set([
   'notice-block info',
   'ordered_list',
   'bullet_list',
@@ -53,63 +27,134 @@ const VALID_CLASS_NAMES = [
   'columns',
   'code-block',
   // 'scrollable-wrapper table-wrapper'
-]
+])
 
-// watchTextChanges();
-//
-// // Функция для запуска наблюдателя
-// function watchTextChanges() {
-//   const observer = new MutationObserver((mutations) => {
-//     // textBoxNodes = document.querySelectorAll('[role="textbox"]');
-//     mutations.forEach((mutation) => {
-//       if (mutation.type === "characterData") {
-//         // console.log("Текст изменился:", mutation.target.nodeValue);
-//         // chrome.runtime.sendMessage({textChanged: mutation.target.nodeValue});
-//         chrome.runtime.sendMessage({action: ACT.SAVE_DOCUMENT, data: {words: 10}}, () => {
-//           console.log("Текст изменился:", mutation.target.nodeValue);
-//         });
-//       }
-//     });
-//   });
-//   // Запускаем слежение за всеми текстовыми узлами страницы
-//   const config = {characterData: true, subtree: true};
-//   observer.observe(document.body, config);
-// }
+chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
+  if (message.action === ACT.GET_DOCUMENT_ID) {
+    const openedDocumentId = getOpenedDocumentId();
+    sendResponse(openedDocumentId)
+  }
+})
 
-// парсим данные
-function saveOrUpdateDocument(textBoxNodes: NodeListOf<Element>, documents: Document[], settings: string[]) {
-  let parsedData: Record<string, string> = {};
+waitForOpenNewDocument(() => {
+  waitForDocumentContainer(".hrehUE", (element: HTMLElement) => {
+    waitForTextboxes(element, (textBoxes: Node[]) => {
+      watchForTextChanges(textBoxes);
+    });
+  });
+});
 
-  textBoxNodes.forEach(textBoxNode => {
-    const nodeTree = createNodeTree(textBoxNode);
-    // console.dir(nodeTree);//TODO:console.dir(nodeTree)
-    parsedData = extractDataFromNodeTree(nodeTree, parsedData, settings);
+function waitForOpenNewDocument(callback: Function) {
+  const observer = new MutationObserver((mutations) => {
+    console.log('🟢 waitForOpenNewDocument observer')
+    callback();
+    console.log("💡 new document is opened", mutations);
+    console.log('🟥 waitForOpenNewDocument observer')
   })
 
-  const title = textBoxNodes[0].textContent ? textBoxNodes[0].textContent : 'No title';
-  const newDocument = createNewDocument(parsedData, title);
+  observer.observe(document.head, {childList: true, subtree: false, attributes: false, characterData: false});
+}
 
-  console.dir(parsedData);//TODO:console.dir(parsedData)
-  //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
-  const foundDocument = findDocumentById(documents, getOpenedDocumentId());
+function waitForDocumentContainer(selector: string, callback: (element: HTMLElement) => void) {
+  const element = document.querySelector(selector);
+  if (element) {
+    callback(element as HTMLElement);
+    console.log("✔️ element hrehUE are found in DOM:", element);
+    return;
+  }
 
-  if (foundDocument)
-    documents.splice(documents.indexOf(foundDocument), 1, newDocument);
-  else
-    documents.push(newDocument);
+  const observer = new MutationObserver((mutations) => {
+    console.log('🟢 waitForDocumentContainer observer')
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node instanceof HTMLElement && node.matches(selector)) {
+          callback(node);
+          console.log("✔️ element hrehUE are found:", node);
+          observer.disconnect();
+          console.log('🟥 waitForDocumentContainer observer')
+        }
+      })
+    })
+  })
 
-  return documents;
+  observer.observe(document.body, {childList: true, subtree: true});
+}
+
+function waitForTextboxes(element: HTMLElement, callback: (textBoxes: Node[]) => void) {
+  const documentId = getOpenedDocumentId();
+  let nodesTree: TextNodeTree[] = [];
+
+  const observer = new MutationObserver(() => {
+    console.log('🟢 waitForTextboxes observer')
+    const textBoxNodes = element.querySelectorAll('[role="textbox"]');
+
+    if (textBoxNodes.length > 1) {
+      for (const textBoxNode of textBoxNodes) {
+        nodesTree.push(createNodeTree(textBoxNode));
+      }
+      sendParsedDocument(nodesTree, documentId);
+
+      callback(Array.from(textBoxNodes));
+      console.log("✔️ textBox nodes are found:", textBoxNodes);
+      observer.disconnect();
+      console.log('🟥 waitForTextboxes observer')
+    }
+  });
+  observer.observe(element, {childList: true, subtree: true});
+}
+
+// Функция для запуска наблюдателя
+function watchForTextChanges(textBoxNodes: Node[]) {
+  const documentId = getOpenedDocumentId();
+  let debounceTimer: number | null = null;
+  let nodesTree: TextNodeTree[] = [];
+
+  const observer = new MutationObserver((mutations) => {
+    console.log('🟢 waitForTextChanges observer');
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    debounceTimer = setTimeout(() => {
+      for (const mutation of mutations) {
+        for (const textBoxNode of textBoxNodes) {
+          nodesTree.push(createNodeTree(textBoxNode));
+        }
+        console.log("✏️ TEXT =>", mutation.target.nodeValue);//, mutation.target.nodeValue
+      }
+      sendParsedDocument(nodesTree, documentId);
+    }, 200)
+  })
+
+  // Запускаем слежение за всеми текстовыми узлами страницы
+  for (const textBoxNode of textBoxNodes)
+    observer.observe(textBoxNode, {characterData: true, subtree: true});
+
+  return observer;
+}
+
+function sendParsedDocument(nodesTree: TextNodeTree[], id: string) {
+  chrome.runtime.sendMessage({
+    action: ACT.GET_NODE_TREE,
+    data: {nodeTree: nodesTree, id: id}
+  }, () => {
+    if (chrome.runtime.lastError) {
+      console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError);
+    } else {
+      console.log("💡 send message => ACT.GET_NODE_TREE", {nodeTree: nodesTree, id: id})
+    }
+  });
 }
 
 // рекурсивно обходим текстовый блок документа и строим узловое дерево
-function createNodeTree(nodeElement: ChildNode, parentNodeNames: string[] = []) {
-  const isNodeNameNeutral = NEUTRAL_TAGS.includes(nodeElement.nodeName);
-  const isNodeContainClass = VALID_CLASS_NAMES.includes(getNodeNameFromClass(nodeElement));
+function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
+  const isNodeNameNeutral = NEUTRAL_TAGS.has(nodeElement?.nodeName);
+  const isNodeContainClass = VALID_CLASS_NAMES.has(getNodeNameFromClass(nodeElement));
+
   const nodeNames = isNodeNameNeutral
     ? [...parentNodeNames]
     : [...parentNodeNames, isNodeContainClass
       ? getNodeNameFromClass(nodeElement)
-      : nodeElement.nodeName]
+      : nodeElement?.nodeName]
 
   const nodeTreeElement: TextNodeTree = {
     tag: nodeElement.nodeName,
@@ -125,137 +170,14 @@ function createNodeTree(nodeElement: ChildNode, parentNodeNames: string[] = []) 
       words.forEach(word => nodeTreeElement.words.push({word, tags: [...new Set(nodeNames)]}));
 
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      if (!IGNORED_TAGS.includes(node.nodeName))
+      if (!IGNORED_TAGS.has(node.nodeName))
         nodeTreeElement.children.push(createNodeTree(node, nodeNames));// Рекурсивно обрабатываем вложенные элементы
     }
   })
   return nodeTreeElement;
 }
 
-// рекурсивно собираем форматированный текст в объект
-function extractDataFromNodeTree(nodeTree: TextNodeTree, totalTree: Record<string, string> = {}, settings: string[]) {
-  let filteredTags = [''];
-  nodeTree.words.forEach(({word, tags}) => {
-    const isTagsRespondSettings = tags.every(item => settings.includes(item));
-    if (isTagsRespondSettings) {
-      filteredTags = tags;
-    }
-    console.log(isTagsRespondSettings, word, '==>', tags, "==>", settings);//TODO: Все tags, word, tags, Содержатся в settings
-    const key = filteredTags.join(',') || "UNREAD";
-
-    if (!totalTree[key]) totalTree[key] = '';
-    totalTree[key] += word + ' ';
-  })
-
-  nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree, settings))
-  return totalTree;
-}
-
-chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
-  const textBoxNodes = document.querySelectorAll('[role="textbox"]');
-
-  if (message.action === ACT.TEXT_CHANGED) {
-
-  }
-
-  if (message.action === ACT.SAVE_DOCUMENT) {
-
-    chrome.storage.local.get("documents", (storage: Storage) => {
-      if (!storage.documents) return;
-
-      const currentSettings = message.data.newSettings || storage.settings;
-
-      let settingsDataSet = Object.values(currentSettings)
-        .flatMap(array => array
-          .filter(item => item.isAllowed)
-          .map(item => item.tagName)).flat();
-
-      const documents = saveOrUpdateDocument(textBoxNodes, storage.documents, settingsDataSet);
-      console.log(documents[0].raw);
-      chrome.storage.local.set({"documents": documents}, () => {
-        sendResponse(storage.documents);
-      });
-    });
-  }
-
-  if (message.action === ACT.GET_DOCUMENT_ID) {
-    const documentId = getOpenedDocumentId();
-    sendResponse(documentId);
-  }
-
-  if (message.action === ACT.REMOVE_DOCUMENT) {
-    chrome.storage.local.get("documents", (storage: Storage) => {
-      const filteredRecords = storage.documents.filter((document) => document.id !== message.data.id);
-
-      chrome.storage.local.set({"documents": filteredRecords}, () => {
-        sendResponse(filteredRecords);
-      });
-    });
-  }
-
-  if (message.action === ACT.GET_RECORDS) {
-    chrome.storage.local.get("documents", (storage: Storage) => {
-      const records = storage.documents;
-      sendResponse(records);
-    })
-  }
-
-  if (message.action === ACT.GET_SETTINGS) {
-    chrome.storage.local.get("settings", (storage: Storage) => {
-      const settings = storage.settings;
-      sendResponse(settings);
-    })
-  }
-
-  if (message.action === ACT.CLEAR_RECORDS) {
-    chrome.storage.local.set({"documents": []}, () => {
-      sendResponse(null)
-    })
-  }
-
-  if (message.action === ACT.SAVE_SETTINGS) {
-    const newSettings = message.data.newSettings;
-    chrome.storage.local.set({"settings": newSettings}, () => {
-      chrome.storage.local.get(["settings"], (storage: Storage) => {
-        // const parsedData = storage.documents[0]?.parsedData;
-        // let {words, symbols} = getApplySettingsTotal(parsedData, 'STRONG');
-        // sendResponse({savedSettings: storage.settings, words: words, symbols: symbols});
-        sendResponse(storage.settings);
-      })
-    })
-  }
-
-  return true;
-});
-
-
-function getWordCount(string: string) {
-  const matches = string.match(/[\p{L}\d]+/gu) || [];  //(/\b\w+\b/g)    //(/\b[\w\dА-Яа-яЁё]+\b/g)   //(/\S+/g);
-  return matches.length;
-}
-
-function getOpenedDocumentId() {
-  const mainDocContainer = document.getElementsByClassName("main-document-container");
-  return mainDocContainer[0].getAttribute("id") ?? crypto.randomUUID();
-}
-
-function getTotalsFromRecordType(data: Record<string, string>) {
-  let total = {words: 0, symbols: 0, raw: ''};
-  for (const [key, value] of Object.entries(data)) {
-    if (key !== 'UNREAD') {
-      total.words += getWordCount(value);
-      total.symbols += value.length;
-      total.raw += value;
-    }
-  }
-  return total;
-}
-
-function findDocumentById(documents: Document[], id: string) {
-  return documents.find((document) => document.id === id);
-}
-
-function getNodeNameFromClass(node: ChildNode) {
+function getNodeNameFromClass(node: Node) {
   if (node instanceof Element) {
     return node.classList.length > 0
       ? `${node.className}`
@@ -264,34 +186,36 @@ function getNodeNameFromClass(node: ChildNode) {
     return node.nodeName;
 }
 
-function createNewDocument(data: Record<string, string>, title: string) {
-  const id = getOpenedDocumentId();
-  const {words, symbols, raw} = getTotalsFromRecordType(data);
-  return {
-    id: id,
-    parsedData: data,
-    raw: raw,
-    symbols: symbols,
-    time: new Date().toLocaleTimeString(),
-    title: title,
-    words: words
-  }
+function getOpenedDocumentId() {
+  const mainDocContainer = document.getElementsByClassName("main-document-container");
+  return mainDocContainer[0]?.getAttribute("id") || crypto.randomUUID();
 }
 
-// function getApplySettingsTotal(parsedData: ParsedData[], setting: string) {
-//   let {words, symbols} = {words: 0, symbols: 0}
-//   // const raw: string = "";
+// function waitForTextboxes(element: HTMLElement, callback: (textBoxes: Node[]) => void) {
+//   const nodes = element.querySelectorAll('[role="textbox"]');
+//   if (nodes.length > 1) {
+//     callback(Array.from(nodes));
+//     console.log("✔️ в DOM найдены textBoxes:", nodes);
+//     return;
+//   }
 //
-//   parsedData.forEach((node) => {
-//     node.data.forEach((item) => {
-//       if (item.path.includes(setting)) {
-//         words += getWordCount(item.text);
-//         symbols += item.text.length;
-//         console.log({words, symbols, raw: item.text})
-//       }
-//     })
-//   })
-//   return {words, symbols}
-//
-
-
+//   const textBoxNodes: Node[] = [];
+//   const observer = new MutationObserver((mutations) => {
+//     console.log('🟢 WORKING  waitForTextboxes observer')
+//     for (const mutation of mutations) {
+//       mutation.addedNodes.forEach((node) => {
+//         if (node instanceof HTMLElement && node.hasAttribute("role") && node.getAttribute("role") === "textbox") {
+//           textBoxNodes.push(node)
+//         }
+//       })
+//     }
+//     console.log("textBoxNodes", textBoxNodes.length)
+//     if (textBoxNodes.length > 1) {
+//       callback(Array.from(textBoxNodes));
+//       console.log("✔️ найдены textBoxes:", textBoxNodes);
+//       observer.disconnect();
+//       console.log('🟥 STOP waitForTextboxes observer')
+//     }
+//   });
+//   observer.observe(element, {childList: true, subtree: true});
+// }

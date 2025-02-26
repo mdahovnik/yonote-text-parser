@@ -11,7 +11,9 @@
 //   raw: string,
 // }
 
-export type Document = {
+import {ACT} from "./constants.ts";
+
+export type TDocument = {
   id: string,
   parsedData: Record<string, string>,
   raw: string,
@@ -21,21 +23,21 @@ export type Document = {
   words: number,
 }
 
-export type Setting = {
+export type TSetting = {
   tagName: string[],
   label: string,
   isAllowed: boolean
 }
 
-export type SettingList = {
-  block: Setting[],
-  text: Setting[],
-  count: Setting[]
+export type TSettingList = {
+  block: TSetting[],
+  text: TSetting[],
+  count: TSetting[]
 }
 
-export type Storage = {
-  documents: Document[],
-  settings: SettingList
+export type TStorage = {
+  documents: TDocument[],
+  settings: TSettingList
 }
 
 export type TextNodeTree = {
@@ -45,4 +47,14 @@ export type TextNodeTree = {
     tags: string[];
   }[];
   children: TextNodeTree[];
+}
+
+export type TMessage = {
+  action: keyof typeof ACT;
+  data: {
+    id: string,
+    newSettings?: TSettingList,
+    words?: number,
+    nodeTree?: TextNodeTree[]
+  }
 }

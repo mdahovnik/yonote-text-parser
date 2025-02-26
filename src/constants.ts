@@ -1,4 +1,4 @@
-import {SettingList} from "./types.ts";
+import {TSettingList} from "./types.ts";
 
 export const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
@@ -11,10 +11,11 @@ export const ACT = {
   REMOVE_DOCUMENT: 'REMOVE_DOCUMENT',
   APPLY_SETTINGS: 'APPLY_SETTINGS',
   SET_BADGE: 'SET_BADGE',
-  TEXT_CHANGED: 'TEXT_CHANGED'
+  TEXT_CHANGED: 'TEXT_CHANGED',
+  GET_NODE_TREE: 'GET_NODE_TREE'
 }
 
-export const appSettings: SettingList = {
+export const appSettings: TSettingList = {
   block: [
     {tagName: ["allow_title"], label: "Page title", isAllowed: false},
     {

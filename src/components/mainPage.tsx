@@ -1,12 +1,12 @@
 import {ButtonAction} from "./buttonAction.tsx";
-import {Document, SettingList} from "../types.ts";
+import {TDocument, TSettingList} from "../types.ts";
 import {Records} from "./records.tsx";
 
 type TMainPage = {
   isActive: boolean;
-  data: Document[];
+  data: TDocument[];
   documentId: string;
-  settings: SettingList;
+  settings: TSettingList;
   onSettingClick: () => void;
   onPlusClick: () => void;
   onClearClick: () => void;
@@ -14,7 +14,7 @@ type TMainPage = {
   // totals: {words: number, symbols: number};
 }
 
-function getTotals(data: Document[]) {
+function getTotals(data: TDocument[]) {
   return data.reduce((a, b) => ({
     words: a.words + b.words,
     symbols: a.symbols + b.symbols
@@ -50,7 +50,7 @@ export function MainPage(
         </div>
         {
           (() => {
-            const buttonType = data.some(item => item.id === documentId) ? "sync" : "plus";
+            const buttonType = data.length > 0 && data.some(item => item.id === documentId) ? "sync" : "plus";
             return <ButtonAction onClick={onPlusClick}
                                  id={"add-record"}
                                  type={buttonType}
