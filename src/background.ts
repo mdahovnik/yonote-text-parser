@@ -1,6 +1,5 @@
 import {ACT, appSettings} from "./constants.ts";
 import {TMessage, TStorage, TextNodeTree, TDocument} from "./types.ts";
-// import {SettingList} from "./types.ts";
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
@@ -15,38 +14,25 @@ let openedDocumentId = "";
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
   if (message.action === ACT.GET_NODE_TREE) {
+    console.log("🟢 ACT.", message.action);
+
+    textBoxNodes = [];
     textBoxNodes = message.data.nodeTree ?? [];
     openedDocumentId = message.data.id;
 
-    // if (!textBoxNodes.length) return;
+    console.log(`=> textBoxNodes received ${new Date().toLocaleTimeString()}on ACT.GET_NODE_TREE: `, message.data.nodeTree);
 
-    console.log("✏️ textBoxNodes received on GET_NODE_TREE action =>", textBoxNodes);
-
-    // chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
-    //   if (!storage.documents) return;
-    //   const currentSettings = message.data.newSettings || storage.settings;
-    //
-    //   let settingsDataSet = Object.values(currentSettings)
-    //     .flatMap(array => array
-    //       .filter(item => item.isAllowed)
-    //       .map(item => item.tagName)).flat();
-    //
-    //   const documents = saveOrUpdateDocument(textBoxNodes, storage.documents, settingsDataSet, openedDocumentId);
-    //   console.log("✏️ raw string =>", documents[0].raw);
-    //
-    //   chrome.storage.local.set({"documents": documents}, () => {
-    //     sendResponse(storage.documents);
-    //   });
-    // });
-    sendResponse({})
+    sendResponse({});
+    console.log("🟥 ACT.", message.action);
   }
 
+
   if (message.action === ACT.SAVE_DOCUMENT) {
-    console.log("action", message.action);
+    console.log("🟢 ACT.", message.action);
+
     chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
       // if (!storage.documents) return;
-      console.log("textBoxNodes in SAVE_DOCUMENT =>", textBoxNodes.length);
-
+      console.log("=> textBoxNodes in SAVE_DOCUMENT: ", textBoxNodes);
       if (!textBoxNodes.length) return;
 
       const currentSettings = message.data.newSettings || storage.settings;
@@ -55,51 +41,66 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
         .flatMap(array => array.filter(item => item.isAllowed && item.tagName)
           .map(item => item.tagName).join());
 
-      console.log("✏️ settingsDataSet =>", settingsDataSet);
+      console.log("=> settingsDataSet: ", settingsDataSet);
       const documents = saveOrUpdateDocument(textBoxNodes, storage.documents, settingsDataSet, openedDocumentId);
-      console.log("✏️ raw =>", documents[0].raw);
 
       chrome.storage.local.set({"documents": documents}, () => {
+        console.log("=> 🎯 storageLocal is updated on ACT.SAVE_DOCUMENT: ", documents);
         sendResponse(storage.documents);
       });
+      console.log("🟥 ACT.", message.action);
     });
   }
+
+
   if (message.action === ACT.REMOVE_DOCUMENT) {
-    console.log("action", message.action);
+    console.log("🟢ACT.", message.action);
+
     chrome.storage.local.get("documents", (storage: TStorage) => {
       const filteredRecords = storage.documents.filter((document) => document.id !== message.data.id);
-
       chrome.storage.local.set({"documents": filteredRecords}, () => {
         sendResponse(filteredRecords);
       });
+      console.log("🟥 ACT.", message.action);
     });
   }
 
+
   if (message.action === ACT.GET_RECORDS) {
-    console.log("action", message.action);
+    console.log("🟢ACT.", message.action);
+
     chrome.storage.local.get("documents", (storage: TStorage) => {
       const records = storage.documents;
       sendResponse(records);
+      console.log("🟥 ACT.", message.action);
     })
   }
 
+
   if (message.action === ACT.GET_SETTINGS) {
-    console.log("action", message.action);
+    console.log("🟢ACT.", message.action);
+
     chrome.storage.local.get("settings", (storage: TStorage) => {
       const settings = storage.settings;
       sendResponse(settings);
+      console.log("🟥 ACT.", message.action);
     })
   }
+
 
   if (message.action === ACT.CLEAR_RECORDS) {
-    console.log("action", message.action);
+    console.log("🟢ACT.", message.action);
+
     chrome.storage.local.set({"documents": []}, () => {
-      sendResponse(null)
+      sendResponse(null);
+      console.log("🟥 ACT.", message.action);
     })
   }
 
+
   if (message.action === ACT.SAVE_SETTINGS) {
-    console.log("action", message.action);
+    console.log("🟢ACT.", message.action);
+
     const newSettings = message.data.newSettings;
     chrome.storage.local.set({"settings": newSettings}, () => {
       chrome.storage.local.get(["settings"], (storage: TStorage) => {
@@ -107,6 +108,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
         // let {words, symbols} = getApplySettingsTotal(parsedData, 'STRONG');
         // sendResponse({savedSettings: storage.settings, words: words, symbols: symbols});
         sendResponse(storage.settings);
+        console.log("🟥 ACT.", message.action);
       })
     })
   }
@@ -125,10 +127,12 @@ function getTotalsFromRecordType(data: Record<string, string>) {
   for (const [key, value] of Object.entries(data)) {
     if (key !== 'UNREAD') {
       total.words += getWordCount(value);
-      total.symbols += value.length;
+      // total.symbols += value.length;
       total.raw += value;
     }
   }
+  total.raw = total.raw.trim();
+  total.symbols = total.raw.length
   return total;
 }
 
@@ -136,10 +140,12 @@ function saveOrUpdateDocument(nodeTreeArray: TextNodeTree[], documents: TDocumen
   let parsedData: Record<string, string> = {};
   nodeTreeArray.forEach(nodeTree => {
     parsedData = extractDataFromNodeTree(nodeTree, parsedData, settings);
+    // console.log("💡💡💡extractDataFromNodeTree => nodeTree", nodeTree);
+    // console.log("💡💡💡extractDataFromNodeTree => parsedData", parsedData);
   })
 
   const title = nodeTreeArray[0].words.map(w => w.word).join(' ') ?? 'No title';
-  console.log("✏️ document title =>", title)
+  console.log("=> document title: ", title)
   const newDocument = createNewDocument(parsedData, title, id);
 
   //TODO: вывод счетчика на иконку
@@ -149,8 +155,13 @@ function saveOrUpdateDocument(nodeTreeArray: TextNodeTree[], documents: TDocumen
   //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
   const foundDocument = findDocumentById(documents, id);
 
-  if (foundDocument) documents.splice(documents.indexOf(foundDocument), 1, newDocument);
-  else documents.push(newDocument);
+  if (foundDocument) {
+    documents.splice(documents.indexOf(foundDocument), 1, newDocument);
+    console.log("=>️ document exists (UPDATED): ", title)
+  } else {
+    documents.push(newDocument);
+    console.log("️=>️  document is new (SAVED): ", title)
+  }
 
   return documents;
 }
@@ -180,16 +191,24 @@ function createNewDocument(data: Record<string, string>, title: string, openedDo
 // рекурсивно собираем форматированный текст в объект
 function extractDataFromNodeTree(nodeTree: TextNodeTree, totalTree: Record<string, string> = {}, settings: string[]) {
   let filteredTags = [''];
+
+
   nodeTree.words.forEach(({word, tags}) => {
+    // const nodeTreeWordsLength = nodeTree.words.length;
+
     const isTagsRespondSettings = tags.every(item => settings.includes(item));
     if (isTagsRespondSettings) {
       filteredTags = tags;
     }
-    console.log(isTagsRespondSettings, word, '/', tags, "==>", settings);//TODO: Все tags, word, tags, Содержатся в settings
+    // console.log(isTagsRespondSettings ? "included =>" : "skipped =>", word, ':', tags, ":", settings);//TODO: Все tags, word, tags, Содержатся в settings
+    console.log("=> word: ", word, word.length, '=> tags: ', tags);//TODO: Все tags, word, tags, Содержатся в settings
     const key = filteredTags.join(',') || "UNREAD";
 
     if (!totalTree[key]) totalTree[key] = '';
     totalTree[key] += word + ' ';
+
+    // if (index < nodeTreeWordsLength - 1)
+    //   totalTree[key] = totalTree[key].trim();
   })
 
   nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree, settings))

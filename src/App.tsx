@@ -108,7 +108,7 @@ function App() {
         console.error("Ошибка при сохранении документа:", chrome.runtime.lastError);
       } else {
         setDocuments(documents);
-        console.log("✔️ document is saved");
+        // console.log("💡 document is saved");
       }
       // chrome.runtime.sendMessage({action: ACT.SET_BADGE, data: {words: documents[0].words}})//TODO: вывод счетчика на иконку
     })
@@ -121,7 +121,7 @@ function App() {
       } else {
         if (!documents)
           setDocuments([]);
-        console.log("💡 all documents are deleted")
+        // console.log("💡 all documents are deleted")
       }
     })
   }
@@ -132,7 +132,7 @@ function App() {
         console.error("Ошибка при удалении документа по id:", chrome.runtime.lastError);
       } else {
         setDocuments(documents);
-        console.log("✔💡️ document is deleted by id", id);
+        // console.log("💡️ document is deleted by id", id);
       }
     })
   }

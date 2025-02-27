@@ -46,32 +46,32 @@ waitForOpenNewDocument(() => {
 
 function waitForOpenNewDocument(callback: Function) {
   const observer = new MutationObserver((mutations) => {
-    console.log('🟢 waitForOpenNewDocument observer')
+    console.log('🟢 NewDocument_Observer')
+    console.log("=> new document is opened: ", mutations);
     callback();
-    console.log("💡 new document is opened", mutations);
-    console.log('🟥 waitForOpenNewDocument observer')
   })
 
   observer.observe(document.head, {childList: true, subtree: false, attributes: false, characterData: false});
 }
 
+
 function waitForDocumentContainer(selector: string, callback: (element: HTMLElement) => void) {
   const element = document.querySelector(selector);
   if (element) {
     callback(element as HTMLElement);
-    console.log("✔️ element hrehUE are found in DOM:", element);
+    console.log("💡element hrehUE are found in DOM:", element);
     return;
   }
 
   const observer = new MutationObserver((mutations) => {
-    console.log('🟢 waitForDocumentContainer observer')
+    console.log('🟢 DocumentContainer_Observer')
     mutations.forEach((mutation) => {
       mutation.addedNodes.forEach((node) => {
         if (node instanceof HTMLElement && node.matches(selector)) {
           callback(node);
-          console.log("✔️ element hrehUE are found:", node);
+          console.log("💡element hrehUE are found: ", node);
           observer.disconnect();
-          console.log('🟥 waitForDocumentContainer observer')
+          console.log('🟥 DocumentContainer_Observer');
         }
       })
     })
@@ -80,48 +80,60 @@ function waitForDocumentContainer(selector: string, callback: (element: HTMLElem
   observer.observe(document.body, {childList: true, subtree: true});
 }
 
-function waitForTextboxes(element: HTMLElement, callback: (textBoxes: Node[]) => void) {
+
+function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[]) => void) {
   const documentId = getOpenedDocumentId();
-  let nodesTree: TextNodeTree[] = [];
 
   const observer = new MutationObserver(() => {
-    console.log('🟢 waitForTextboxes observer')
+    console.log('🟢 TextBoxes_Observer')
     const textBoxNodes = element.querySelectorAll('[role="textbox"]');
 
-    if (textBoxNodes.length > 1) {
-      for (const textBoxNode of textBoxNodes) {
-        nodesTree.push(createNodeTree(textBoxNode));
-      }
-      sendParsedDocument(nodesTree, documentId);
+    let nodesTree: TextNodeTree[] = [];
+    // if (textBoxNodes.length > 1) {
+    for (const textBoxNode of textBoxNodes)
+      nodesTree.push(createNodeTree(textBoxNode));
 
-      callback(Array.from(textBoxNodes));
-      console.log("✔️ textBox nodes are found:", textBoxNodes);
-      observer.disconnect();
-      console.log('🟥 waitForTextboxes observer')
-    }
+    callback(Array.from(textBoxNodes));
+    console.log('💡textBoxNodes are found: ', textBoxNodes);
+
+    // observer.disconnect();
+    // console.log('🟥 TextBoxes_Observer')
+    sendNodesTree(nodesTree, documentId);
+    // }
   });
+
   observer.observe(element, {childList: true, subtree: true});
+  console.log("👀 watching for textBoxes changes...");
 }
+
 
 // Функция для запуска наблюдателя
 function watchForTextChanges(textBoxNodes: Node[]) {
+  if (!textBoxNodes || textBoxNodes.length === 0) {
+    console.warn("⚠️ No text nodes provided for observation.");
+    return null;
+  }
+
   const documentId = getOpenedDocumentId();
   let debounceTimer: number | null = null;
-  let nodesTree: TextNodeTree[] = [];
 
   const observer = new MutationObserver((mutations) => {
-    console.log('🟢 waitForTextChanges observer');
+    console.log('🟢 TextChanges_Observer');
+
+    let nodesTree: TextNodeTree[] = [];
 
     if (debounceTimer) clearTimeout(debounceTimer);
 
     debounceTimer = setTimeout(() => {
       for (const mutation of mutations) {
-        for (const textBoxNode of textBoxNodes) {
-          nodesTree.push(createNodeTree(textBoxNode));
+        if (mutation.target.TEXT_NODE) {
+          for (const textBoxNode of textBoxNodes) {
+            nodesTree.push(createNodeTree(textBoxNode));
+          }
+          console.log("✏️ CHANGED_TEXT: ", mutation.target.nodeValue);//, mutation.target.nodeValue
+          sendNodesTree(nodesTree, documentId);
         }
-        console.log("✏️ TEXT =>", mutation.target.nodeValue);//, mutation.target.nodeValue
       }
-      sendParsedDocument(nodesTree, documentId);
     }, 200)
   })
 
@@ -129,10 +141,12 @@ function watchForTextChanges(textBoxNodes: Node[]) {
   for (const textBoxNode of textBoxNodes)
     observer.observe(textBoxNode, {characterData: true, subtree: true});
 
+  console.log("👀 watching for text changes...");
   return observer;
 }
 
-function sendParsedDocument(nodesTree: TextNodeTree[], id: string) {
+
+function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
   chrome.runtime.sendMessage({
     action: ACT.GET_NODE_TREE,
     data: {nodeTree: nodesTree, id: id}
@@ -140,10 +154,11 @@ function sendParsedDocument(nodesTree: TextNodeTree[], id: string) {
     if (chrome.runtime.lastError) {
       console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError);
     } else {
-      console.log("💡 send message => ACT.GET_NODE_TREE", {nodeTree: nodesTree, id: id})
+      console.log("=>  send message ACT.GET_NODE_TREE: ", {nodeTree: nodesTree, id: id})
     }
   });
 }
+
 
 // рекурсивно обходим текстовый блок документа и строим узловое дерево
 function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
@@ -164,18 +179,23 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
 
   nodeElement.childNodes.forEach((node) => {
     if (node.nodeType === Node.TEXT_NODE) {
-      // Разбиваем текст на слова, фильтром убираем пустые строки и сохраняем их
+
+      // разбиваем текст на слова, фильтром убираем пустые строки и сохраняем их
       const words = node.textContent?.trim().split(/\s+/).filter(w => w) || [];
-      // В tags с помощью new Set() оставляем только уникальные теги
+
+      // в tags с помощью new Set() оставляем только уникальные теги
       words.forEach(word => nodeTreeElement.words.push({word, tags: [...new Set(nodeNames)]}));
 
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      if (!IGNORED_TAGS.has(node.nodeName))
-        nodeTreeElement.children.push(createNodeTree(node, nodeNames));// Рекурсивно обрабатываем вложенные элементы
+      if (!IGNORED_TAGS.has(node.nodeName)) {
+        // рекурсивно обрабатываем вложенные элементы
+        nodeTreeElement.children.push(createNodeTree(node, nodeNames));
+      }
     }
   })
   return nodeTreeElement;
 }
+
 
 function getNodeNameFromClass(node: Node) {
   if (node instanceof Element) {
@@ -185,6 +205,7 @@ function getNodeNameFromClass(node: Node) {
   } else
     return node.nodeName;
 }
+
 
 function getOpenedDocumentId() {
   const mainDocContainer = document.getElementsByClassName("main-document-container");
