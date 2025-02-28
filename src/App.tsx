@@ -92,6 +92,7 @@ function App() {
       if (chrome.runtime.lastError) {
         console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError);
       } else {
+        console.log("********* settings are saved", savedSettings);
         setSettings(savedSettings);
       }
     })

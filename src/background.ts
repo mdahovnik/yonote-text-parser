@@ -21,7 +21,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     currentDocument = null;
     textNodesCache = message.data.nodeTree ?? [];
     openedDocumentId = message.data.id;
-    console.log(`=> textNodesCache received ${new Date().toLocaleTimeString()}on ACT.GET_NODE_TREE: `, message.data.nodeTree);
+    console.log(`=> textNodesCache received ${new Date().toLocaleTimeString()}on ACT.GET_NODE_TREE:`, JSON.stringify(message.data.nodeTree, null, 2));
 
     chrome.storage.local.get(["settings"], (storage: TStorage) => {
       if (!storage.settings) {
@@ -29,11 +29,11 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
         return;
       }
 
-      const currentSettings = message.data.newSettings || storage.settings;
+      const currentSettings = storage.settings;//message.data.newSettings || storage.settings;
 
       let settingsDataSet: string[] = Object.values(currentSettings)
-        .flatMap(array => array.filter(item => item.isAllowed && item.tagName)
-          .map(item => item.tagName).join());
+        .flatMap(array => array.filter(item => item.isAllowed)
+          .map(item => item.tagName).flat());
 
       console.log("=> settingsDataSet: ", settingsDataSet);
 
@@ -42,7 +42,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
       currentDocument = createNewDocument(parsedData, title, openedDocumentId);
 
       // вывод счетчика на иконку
-      setBadge(currentDocument, currentSettings,);
+      setBadge(currentDocument, currentSettings);
 
       sendResponse({});
       console.log("🟥 ACT.", message.action);
@@ -58,11 +58,11 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
       // if (!storage.documents) return;
       // console.log("=> textBoxNodes in SAVE_DOCUMENT: ", textNodesCache);
 
-      const currentSettings = message.data.newSettings || storage.settings;
+      const currentSettings = storage.settings;//message.data.newSettings || storage.settings;
 
       let settingsDataSet: string[] = Object.values(currentSettings)
-        .flatMap(array => array.filter(item => item.isAllowed && item.tagName)
-          .map(item => item.tagName).join());
+        .flatMap(array => array.filter(item => item.isAllowed)
+          .map(item => item.tagName).flat());
 
       console.log("=> settingsDataSet: ", settingsDataSet);
       const documents = saveOrUpdateDocument(textNodesCache, storage.documents, settingsDataSet, openedDocumentId);
@@ -178,9 +178,11 @@ function getDocumentTitle(textNodesCache: TextNodeTree[]) {
   return textNodesCache[0].words.map(w => w.word).join(' ') ?? 'No title';
 }
 
+
 function getNewDocumentData(textNodes: TextNodeTree[], settings: string[]) {
   let parsedData: Record<string, string> = {};
   textNodes.forEach(textNode => {
+    // const nodeTree = createNodeTree(textNode);
     parsedData = extractDataFromNodeTree(textNode, parsedData, settings);
     // console.log("💡💡💡extractDataFromNodeTree => nodeTree", nodeTree);
     // console.log("💡💡💡extractDataFromNodeTree => parsedData", parsedData);
@@ -189,12 +191,14 @@ function getNewDocumentData(textNodes: TextNodeTree[], settings: string[]) {
   return parsedData;
 }
 
+//TODO: разбить функцию
 function saveOrUpdateDocument(textNodes: TextNodeTree[], documents: TDocument[], settings: string[], id: string) {
   let parsedData: Record<string, string> = {};
+
   textNodes.forEach(textNode => {
     parsedData = extractDataFromNodeTree(textNode, parsedData, settings);
     // console.log("💡💡💡extractDataFromNodeTree => nodeTree", nodeTree);
-    // console.log("💡💡💡extractDataFromNodeTree => parsedData", parsedData);
+    console.log("💡💡💡extractDataFromNodeTree => parsedData", parsedData);
   })
 
   const title = getDocumentTitle(textNodes);//nodeTreeArray[0].words.map(w => w.word).join(' ') ?? 'No title';
@@ -245,23 +249,23 @@ function createNewDocument(data: Record<string, string>, title: string, openedDo
 function extractDataFromNodeTree(nodeTree: TextNodeTree, totalTree: Record<string, string> = {}, settings: string[]) {
   let filteredTags = [''];
 
-
   nodeTree.words.forEach(({word, tags}) => {
     // const nodeTreeWordsLength = nodeTree.words.length;
 
-    const isTagsRespondSettings = tags.every(item => settings.includes(item));
+    const isTagsRespondSettings = tags.every(item => {
+      console.log("=> word:", word, "=> word-tags:", item, "=> settings", settings, settings.includes(item))
+      return settings.includes(item)
+    });
     if (isTagsRespondSettings) {
       filteredTags = tags;
     }
-    // console.log(isTagsRespondSettings ? "included =>" : "skipped =>", word, ':', tags, ":", settings);//TODO: Все tags, word, tags, Содержатся в settings
-    console.log("=> word: ", word, word.length, '=> tags: ', tags);//TODO: Все tags, word, tags, Содержатся в settings
+
+    // console.log("=> word:", word, word.length, '=> tags:', tags, 'filteredTags:', filteredTags);//TODO: Все tags, word, tags, Содержатся в settings
     const key = filteredTags.join(',') || "UNREAD";
 
     if (!totalTree[key]) totalTree[key] = '';
     totalTree[key] += word + ' ';
-
-    // if (index < nodeTreeWordsLength - 1)
-    //   totalTree[key] = totalTree[key].trim();
+    console.log("=> key:", key, "=> totalTree[key]:", totalTree[key])
   })
 
   nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree, settings))

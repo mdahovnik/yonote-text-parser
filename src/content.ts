@@ -16,9 +16,9 @@ const ACT = {
   TEXT_CHANGED: 'TEXT_CHANGED',
   GET_NODE_TREE: 'GET_NODE_TREE'
 }
-const NEUTRAL_TAGS = new Set(["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD', 'PRE']);
-const IGNORED_TAGS = new Set(['BUTTON', 'OPTION']);
-const VALID_CLASS_NAMES = new Set([
+const NEUTRAL_TAGS = ["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD', 'PRE'];
+const IGNORED_TAGS = ['BUTTON', 'OPTION'];
+const VALID_CLASS_NAMES = [
   'notice-block info',
   'ordered_list',
   'bullet_list',
@@ -27,7 +27,7 @@ const VALID_CLASS_NAMES = new Set([
   'columns',
   'code-block',
   // 'scrollable-wrapper table-wrapper'
-])
+]
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   if (message.action === ACT.GET_DOCUMENT_ID) {
@@ -158,9 +158,9 @@ function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
     data: {nodeTree: nodesTree, id: id}
   }, () => {
     if (chrome.runtime.lastError) {
-      console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError);
+      console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError.message);
     } else {
-      console.log("=> ✉️ send message ACT.GET_NODE_TREE:", {nodeTree: nodesTree, id: id})
+      console.log("=> ✉️ send message ACT.GET_NODE_TREE:", JSON.stringify({nodeTree: nodesTree, id: id}, null, 2))
     }
   });
 }
@@ -168,14 +168,14 @@ function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
 
 // рекурсивно обходим текстовый блок документа и строим узловое дерево
 function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
-  const isNodeNameNeutral = NEUTRAL_TAGS.has(nodeElement?.nodeName);
-  const isNodeContainClass = VALID_CLASS_NAMES.has(getNodeNameFromClass(nodeElement));
+  const isNodeNameNeutral = NEUTRAL_TAGS.includes(nodeElement.nodeName);
+  const isNodeContainClass = VALID_CLASS_NAMES.includes(getNodeNameFromClass(nodeElement));
 
   const nodeNames = isNodeNameNeutral
     ? [...parentNodeNames]
     : [...parentNodeNames, isNodeContainClass
       ? getNodeNameFromClass(nodeElement)
-      : nodeElement?.nodeName]
+      : nodeElement.nodeName]
 
   const nodeTreeElement: TextNodeTree = {
     tag: nodeElement.nodeName,
@@ -193,7 +193,7 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
       words.forEach(word => nodeTreeElement.words.push({word, tags: [...new Set(nodeNames)]}));
 
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      if (!IGNORED_TAGS.has(node.nodeName)) {
+      if (!IGNORED_TAGS.includes(node.nodeName)) {
         // рекурсивно обрабатываем вложенные элементы
         nodeTreeElement.children.push(createNodeTree(node, nodeNames));
       }
