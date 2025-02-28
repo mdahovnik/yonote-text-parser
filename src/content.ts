@@ -160,7 +160,7 @@ function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
     if (chrome.runtime.lastError) {
       console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError.message);
     } else {
-      console.log("=> ✉️ send message ACT.GET_NODE_TREE:", JSON.stringify({nodeTree: nodesTree, id: id}, null, 2))
+      console.log("=> ✉️ send message ACT.GET_NODE_TREE:", {nodeTree: nodesTree, id: id})// JSON.stringify({nodeTree: nodesTree, id: id}, null, 2))
     }
   });
 }
@@ -217,3 +217,4 @@ function getOpenedDocumentId() {
   const mainDocContainer = document.getElementsByClassName("main-document-container");
   return mainDocContainer[0]?.getAttribute("id") || crypto.randomUUID();
 }
+//saveOrUpdateDocument

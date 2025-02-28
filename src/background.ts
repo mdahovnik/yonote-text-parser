@@ -8,8 +8,9 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-let textNodesCache: TextNodeTree[] = [];
-let openedDocumentId = "";
+
+let textNodesCache: TextNodeTree[] = [];// Структура текстовых узлов кешируемая в live-режиме из content-script
+let currentDocumentId = "";
 let currentDocument: TDocument | null = null;
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
@@ -17,32 +18,22 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   if (message.action === ACT.GET_NODE_TREE) {
     console.log("🟢 ACT.", message.action);
 
-    textNodesCache = [];
-    currentDocument = null;
     textNodesCache = message.data.nodeTree ?? [];
-    openedDocumentId = message.data.id;
-    console.log(`=> textNodesCache received ${new Date().toLocaleTimeString()}on ACT.GET_NODE_TREE:`, JSON.stringify(message.data.nodeTree, null, 2));
+    currentDocumentId = message.data.id;
 
     chrome.storage.local.get(["settings"], (storage: TStorage) => {
       if (!storage.settings) {
-        console.error("Ошибка получения настроек из storageLocal");
+        console.error("Ошибка при получении settings из storageLocal по ACT.GET_NODE_TREE");
         return;
       }
 
-      const currentSettings = storage.settings;//message.data.newSettings || storage.settings;
-
-      let settingsDataSet: string[] = Object.values(currentSettings)
-        .flatMap(array => array.filter(item => item.isAllowed)
-          .map(item => item.tagName).flat());
-
-      console.log("=> settingsDataSet: ", settingsDataSet);
-
-      const parsedData = getNewDocumentData(textNodesCache, settingsDataSet);
-      const title = getDocumentTitle(textNodesCache);
-      currentDocument = createNewDocument(parsedData, title, openedDocumentId);
+      const normalizeSettingsString = normalizeSettings(storage.settings)
+      const parsedDocumentData = parseNewDocumentData(textNodesCache, normalizeSettingsString);
+      const documentTitle = getDocumentTitle(textNodesCache);
+      currentDocument = createNewDocument(parsedDocumentData, documentTitle, currentDocumentId);
 
       // вывод счетчика на иконку
-      setBadge(currentDocument, currentSettings);
+      setBadge(currentDocument, storage.settings);
 
       sendResponse({});
       console.log("🟥 ACT.", message.action);
@@ -55,20 +46,27 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     if (!textNodesCache.length) return;
 
     chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
-      // if (!storage.documents) return;
-      // console.log("=> textBoxNodes in SAVE_DOCUMENT: ", textNodesCache);
+      const documents = storage.documents;
 
-      const currentSettings = storage.settings;//message.data.newSettings || storage.settings;
+      const normalizeSettingsString = normalizeSettings(storage.settings);
+      const parsedDocumentData = parseNewDocumentData(textNodesCache, normalizeSettingsString);
+      const documentTitle = getDocumentTitle(textNodesCache);
 
-      let settingsDataSet: string[] = Object.values(currentSettings)
-        .flatMap(array => array.filter(item => item.isAllowed)
-          .map(item => item.tagName).flat());
+      currentDocument = createNewDocument(parsedDocumentData, documentTitle, currentDocumentId);
 
-      console.log("=> settingsDataSet: ", settingsDataSet);
-      const documents = saveOrUpdateDocument(textNodesCache, storage.documents, settingsDataSet, openedDocumentId);
+      const foundDocument = findDocumentById(documents, currentDocumentId);
+
+      //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
+      if (foundDocument) {
+        documents.splice(documents.indexOf(foundDocument), 1, currentDocument);
+        console.log("️🗘 UPDATED document (exists): ", documentTitle)
+      } else {
+        documents.push(currentDocument);
+        console.log("️️💾  SAVED document (new): ", documentTitle)
+      }
 
       chrome.storage.local.set({"documents": documents}, () => {
-        console.log("=> 🎯 storageLocal is updated on ACT.SAVE_DOCUMENT: ", documents);
+        console.log("🎯 storageLocal is updated on ACT.SAVE_DOCUMENT: ", documents);
         sendResponse(storage.documents);
       });
       console.log("🟥 ACT.", message.action);
@@ -125,22 +123,28 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     console.log("🟢ACT.", message.action);
 
     const newSettings = message.data.newSettings;
+
     chrome.storage.local.set({"settings": newSettings}, () => {
       chrome.storage.local.get(["settings"], (storage: TStorage) => {
-        // const parsedData = storage.documents[0]?.parsedData;
-        // let {words, symbols} = getApplySettingsTotal(parsedData, 'STRONG');
-        // sendResponse({savedSettings: storage.settings, words: words, symbols: symbols});
         sendResponse(storage.settings);
         console.log("🟥 ACT.", message.action);
       })
     })
   }
-
   return true;
 });
 
 
-function setBadge(document: TDocument, currentSettings: TSettingList) {
+function normalizeSettings(settings: TSettingList) {
+  return Object.values(settings)
+    .flatMap(array => array.filter(item => item.isAllowed)
+      .map(item => item.tagName).flat());
+}
+
+
+function setBadge(document: TDocument | null, currentSettings: TSettingList) {
+  if (!document) return;
+
   const count = Object.values(currentSettings.count).find(count => count.isAllowed);
 
   chrome.action.setBadgeText({
@@ -179,59 +183,21 @@ function getDocumentTitle(textNodesCache: TextNodeTree[]) {
 }
 
 
-function getNewDocumentData(textNodes: TextNodeTree[], settings: string[]) {
+function parseNewDocumentData(textNodes: TextNodeTree[], settings: string[]) {
   let parsedData: Record<string, string> = {};
   textNodes.forEach(textNode => {
-    // const nodeTree = createNodeTree(textNode);
     parsedData = extractDataFromNodeTree(textNode, parsedData, settings);
-    // console.log("💡💡💡extractDataFromNodeTree => nodeTree", nodeTree);
-    // console.log("💡💡💡extractDataFromNodeTree => parsedData", parsedData);
   })
-
   return parsedData;
-}
-
-//TODO: разбить функцию
-function saveOrUpdateDocument(textNodes: TextNodeTree[], documents: TDocument[], settings: string[], id: string) {
-  let parsedData: Record<string, string> = {};
-
-  textNodes.forEach(textNode => {
-    parsedData = extractDataFromNodeTree(textNode, parsedData, settings);
-    // console.log("💡💡💡extractDataFromNodeTree => nodeTree", nodeTree);
-    console.log("💡💡💡extractDataFromNodeTree => parsedData", parsedData);
-  })
-
-  const title = getDocumentTitle(textNodes);//nodeTreeArray[0].words.map(w => w.word).join(' ') ?? 'No title';
-  console.log("=> document title: ", title)
-  const newDocument = createNewDocument(parsedData, title, id);
-
-
-  //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные, нет - сохраняем в хранилище
-  const foundDocument = findDocumentById(documents, id);
-
-  if (foundDocument) {
-    documents.splice(documents.indexOf(foundDocument), 1, newDocument);
-    console.log("=>️ document exists (UPDATED): ", title)
-  } else {
-    documents.push(newDocument);
-    console.log("️=>️  document is new (SAVED): ", title)
-  }
-
-  return documents;
 }
 
 
 function findDocumentById(documents: TDocument[], id: string) {
-  // const foundDocument = documents.find((document) => document.id === id);
-  // if (!foundDocument) {
-  //   console.error(`Не найден документ с id: ${id}`);
-  // }
   return documents.find((document) => document.id === id) || null;
 }
 
 
 function createNewDocument(data: Record<string, string>, title: string, openedDocumentId: string): TDocument {
-  // const id = getOpenedDocumentId();
   const {words, symbols, raw} = getTotalsFromRecordType(data);
   return {
     id: openedDocumentId,
@@ -250,22 +216,17 @@ function extractDataFromNodeTree(nodeTree: TextNodeTree, totalTree: Record<strin
   let filteredTags = [''];
 
   nodeTree.words.forEach(({word, tags}) => {
-    // const nodeTreeWordsLength = nodeTree.words.length;
-
     const isTagsRespondSettings = tags.every(item => {
-      console.log("=> word:", word, "=> word-tags:", item, "=> settings", settings, settings.includes(item))
+      // console.log("=> word:", word, "=> word-tags:", item, "=> settings", settings, settings.includes(item))
       return settings.includes(item)
     });
-    if (isTagsRespondSettings) {
-      filteredTags = tags;
-    }
 
-    // console.log("=> word:", word, word.length, '=> tags:', tags, 'filteredTags:', filteredTags);//TODO: Все tags, word, tags, Содержатся в settings
+    if (isTagsRespondSettings) filteredTags = tags;
+
     const key = filteredTags.join(',') || "UNREAD";
 
     if (!totalTree[key]) totalTree[key] = '';
     totalTree[key] += word + ' ';
-    console.log("=> key:", key, "=> totalTree[key]:", totalTree[key])
   })
 
   nodeTree.children.forEach(child => extractDataFromNodeTree(child, totalTree, settings))

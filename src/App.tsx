@@ -92,8 +92,8 @@ function App() {
       if (chrome.runtime.lastError) {
         console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError);
       } else {
-        console.log("********* settings are saved", savedSettings);
         setSettings(savedSettings);
+        console.log("💾 settings are SAVED", savedSettings);
       }
     })
   }
@@ -109,20 +109,19 @@ function App() {
         console.error("Ошибка при сохранении документа:", chrome.runtime.lastError);
       } else {
         setDocuments(documents);
-        // console.log("💡 document is saved");
+        console.log("💾 document is SAVED");
       }
       // chrome.runtime.sendMessage({action: ACT.SET_BADGE, data: {words: documents[0].words}})//TODO: вывод счетчика на иконку
     })
   }
 
   const handleClearClick = () => {
-    chrome.runtime.sendMessage({action: ACT.CLEAR_RECORDS}, (documents: TDocument[]) => {
+    chrome.runtime.sendMessage({action: ACT.CLEAR_RECORDS}, () => {
       if (chrome.runtime.lastError) {
         console.error("Ошибка при удалении всех документов:", chrome.runtime.lastError);
       } else {
-        if (!documents)
-          setDocuments([]);
-        // console.log("💡 all documents are deleted")
+        setDocuments([]);
+        console.log("🗑️ all documents are DELETED")
       }
     })
   }
@@ -133,7 +132,7 @@ function App() {
         console.error("Ошибка при удалении документа по id:", chrome.runtime.lastError);
       } else {
         setDocuments(documents);
-        // console.log("💡️ document is deleted by id", id);
+        console.log("🗑️ document is DELETED BY ID", id);
       }
     })
   }
