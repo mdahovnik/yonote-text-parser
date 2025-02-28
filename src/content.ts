@@ -44,9 +44,11 @@ waitForOpenNewDocument(() => {
   });
 });
 
+// отслеживаем изменения в document.head, это говорит о том что изменился документ для редактирования
+// этот observer работает постоянно
 function waitForOpenNewDocument(callback: Function) {
   const observer = new MutationObserver((mutations) => {
-    console.log('🟢 NewDocument_Observer')
+    console.log('🟢 NewDocument_Observer working...')
     console.log("=> new document is opened: ", mutations);
     callback();
   })
@@ -54,63 +56,69 @@ function waitForOpenNewDocument(callback: Function) {
   observer.observe(document.head, {childList: true, subtree: false, attributes: false, characterData: false});
 }
 
-
+// ищем блок с class='hrehUE'
 function waitForDocumentContainer(selector: string, callback: (element: HTMLElement) => void) {
   const element = document.querySelector(selector);
   if (element) {
     callback(element as HTMLElement);
-    console.log("💡element hrehUE are found in DOM:", element);
+    console.log("=> element with class='hrehUE' are found in DOM:", element);
     return;
   }
 
   const observer = new MutationObserver((mutations) => {
-    console.log('🟢 DocumentContainer_Observer')
-    mutations.forEach((mutation) => {
+    console.log('🟢 DocumentContainer_Observer working...')
+    for (const mutation of mutations) {
       mutation.addedNodes.forEach((node) => {
         if (node instanceof HTMLElement && node.matches(selector)) {
           callback(node);
-          console.log("💡element hrehUE are found: ", node);
+          console.log("=> element with class='hrehUE' are found:", node);
           observer.disconnect();
-          console.log('🟥 DocumentContainer_Observer');
+          console.log('🟥 DocumentContainer_Observer stopped');
         }
       })
-    })
+    }
   })
 
   observer.observe(document.body, {childList: true, subtree: true});
 }
 
 
+// наблюдаем за блоком с class='hrehUE' и ждем монтирования текстовых узлов с атрибутом role="textbox"
 function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[]) => void) {
   const documentId = getOpenedDocumentId();
+  let debounceTimer: number | null = null;
 
   const observer = new MutationObserver(() => {
-    console.log('🟢 TextBoxes_Observer')
+    console.log('🟢 TextBoxes_Observer working...')
+    if (debounceTimer) clearTimeout(debounceTimer);
+
     const textBoxNodes = element.querySelectorAll('[role="textbox"]');
-
     let nodesTree: TextNodeTree[] = [];
-    // if (textBoxNodes.length > 1) {
-    for (const textBoxNode of textBoxNodes)
-      nodesTree.push(createNodeTree(textBoxNode));
 
-    callback(Array.from(textBoxNodes));
-    console.log('💡textBoxNodes are found: ', textBoxNodes);
+    // 300мс для нахождения всех текстовых узлов
+    debounceTimer = setTimeout(() => {
+      for (const textBoxNode of textBoxNodes) {
+        nodesTree.push(createNodeTree(textBoxNode));
+      }
 
-    // observer.disconnect();
-    // console.log('🟥 TextBoxes_Observer')
-    sendNodesTree(nodesTree, documentId);
-    // }
+      callback(Array.from(textBoxNodes));
+      sendNodesTree(nodesTree, documentId);
+      observer.disconnect();
+
+      console.log('=> textBoxNodes are found:', textBoxNodes);
+      console.log('🟥 TextBoxes_Observer stopped');
+    }, 300)
+
   });
 
   observer.observe(element, {childList: true, subtree: true});
-  console.log("👀 watching for textBoxes changes...");
 }
 
 
-// Функция для запуска наблюдателя
+// наблюдаем за всеми текстовыми узлами в элементах с атрибутом role="textbox"
 function watchForTextChanges(textBoxNodes: Node[]) {
   if (!textBoxNodes || textBoxNodes.length === 0) {
-    console.warn("⚠️ No text nodes provided for observation.");
+    console.warn("⚠️ no text nodes for observation.");
     return null;
   }
 
@@ -118,22 +126,21 @@ function watchForTextChanges(textBoxNodes: Node[]) {
   let debounceTimer: number | null = null;
 
   const observer = new MutationObserver((mutations) => {
-    console.log('🟢 TextChanges_Observer');
+    console.log('👀 TextChanges_Observer working...');
 
     let nodesTree: TextNodeTree[] = [];
-
     if (debounceTimer) clearTimeout(debounceTimer);
 
+    // мутации текстовых узлов формируем с задержкой 200мс
     debounceTimer = setTimeout(() => {
       for (const mutation of mutations) {
-        if (mutation.target.TEXT_NODE) {
-          for (const textBoxNode of textBoxNodes) {
-            nodesTree.push(createNodeTree(textBoxNode));
-          }
-          console.log("✏️ CHANGED_TEXT: ", mutation.target.nodeValue);//, mutation.target.nodeValue
-          sendNodesTree(nodesTree, documentId);
+        console.log("✏️", mutation.target.nodeValue);
+
+        for (const textBoxNode of textBoxNodes) {
+          nodesTree.push(createNodeTree(textBoxNode));
         }
       }
+      sendNodesTree(nodesTree, documentId);
     }, 200)
   })
 
@@ -141,7 +148,6 @@ function watchForTextChanges(textBoxNodes: Node[]) {
   for (const textBoxNode of textBoxNodes)
     observer.observe(textBoxNode, {characterData: true, subtree: true});
 
-  console.log("👀 watching for text changes...");
   return observer;
 }
 
@@ -154,7 +160,7 @@ function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
     if (chrome.runtime.lastError) {
       console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError);
     } else {
-      console.log("=>  send message ACT.GET_NODE_TREE: ", {nodeTree: nodesTree, id: id})
+      console.log("=> ✉️ send message ACT.GET_NODE_TREE:", {nodeTree: nodesTree, id: id})
     }
   });
 }
@@ -211,32 +217,3 @@ function getOpenedDocumentId() {
   const mainDocContainer = document.getElementsByClassName("main-document-container");
   return mainDocContainer[0]?.getAttribute("id") || crypto.randomUUID();
 }
-
-// function waitForTextboxes(element: HTMLElement, callback: (textBoxes: Node[]) => void) {
-//   const nodes = element.querySelectorAll('[role="textbox"]');
-//   if (nodes.length > 1) {
-//     callback(Array.from(nodes));
-//     console.log("✔️ в DOM найдены textBoxes:", nodes);
-//     return;
-//   }
-//
-//   const textBoxNodes: Node[] = [];
-//   const observer = new MutationObserver((mutations) => {
-//     console.log('🟢 WORKING  waitForTextboxes observer')
-//     for (const mutation of mutations) {
-//       mutation.addedNodes.forEach((node) => {
-//         if (node instanceof HTMLElement && node.hasAttribute("role") && node.getAttribute("role") === "textbox") {
-//           textBoxNodes.push(node)
-//         }
-//       })
-//     }
-//     console.log("textBoxNodes", textBoxNodes.length)
-//     if (textBoxNodes.length > 1) {
-//       callback(Array.from(textBoxNodes));
-//       console.log("✔️ найдены textBoxes:", textBoxNodes);
-//       observer.disconnect();
-//       console.log('🟥 STOP waitForTextboxes observer')
-//     }
-//   });
-//   observer.observe(element, {childList: true, subtree: true});
-// }
