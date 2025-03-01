@@ -29,9 +29,12 @@ const VALID_CLASS_NAMES = [
   // 'scrollable-wrapper table-wrapper'
 ]
 
+let toggleH1 = false;
+let toggleH2 = false;
+let toggleH3 = false;
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   if (message.action === ACT.GET_DOCUMENT_ID) {
-    const openedDocumentId = getOpenedDocumentId();
+    const openedDocumentId = getCurrentDocumentId();
     sendResponse(openedDocumentId)
   }
 })
@@ -42,10 +45,11 @@ waitForOpenNewDocument(() => {
       watchForTextChanges(textBoxes);
     });
   });
+
 });
 
-// отслеживаем изменения в document.head, это говорит о том что изменился документ для редактирования
-// этот observer работает постоянно
+// Отслеживаем изменения в document.head, мутации в head происходят только
+// при выборе нового документа для редактирования. Этот observer работает постоянно и каскадно запускает остальные.
 function waitForOpenNewDocument(callback: Function) {
   const observer = new MutationObserver((mutations) => {
     console.log('🟢 NewDocument_Observer working...')
@@ -56,7 +60,8 @@ function waitForOpenNewDocument(callback: Function) {
   observer.observe(document.head, {childList: true, subtree: false, attributes: false, characterData: false});
 }
 
-// ищем блок с class='hrehUE'
+// Ищем блок с class='hrehUE', он при обновлении документа мутирует и его можно отследить обзёрвером
+// После обнаружения блока дисконнектим его.
 function waitForDocumentContainer(selector: string, callback: (element: HTMLElement) => void) {
   const element = document.querySelector(selector);
   if (element) {
@@ -82,10 +87,10 @@ function waitForDocumentContainer(selector: string, callback: (element: HTMLElem
   observer.observe(document.body, {childList: true, subtree: true});
 }
 
-
-// наблюдаем за блоком с class='hrehUE' и ждем монтирования текстовых узлов с атрибутом role="textbox"
+// В блоке с class='hrehUE' ждем монтирования нод с атрибутом role="textbox".
+// В них находятся все текстовые узлы документа. После обнаружения блока дисконнектим его.
 function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[]) => void) {
-  const documentId = getOpenedDocumentId();
+  const documentId = getCurrentDocumentId();
   let debounceTimer: number | null = null;
 
   const observer = new MutationObserver(() => {
@@ -114,15 +119,15 @@ function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[])
   observer.observe(element, {childList: true, subtree: true});
 }
 
-
-// наблюдаем за всеми текстовыми узлами в элементах с атрибутом role="textbox"
+// Наблюдаем за всеми текстовыми узлами в элементах с атрибутом role="textbox".
+// И в лайф-режиме фиксируем изменения.
 function watchForTextChanges(textBoxNodes: Node[]) {
   if (!textBoxNodes || textBoxNodes.length === 0) {
     console.warn("⚠️ no text nodes for observation.");
     return null;
   }
 
-  const documentId = getOpenedDocumentId();
+  const documentId = getCurrentDocumentId();
   let debounceTimer: number | null = null;
 
   const observer = new MutationObserver((mutations) => {
@@ -151,7 +156,7 @@ function watchForTextChanges(textBoxNodes: Node[]) {
   return observer;
 }
 
-
+// Отправляем дерево текстовых узлов спарсенного в background-script
 function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
   chrome.runtime.sendMessage({
     action: ACT.GET_NODE_TREE,
@@ -160,18 +165,17 @@ function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
     if (chrome.runtime.lastError) {
       console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError.message);
     } else {
-      console.log("=> ✉️ send message ACT.GET_NODE_TREE:", {nodeTree: nodesTree, id: id})// JSON.stringify({nodeTree: nodesTree, id: id}, null, 2))
+      console.log("✉️ send message ACT.GET_NODE_TREE:", {nodeTree: nodesTree, id: id})// JSON.stringify({nodeTree: nodesTree, id: id}, null, 2))
     }
   });
 }
-
 
 // рекурсивно обходим текстовый блок документа и строим узловое дерево
 function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
   const isNodeNameNeutral = NEUTRAL_TAGS.includes(nodeElement.nodeName);
   const isNodeContainClass = VALID_CLASS_NAMES.includes(getNodeNameFromClass(nodeElement));
-
-  const nodeNames = isNodeNameNeutral
+  // console.log("====>", getNodeNameFromClass(nodeElement))
+  let nodeNames = isNodeNameNeutral
     ? [...parentNodeNames]
     : [...parentNodeNames, isNodeContainClass
       ? getNodeNameFromClass(nodeElement)
@@ -183,8 +187,12 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
     children: []
   };
 
+
   nodeElement.childNodes.forEach((node) => {
     if (node.nodeType === Node.TEXT_NODE) {
+      if (nodeNames.includes("H1")) nodeNames = nodeNames.filter(name => name === "H1");
+      if (nodeNames.includes("H2")) nodeNames = nodeNames.filter(name => name === "H2");
+      if (nodeNames.includes("H3")) nodeNames = nodeNames.filter(name => name === "H3");
 
       // разбиваем текст на слова, фильтром убираем пустые строки и сохраняем их
       const words = node.textContent?.trim().split(/\s+/).filter(w => w) || [];
@@ -194,6 +202,27 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
 
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       if (!IGNORED_TAGS.includes(node.nodeName)) {
+
+        if (node.nodeName === "H1") {
+          toggleH1 = true;
+          toggleH2 = false;
+          toggleH3 = false;
+        }
+        if (node.nodeName === "H2") {
+          toggleH1 = false;
+          toggleH2 = true;
+          toggleH3 = false;
+        }
+        if (node.nodeName === "H3") {
+          toggleH1 = false;
+          toggleH2 = false;
+          toggleH3 = true;
+        }
+
+        if (toggleH1) nodeNames.push('H1_toggle_content');
+        if (toggleH2) nodeNames.push('H2_toggle_content');
+        if (toggleH3) nodeNames.push('H3_toggle_content');
+
         // рекурсивно обрабатываем вложенные элементы
         nodeTreeElement.children.push(createNodeTree(node, nodeNames));
       }
@@ -202,7 +231,8 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
   return nodeTreeElement;
 }
 
-
+// Если нода содержит class, то получаем его.
+// Нужны для дальнейшего парсинга с учетом VALID_CLASS_NAMES
 function getNodeNameFromClass(node: Node) {
   if (node instanceof Element) {
     return node.classList.length > 0
@@ -212,9 +242,7 @@ function getNodeNameFromClass(node: Node) {
     return node.nodeName;
 }
 
-
-function getOpenedDocumentId() {
+function getCurrentDocumentId() {
   const mainDocContainer = document.getElementsByClassName("main-document-container");
   return mainDocContainer[0]?.getAttribute("id") || crypto.randomUUID();
 }
-//saveOrUpdateDocument

@@ -5,14 +5,12 @@ import {MainPage} from "./components/mainPage.tsx";
 import {TDocument, TSettingList} from "./types.ts";
 import {ACT, appSettings} from "./constants.ts";
 
-
 async function getTabId() {
   const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
   return tab?.id as number;
 }
 
 async function fetchFromLocalStorage<T>(actionType: keyof typeof ACT) {
-  // const tabId = await getTabId()
   return new Promise<T>((resolve, reject) => {
     chrome.runtime.sendMessage({action: actionType}, (data: T) => {
       if (chrome.runtime.lastError) {
@@ -74,6 +72,15 @@ function App() {
         setDocumentId(id));
   }, [])
 
+  // function handleSendMessage(successMessage: string, callback: () => void) {
+  //   if (chrome.runtime.lastError) {
+  //     console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError.message);
+  //   } else {
+  //     callback();
+  //     console.log(successMessage);
+  //   }
+  // }
+
   const handleSettingsChange = (category: keyof TSettingList, label: string) => {
     const updatedSettings = {
       ...settings,
@@ -88,12 +95,13 @@ function App() {
     chrome.runtime.sendMessage({
       action: ACT.SAVE_SETTINGS,
       data: {newSettings: {...updatedSettings}}
-    }, (savedSettings: TSettingList) => {
+    }, (data: { savedDocuments: TDocument[], savedSettings: TSettingList }) => {
       if (chrome.runtime.lastError) {
         console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError);
       } else {
-        setSettings(savedSettings);
-        console.log("💾 settings are SAVED", savedSettings);
+        setSettings(data.savedSettings);
+        setDocuments(data.savedDocuments);
+        console.log("💾 settings are SAVED", data.savedSettings);
       }
     })
   }
@@ -111,7 +119,6 @@ function App() {
         setDocuments(documents);
         console.log("💾 document is SAVED");
       }
-      // chrome.runtime.sendMessage({action: ACT.SET_BADGE, data: {words: documents[0].words}})//TODO: вывод счетчика на иконку
     })
   }
 
