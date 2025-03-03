@@ -16,6 +16,7 @@ import {ACT} from "./constants.ts";
 export type TDocument = {
   id: string,
   parsedData: Record<string, string>,
+  settings: string[],
   raw: string,
   symbols: number,
   time: string,

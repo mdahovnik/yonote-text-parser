@@ -20,18 +20,23 @@ const NEUTRAL_TAGS = ["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD', 'PRE'];
 const IGNORED_TAGS = ['BUTTON', 'OPTION'];
 const VALID_CLASS_NAMES = [
   'notice-block info',
+  "notice-block warning",
+  "notice-block tip",
   'ordered_list',
   'bullet_list',
   'toggle',
   'checkbox_list',
   'columns',
-  'code-block',
+  'code-block'
   // 'scrollable-wrapper table-wrapper'
 ]
 
-let toggleH1 = false;
-let toggleH2 = false;
-let toggleH3 = false;
+// let toggleH1 = false;
+// let toggleH2 = false;
+// let toggleH3 = false;
+
+let currentToggle: "H1" | "H2" | "H3" | null = null;
+
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   if (message.action === ACT.GET_DOCUMENT_ID) {
     const openedDocumentId = getCurrentDocumentId();
@@ -102,6 +107,10 @@ function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[])
 
     // 300мс для нахождения всех текстовых узлов
     debounceTimer = setTimeout(() => {
+      // toggleH1 = false;
+      // toggleH2 = false;
+      // toggleH3 = false;
+      currentToggle = null;
       for (const textBoxNode of textBoxNodes) {
         nodesTree.push(createNodeTree(textBoxNode));
       }
@@ -138,6 +147,10 @@ function watchForTextChanges(textBoxNodes: Node[]) {
 
     // мутации текстовых узлов формируем с задержкой 200мс
     debounceTimer = setTimeout(() => {
+      // toggleH1 = false;
+      // toggleH2 = false;
+      // toggleH3 = false;
+      currentToggle = null;
       for (const mutation of mutations) {
         console.log("✏️", mutation.target.nodeValue);
 
@@ -163,9 +176,12 @@ function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
     data: {nodeTree: nodesTree, id: id}
   }, () => {
     if (chrome.runtime.lastError) {
-      console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError.message);
+      console.error("Ошибка при отправке сообщения ACT.GET_NODE_TREE:", chrome.runtime.lastError.message);
     } else {
-      console.log("✉️ send message ACT.GET_NODE_TREE:", {nodeTree: nodesTree, id: id})// JSON.stringify({nodeTree: nodesTree, id: id}, null, 2))
+      console.log("✉️ send message ACT.GET_NODE_TREE:", {
+        nodeTree: nodesTree,
+        id: id
+      }, JSON.stringify({nodeTree: nodesTree, id: id}, null, 2))
     }
   });
 }
@@ -190,9 +206,9 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
 
   nodeElement.childNodes.forEach((node) => {
     if (node.nodeType === Node.TEXT_NODE) {
-      if (nodeNames.includes("H1")) nodeNames = nodeNames.filter(name => name === "H1");
-      if (nodeNames.includes("H2")) nodeNames = nodeNames.filter(name => name === "H2");
-      if (nodeNames.includes("H3")) nodeNames = nodeNames.filter(name => name === "H3");
+
+      if (currentToggle && nodeNames.includes(currentToggle))
+        nodeNames = nodeNames.filter(name => name === currentToggle);
 
       // разбиваем текст на слова, фильтром убираем пустые строки и сохраняем их
       const words = node.textContent?.trim().split(/\s+/).filter(w => w) || [];
@@ -203,31 +219,47 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       if (!IGNORED_TAGS.includes(node.nodeName)) {
 
-        if (node.nodeName === "H1") {
-          toggleH1 = true;
-          toggleH2 = false;
-          toggleH3 = false;
-        }
-        if (node.nodeName === "H2") {
-          toggleH1 = false;
-          toggleH2 = true;
-          toggleH3 = false;
-        }
-        if (node.nodeName === "H3") {
-          toggleH1 = false;
-          toggleH2 = false;
-          toggleH3 = true;
+        // if (node.nodeName === "H1") {
+        //   toggleH1 = true;
+        //   toggleH2 = false;
+        //   toggleH3 = false;
+        // }
+        // if (node.nodeName === "H2") {
+        //   toggleH1 = false;
+        //   toggleH2 = true;
+        //   toggleH3 = false;
+        // }
+        // if (node.nodeName === "H3") {
+        //   toggleH1 = false;
+        //   toggleH2 = false;
+        //   toggleH3 = true;
+        // }
+        //
+        // if (toggleH1) nodeNames.push('H1_toggle_content');
+        // if (toggleH2) nodeNames.push('H2_toggle_content');
+        // if (toggleH3) nodeNames.push('H3_toggle_content');
+
+        switch (node.nodeName) {
+          case "H1":
+            currentToggle = "H1";
+            break;
+          case "H2":
+            currentToggle = "H2";
+            break;
+          case "H3":
+            currentToggle = "H3";
+            break;
         }
 
-        if (toggleH1) nodeNames.push('H1_toggle_content');
-        if (toggleH2) nodeNames.push('H2_toggle_content');
-        if (toggleH3) nodeNames.push('H3_toggle_content');
+        if (currentToggle)
+          nodeNames.push(`${currentToggle}_toggle_content`);
 
         // рекурсивно обрабатываем вложенные элементы
         nodeTreeElement.children.push(createNodeTree(node, nodeNames));
       }
     }
   })
+
   return nodeTreeElement;
 }
 
@@ -246,3 +278,25 @@ function getCurrentDocumentId() {
   const mainDocContainer = document.getElementsByClassName("main-document-container");
   return mainDocContainer[0]?.getAttribute("id") || crypto.randomUUID();
 }
+
+//TODO: рассмотреть этот вариант.
+//Если только один из флагов (H1, H2, H3) может быть активен одновременно,
+// можно использовать одну переменную для хранения текущего состояния:
+//
+// let currentToggle = null; // Может быть "H1", "H2", "H3" или null
+//
+// switch (node.nodeName) {
+//   case "H1":
+//     currentToggle = "H1";
+//     break;
+//   case "H2":
+//     currentToggle = "H2";
+//     break;
+//   case "H3":
+//     currentToggle = "H3";
+//     break;
+// }
+//
+// if (currentToggle) {
+//   nodeNames.push(`${currentToggle}_toggle_content`);
+// }

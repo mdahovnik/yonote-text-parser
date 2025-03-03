@@ -50,11 +50,26 @@ export function MainPage(
         </div>
         {
           (() => {
-            const buttonType = data.length > 0 && data.some(item => item.id === documentId) ? "sync" : "plus";
-            return <ButtonAction onClick={onPlusClick}
-                                 id={"add-record"}
-                                 type={buttonType}
-                                 isActive={isActive}/>
+            const currentSettings = Object.values(settings)
+              .flatMap(array => array.filter(item => item.isAllowed))
+              .map(item => item.tagName)
+              .flat();
+
+            if (data.length === 0 || !data.some(item => item.id === documentId)) {
+              return <ButtonAction onClick={onPlusClick}
+                                   id={"add-record"}
+                                   type={"plus"}
+                                   isActive={isActive}/>
+            } else if (
+              data.some(item => item.id === documentId
+                && JSON.stringify(item.settings) !== JSON.stringify(currentSettings))) {
+              return <ButtonAction onClick={onPlusClick}
+                                   id={"add-record"}
+                                   type={"sync"}
+                                   isActive={isActive}/>
+            } else {
+              return <div></div>
+            }
           })()
         }
       </div>
@@ -80,7 +95,7 @@ export function MainPage(
                   const isCountWordsAllowed = settings.count.find((item) => item.label === "Words")?.isAllowed;
                   return (
                     <ButtonAction className={"record-counter"}
-                                  text={isCountWordsAllowed ? `Words:${words}` : `Symbols:${symbols}`}
+                                  text={isCountWordsAllowed ? `Words: ${words}` : `Symbols: ${symbols}`}
                                   onClick={() => handleCopyClick(isCountWordsAllowed ? words : symbols)}
                                   type={"copy"}/>
                   )
