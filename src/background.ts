@@ -8,49 +8,59 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+// chrome.tabs.onActivated.addListener((activeInfo) => {
+//   chrome.tabs.get(activeInfo.tabId, (tab) => {
+//     if (tab.url && tab.url.includes("yonote.ru/doc/")) {
+//       console.log("******** chrome.tabs.onActivated.addListener ***********");
+//       chrome.scripting.executeScript({
+//         target: {tabId: activeInfo.tabId},
+//         func: () => {
+//           if (typeof window.startWatchingDocument === "function") {
+//             window.startWatchingDocument();
+//           }else{
+//             console.error("startWatchingDocument не найдена в window!");
+//           }
+//         }
+//       });
+//     }
+//   })
+// })
+
 let textNodesCache: TextNodeTree[] = [];// Для хранения текстовых узлов кешируемых в live-режиме из content-script
 let currentDocumentId = "";
-let currentDocument: TDocument | null = null;
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
   if (message.action === ACT.GET_NODE_TREE) {
-    console.log("🟢 ACT.", message.action);
+    // console.log("🟢 ACT.", message.action);
     textNodesCache = message.data.nodeTree ?? [];
     currentDocumentId = message.data.id;
-
-    chrome.storage.local.get(["settings"], (storage: TStorage) => {
+    console.log("ACT.GET_NODE_TREE*********************", textNodesCache)
+    chrome.storage.local.get("settings", (storage: TStorage) => {
       const storageSettings = storage.settings;
-      currentDocument = getCurrentDocument(textNodesCache, storageSettings, currentDocumentId);
-
-      // вывод счетчика на иконку
+      const currentDocument = getCurrentDocument(textNodesCache, storageSettings, currentDocumentId);
       setBadge(currentDocument, storageSettings);
-      // console.log("🟥 ACT.", message.action);
-      sendResponse({});
+      // sendResponse({});
     });
-    return true;
+    // return true;
   }
 
 
   if (message.action === ACT.SAVE_DOCUMENT) {
     // console.log("🟢 ACT.", message.action);
-    if (!textNodesCache.length) return;
+    // if (!textNodesCache.length) return;
 
     chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
       const storageDocuments = storage.documents;
       const storageSettings = storage.settings;
-
-      currentDocument = getCurrentDocument(textNodesCache, storageSettings, currentDocumentId);
+      const currentDocument = getCurrentDocument(textNodesCache, storageSettings, currentDocumentId);
       const foundDocument = findDocumentById(storageDocuments, currentDocumentId);
 
       //проверяем наличие документа по id в хранилище, если есть - обновляем его, нет - сохраняем новый
-      if (foundDocument) {
+      if (foundDocument)
         storageDocuments.splice(storageDocuments.indexOf(foundDocument), 1, currentDocument);
-        // console.log("️🗘 UPDATED document (exists): ", currentDocument.title)
-      } else {
+      else
         storageDocuments.push(currentDocument);
-        // console.log("️️💾  SAVED document (new): ", currentDocument.title)
-      }
 
       chrome.storage.local.set({"documents": storageDocuments}, () => {
         chrome.storage.local.get(["documents"], (storage: TStorage) => {
@@ -58,52 +68,41 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
           sendResponse(storage.documents);
         });
       });
-      // console.log("🟥 ACT.", message.action);
     });
     return true;
   }
 
   if (message.action === ACT.REMOVE_DOCUMENT) {
     // console.log("🟢ACT.", message.action);
-
     chrome.storage.local.get("documents", (storage: TStorage) => {
       const filteredRecords = storage.documents.filter((document) => document.id !== message.data.id);
       chrome.storage.local.set({"documents": filteredRecords}, () => {
         sendResponse(filteredRecords);
       });
-      // console.log("🟥 ACT.", message.action);
     });
     return true;
   }
 
   if (message.action === ACT.GET_RECORDS) {
     // console.log("🟢ACT.", message.action);
-
     chrome.storage.local.get("documents", (storage: TStorage) => {
-      const records = storage.documents;
-      sendResponse(records);
-      // console.log("🟥 ACT.", message.action);
+      sendResponse(storage.documents);
     })
     return true;
   }
 
   if (message.action === ACT.GET_SETTINGS) {
     // console.log("🟢ACT.", message.action);
-
     chrome.storage.local.get("settings", (storage: TStorage) => {
-      const settings = storage.settings;
-      sendResponse(settings);
-      // console.log("🟥 ACT.", message.action);
+      sendResponse(storage.settings);
     })
     return true;
   }
 
   if (message.action === ACT.CLEAR_RECORDS) {
     // console.log("🟢ACT.", message.action);
-
     chrome.storage.local.set({"documents": []}, () => {
       sendResponse(null);
-      // console.log("🟥 ACT.", message.action);
     })
     return true;
   }
@@ -128,7 +127,6 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
   if (message.action === ACT.SAVE_SETTINGS) {
     // console.log("🟢ACT.", message.action);
-
     const newSettings = message.data.newSettings;
 
     chrome.storage.local.set({"settings": newSettings}, () => {
@@ -136,28 +134,25 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
         const storageDocuments = storage.documents;
         const storageSettings = storage.settings;
 
-        currentDocument = getCurrentDocument(textNodesCache, storageSettings, currentDocumentId);
-
+        const currentDocument = getCurrentDocument(textNodesCache, storageSettings, currentDocumentId);
         setBadge(currentDocument, storageSettings);
 
         //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные и
         // передаем в App.ts для обновления счетчика этого документа в списке
         const foundDocument = findDocumentById(storageDocuments, currentDocumentId);
-        if (foundDocument) {
+
+        if (foundDocument)
           storageDocuments.splice(storageDocuments.indexOf(foundDocument), 1, currentDocument);
-          // console.log(foundDocument.id, currentDocument.id)
-          // console.log("️🗘 UPDATED document (exists)")
-        }
 
         chrome.storage.local.set({"documents": storageDocuments}, () => {
-          // console.log("🎯 storageLocal is updated on ACT.SAVE_DOCUMENT: ", storageDocuments);
-          const data = {
-            savedDocuments: storageDocuments,
-            savedSettings: storageSettings
-          };
-          sendResponse(data);
+          chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
+            const data = {
+              savedDocuments: storage.documents,
+              savedSettings: storage.settings
+            };
+            sendResponse(data);
+          })
         });
-        // console.log("🟥 ACT.", message.action);
       })
     })
     return true;
@@ -267,7 +262,6 @@ function extractDataFromNodeTree(
 
   nodeTree.words.forEach(({word, tags}) => {
     const isTagsRespondSettings = tags.every(item => {
-      // console.log("=> word:", word, "=> word-tags:", item, "=> settings", settings, settings.includes(item))
       return settings.includes(item)
     });
 

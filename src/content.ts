@@ -28,13 +28,7 @@ const VALID_CLASS_NAMES = [
   'checkbox_list',
   'columns',
   'code-block'
-  // 'scrollable-wrapper table-wrapper'
 ]
-
-// let toggleH1 = false;
-// let toggleH2 = false;
-// let toggleH3 = false;
-
 let currentToggle: "H1" | "H2" | "H3" | null = null;
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
@@ -44,14 +38,17 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 })
 
-waitForOpenNewDocument(() => {
-  waitForDocumentContainer(".hrehUE", (element: HTMLElement) => {
-    waitForTextboxes(element, (textBoxes: Node[]) => {
-      watchForTextChanges(textBoxes);
+const startWatchingDocument = () => {
+  waitForOpenNewDocument(() => {
+    waitForDocumentContainer(".hrehUE", (element: HTMLElement) => {
+      waitForTextboxes(element, (textBoxes: Node[]) => {
+        watchForTextChanges(textBoxes);
+      });
     });
   });
+}
 
-});
+startWatchingDocument();
 
 // Отслеживаем изменения в document.head, мутации в head происходят только
 // при выборе нового документа для редактирования. Этот observer работает постоянно и каскадно запускает остальные.
@@ -61,7 +58,6 @@ function waitForOpenNewDocument(callback: Function) {
     console.log("=> new document is opened: ", mutations);
     callback();
   })
-
   observer.observe(document.head, {childList: true, subtree: false, attributes: false, characterData: false});
 }
 
@@ -88,11 +84,10 @@ function waitForDocumentContainer(selector: string, callback: (element: HTMLElem
       })
     }
   })
-
   observer.observe(document.body, {childList: true, subtree: true});
 }
 
-// В блоке с class='hrehUE' ждем монтирования нод с атрибутом role="textbox".
+// В блоке с class='hrehUE' ждем монтирования тегов с атрибутом role="textbox".
 // В них находятся все текстовые узлы документа. После обнаружения блока дисконнектим его.
 function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[]) => void) {
   const documentId = getCurrentDocumentId();
@@ -107,9 +102,6 @@ function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[])
 
     // 300мс для нахождения всех текстовых узлов
     debounceTimer = setTimeout(() => {
-      // toggleH1 = false;
-      // toggleH2 = false;
-      // toggleH3 = false;
       currentToggle = null;
       for (const textBoxNode of textBoxNodes) {
         nodesTree.push(createNodeTree(textBoxNode));
@@ -122,9 +114,7 @@ function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[])
       console.log('=> textBoxNodes are found:', textBoxNodes);
       console.log('🟥 TextBoxes_Observer stopped');
     }, 300)
-
   });
-
   observer.observe(element, {childList: true, subtree: true});
 }
 
@@ -147,15 +137,12 @@ function watchForTextChanges(textBoxNodes: Node[]) {
 
     // мутации текстовых узлов формируем с задержкой 200мс
     debounceTimer = setTimeout(() => {
-      // toggleH1 = false;
-      // toggleH2 = false;
-      // toggleH3 = false;
       currentToggle = null;
       for (const mutation of mutations) {
-        console.log("✏️", mutation.target.nodeValue);
-
-        for (const textBoxNode of textBoxNodes) {
-          nodesTree.push(createNodeTree(textBoxNode));
+        if (mutation.type === 'characterData') {
+          for (const textBoxNode of textBoxNodes) {
+            nodesTree.push(createNodeTree(textBoxNode));
+          }
         }
       }
       sendNodesTree(nodesTree, documentId);
@@ -171,17 +158,11 @@ function watchForTextChanges(textBoxNodes: Node[]) {
 
 // Отправляем дерево текстовых узлов спарсенного в background-script
 function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
-  chrome.runtime.sendMessage({
-    action: ACT.GET_NODE_TREE,
-    data: {nodeTree: nodesTree, id: id}
-  }, () => {
+  chrome.runtime.sendMessage({action: ACT.GET_NODE_TREE, data: {nodeTree: nodesTree, id: id}}, () => {
     if (chrome.runtime.lastError) {
       console.error("Ошибка при отправке сообщения ACT.GET_NODE_TREE:", chrome.runtime.lastError.message);
     } else {
-      console.log("✉️ send message ACT.GET_NODE_TREE:", {
-        nodeTree: nodesTree,
-        id: id
-      }, JSON.stringify({nodeTree: nodesTree, id: id}, null, 2))
+      console.log("✉️ send message ACT.GET_NODE_TREE:", {nodeTree: nodesTree, id: id})//, JSON.stringify({nodeTree: nodesTree, id: id}, null, 2))
     }
   });
 }
@@ -278,25 +259,3 @@ function getCurrentDocumentId() {
   const mainDocContainer = document.getElementsByClassName("main-document-container");
   return mainDocContainer[0]?.getAttribute("id") || crypto.randomUUID();
 }
-
-//TODO: рассмотреть этот вариант.
-//Если только один из флагов (H1, H2, H3) может быть активен одновременно,
-// можно использовать одну переменную для хранения текущего состояния:
-//
-// let currentToggle = null; // Может быть "H1", "H2", "H3" или null
-//
-// switch (node.nodeName) {
-//   case "H1":
-//     currentToggle = "H1";
-//     break;
-//   case "H2":
-//     currentToggle = "H2";
-//     break;
-//   case "H3":
-//     currentToggle = "H3";
-//     break;
-// }
-//
-// if (currentToggle) {
-//   nodeNames.push(`${currentToggle}_toggle_content`);
-// }
