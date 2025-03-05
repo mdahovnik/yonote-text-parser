@@ -64,22 +64,13 @@ function App() {
       .then((data) =>
         setSettings(data));
 
-    fetchFromLocalStorage<TDocument[]>("GET_RECORDS")
+    fetchFromLocalStorage<TDocument[]>("GET_DOCUMENTS")
       .then((data) => setDocuments(data));
 
     fetchDocumentId()
       .then((id) =>
         setDocumentId(id));
   }, [])
-
-  // function handleSendMessage(successMessage: string, callback: () => void) {
-  //   if (chrome.runtime.lastError) {
-  //     console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError.message);
-  //   } else {
-  //     callback();
-  //     console.log(successMessage);
-  //   }
-  // }
 
   const handleSettingsChange = (category: keyof TSettingList, label: string) => {
     const updatedSettings = {

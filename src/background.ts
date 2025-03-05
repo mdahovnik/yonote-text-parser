@@ -8,52 +8,59 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// chrome.tabs.onActivated.addListener((activeInfo) => {
-//   chrome.tabs.get(activeInfo.tabId, (tab) => {
-//     if (tab.url && tab.url.includes("yonote.ru/doc/")) {
-//       console.log("******** chrome.tabs.onActivated.addListener ***********");
-//       chrome.scripting.executeScript({
-//         target: {tabId: activeInfo.tabId},
-//         func: () => {
-//           if (typeof window.startWatchingDocument === "function") {
-//             window.startWatchingDocument();
-//           }else{
-//             console.error("startWatchingDocument не найдена в window!");
-//           }
-//         }
-//       });
-//     }
-//   })
-// })
-
-let textNodesCache: TextNodeTree[] = [];// Для хранения текстовых узлов кешируемых в live-режиме из content-script
+let nodesTreeCache: TextNodeTree[] = [];// Для хранения текстовых узлов кешируемых в live-режиме из content-script
 let currentDocumentId = "";
 
+// для предотвращения автоматической выгрузки Service Worker при отсутствии активных событий после 30сек простоя
+chrome.alarms.create("keepServiceWorkerAlive", {
+  periodInMinutes: 0.5
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "keepServiceWorkerAlive") {
+    console.log("Будим Service Worker");
+  }
+});
+
+// Поскольку текстовые ноды мутируют постоянно и передаются из content.ts сюда в реальном времени для сохранения в nodesTreeCache,
+// используем chrome.runtime.connect(). Это постоянное соединение, в данном случае более оптимизированный и быстрый способ,
+// чем sendMessage(), меньше накладных расходов.
+chrome.runtime.onConnect.addListener((port) => {
+  console.log("Content.ts подключился:", port.name);
+
+  port.onMessage.addListener((message: TMessage) => {
+    if (message.action === ACT.GET_NODE_TREE) {
+      nodesTreeCache = message.data.nodeTree ?? [];
+      currentDocumentId = message.data.id;
+      console.log("ACT.GET_NODE_TREE*********************", message.data.nodeTree?.length, nodesTreeCache, currentDocumentId)
+
+      chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
+        const storageSettings = storage.settings;
+        const storageDocuments = storage.documents;
+        const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
+
+        //TODO: при наборе текста обновляется только бейдж
+        //проверяем наличие документа по id в хранилище, если есть - обновляем его
+        const foundDocument = findDocumentById(storageDocuments, currentDocumentId);
+        if (foundDocument) {
+          storageDocuments.splice(storageDocuments.indexOf(foundDocument), 1, currentDocument);
+          chrome.storage.local.set({"documents": storageDocuments});
+        }
+
+        setBadge(currentDocument, storageSettings);
+      });
+    }
+  });
+})
+
+// для передачи сообщений из App.tsx постоянное соединение не важно, поэтому используем chrome.runtime.onMessage().
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
-  if (message.action === ACT.GET_NODE_TREE) {
-    // console.log("🟢 ACT.", message.action);
-    textNodesCache = message.data.nodeTree ?? [];
-    currentDocumentId = message.data.id;
-    console.log("ACT.GET_NODE_TREE*********************", textNodesCache)
-    chrome.storage.local.get("settings", (storage: TStorage) => {
-      const storageSettings = storage.settings;
-      const currentDocument = getCurrentDocument(textNodesCache, storageSettings, currentDocumentId);
-      setBadge(currentDocument, storageSettings);
-      // sendResponse({});
-    });
-    // return true;
-  }
-
-
   if (message.action === ACT.SAVE_DOCUMENT) {
-    // console.log("🟢 ACT.", message.action);
-    // if (!textNodesCache.length) return;
-
     chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
       const storageDocuments = storage.documents;
       const storageSettings = storage.settings;
-      const currentDocument = getCurrentDocument(textNodesCache, storageSettings, currentDocumentId);
+      const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
       const foundDocument = findDocumentById(storageDocuments, currentDocumentId);
 
       //проверяем наличие документа по id в хранилище, если есть - обновляем его, нет - сохраняем новый
@@ -73,7 +80,6 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 
   if (message.action === ACT.REMOVE_DOCUMENT) {
-    // console.log("🟢ACT.", message.action);
     chrome.storage.local.get("documents", (storage: TStorage) => {
       const filteredRecords = storage.documents.filter((document) => document.id !== message.data.id);
       chrome.storage.local.set({"documents": filteredRecords}, () => {
@@ -83,8 +89,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     return true;
   }
 
-  if (message.action === ACT.GET_RECORDS) {
-    // console.log("🟢ACT.", message.action);
+  if (message.action === ACT.GET_DOCUMENTS) {
     chrome.storage.local.get("documents", (storage: TStorage) => {
       sendResponse(storage.documents);
     })
@@ -92,7 +97,6 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 
   if (message.action === ACT.GET_SETTINGS) {
-    // console.log("🟢ACT.", message.action);
     chrome.storage.local.get("settings", (storage: TStorage) => {
       sendResponse(storage.settings);
     })
@@ -100,30 +104,11 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 
   if (message.action === ACT.CLEAR_RECORDS) {
-    // console.log("🟢ACT.", message.action);
     chrome.storage.local.set({"documents": []}, () => {
       sendResponse(null);
     })
     return true;
   }
-
-  // function updateStorageDocuments(
-  //   storageDocuments: TDocument[],
-  //   currentDocument: TDocument,
-  //   foundDocument: TDocument | null
-  // ) {
-  //   let isSuccess: boolean;
-  //   if (foundDocument) {
-  //     storageDocuments.splice(storageDocuments.indexOf(foundDocument), 1, currentDocument);
-  //     isSuccess = true;
-  //     console.log("️🗘 UPDATED document (exists)")
-  //   } else {
-  //     storageDocuments.push(currentDocument);
-  //     isSuccess = true;
-  //     console.log("️️💾  SAVED document (new)")
-  //   }
-  //   return isSuccess;
-  // }
 
   if (message.action === ACT.SAVE_SETTINGS) {
     // console.log("🟢ACT.", message.action);
@@ -134,22 +119,18 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
         const storageDocuments = storage.documents;
         const storageSettings = storage.settings;
 
-        const currentDocument = getCurrentDocument(textNodesCache, storageSettings, currentDocumentId);
+        const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
         setBadge(currentDocument, storageSettings);
 
         //проверяем наличие документа с таким-же id в хранилище, если есть - обновляем его данные и
         // передаем в App.ts для обновления счетчика этого документа в списке
         const foundDocument = findDocumentById(storageDocuments, currentDocumentId);
-
         if (foundDocument)
           storageDocuments.splice(storageDocuments.indexOf(foundDocument), 1, currentDocument);
 
         chrome.storage.local.set({"documents": storageDocuments}, () => {
           chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
-            const data = {
-              savedDocuments: storage.documents,
-              savedSettings: storage.settings
-            };
+            const data = {savedDocuments: storage.documents, savedSettings: storage.settings};
             sendResponse(data);
           })
         });
@@ -157,20 +138,18 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     })
     return true;
   }
-});
+})
+
 
 function normalizeSettings(settings: TSettingList) {
   return Object.values(settings)
-    .flatMap(array => array.filter(item => item.isAllowed)
-      .map(item => item.tagName).flat());
+    .flatMap(settingsList =>
+      settingsList.filter(item => item.isAllowed)
+        .map(item => item.tagName).flat());
 }
 
-function setBadge(
-  document: TDocument | null,
-  currentSettings: TSettingList
-) {
+function setBadge(document: TDocument | null, currentSettings: TSettingList) {
   if (!document) return;
-
   const count = Object.values(currentSettings.count).find(count => count.isAllowed);
 
   chrome.action.setBadgeText({
@@ -215,10 +194,7 @@ function getDocumentTitle(textNodesCache: TextNodeTree[]) {
   return textNodesCache[0].words.map(w => w.word).join(' ') ?? 'No title';
 }
 
-function parseNewDocumentData(
-  textNodes: TextNodeTree[],
-  settings: string[]
-) {
+function parseNewDocumentData(textNodes: TextNodeTree[], settings: string[]) {
   let parsedData: Record<string, string> = {};
   textNodes.forEach(textNode => {
     parsedData = extractDataFromNodeTree(textNode, parsedData, settings);
@@ -226,10 +202,7 @@ function parseNewDocumentData(
   return parsedData;
 }
 
-function findDocumentById(
-  documents: TDocument[],
-  id: string
-) {
+function findDocumentById(documents: TDocument[], id: string) {
   return documents.find((document) => document.id === id) || null;
 }
 

@@ -4,7 +4,7 @@ console.log("💡 content.ts is running:", document.readyState);
 
 const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
-  GET_RECORDS: 'GET_RECORDS',
+  GET_DOCUMENTS: 'GET_DOCUMENTS',
   GET_SETTINGS: 'GET_SETTINGS',
   GET_DOCUMENT_ID: 'GET_DOCUMENT_ID',
   CLEAR_RECORDS: 'CLEAR_RECORDS',
@@ -29,12 +29,33 @@ const VALID_CLASS_NAMES = [
   'columns',
   'code-block'
 ]
-let currentToggle: "H1" | "H2" | "H3" | null = null;
+let currentHeading: "H1" | "H2" | "H3" | null = null;
+let nodesTree: TextNodeTree[] = [];
 
-chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
+// открываем постоянное соединение которое будем использовать в background.ts
+let port = chrome.runtime.connect({name: "content-to-background"});
+
+port.onDisconnect.addListener(reconnectPort);
+
+function reconnectPort() {
+  setTimeout(() => {
+    port = chrome.runtime.connect({name: "content-to-background"});
+
+    if (port) {
+      port.onDisconnect.addListener(reconnectPort);
+      console.log("Порт переподключен к background...");
+    } else {
+      console.warn("Не удалось перезапустить порт. Пробуем снова...");
+      reconnectPort();
+    }
+  }, 500)
+}
+
+
+chrome.runtime.onMessage.addListener((message: TMessage, {}, sendMessage) => {
   if (message.action === ACT.GET_DOCUMENT_ID) {
     const openedDocumentId = getCurrentDocumentId();
-    sendResponse(openedDocumentId)
+    sendMessage(openedDocumentId)
   }
 })
 
@@ -54,32 +75,30 @@ startWatchingDocument();
 // при выборе нового документа для редактирования. Этот observer работает постоянно и каскадно запускает остальные.
 function waitForOpenNewDocument(callback: Function) {
   const observer = new MutationObserver((mutations) => {
-    console.log('🟢 NewDocument_Observer working...')
+    console.log('🟢 NewDocument_Observer WORKING...')
     console.log("=> new document is opened: ", mutations);
     callback();
   })
   observer.observe(document.head, {childList: true, subtree: false, attributes: false, characterData: false});
 }
 
-// Ищем блок с class='hrehUE', он при обновлении документа мутирует и его можно отследить обзёрвером
-// После обнаружения блока дисконнектим его.
+// Ищем блок с class='hrehUE', он при обновлении документа мутирует и его можно отследить DocumentContainer_Observer
+// После обнаружения блока дисконнектим DocumentContainer_Observer.
 function waitForDocumentContainer(selector: string, callback: (element: HTMLElement) => void) {
   const element = document.querySelector(selector);
   if (element) {
     callback(element as HTMLElement);
-    console.log("=> element with class='hrehUE' are found in DOM:", element);
     return;
   }
 
   const observer = new MutationObserver((mutations) => {
-    console.log('🟢 DocumentContainer_Observer working...')
+    console.log('🟢 DocumentContainer_Observer WORKING...')
     for (const mutation of mutations) {
       mutation.addedNodes.forEach((node) => {
         if (node instanceof HTMLElement && node.matches(selector)) {
           callback(node);
-          console.log("=> element with class='hrehUE' are found:", node);
           observer.disconnect();
-          console.log('🟥 DocumentContainer_Observer stopped');
+          console.log('🟥 DocumentContainer_Observer DISCONNECTED');
         }
       })
     }
@@ -94,15 +113,15 @@ function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[])
   let debounceTimer: number | null = null;
 
   const observer = new MutationObserver(() => {
-    console.log('🟢 TextBoxes_Observer working...')
+    console.log('🟢 TextBoxes_Observer WORKING...')
+
     if (debounceTimer) clearTimeout(debounceTimer);
-
     const textBoxNodes = element.querySelectorAll('[role="textbox"]');
-    let nodesTree: TextNodeTree[] = [];
 
-    // 300мс для нахождения всех текстовых узлов
     debounceTimer = setTimeout(() => {
-      currentToggle = null;
+      currentHeading = null;
+      nodesTree = [];
+
       for (const textBoxNode of textBoxNodes) {
         nodesTree.push(createNodeTree(textBoxNode));
       }
@@ -111,39 +130,35 @@ function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[])
       sendNodesTree(nodesTree, documentId);
       observer.disconnect();
 
-      console.log('=> textBoxNodes are found:', textBoxNodes);
-      console.log('🟥 TextBoxes_Observer stopped');
+      console.log('🟥 TextBoxes_Observer DISCONNECTED');
     }, 300)
   });
   observer.observe(element, {childList: true, subtree: true});
 }
 
-// Наблюдаем за всеми текстовыми узлами в элементах с атрибутом role="textbox".
-// И в лайф-режиме фиксируем изменения.
+// Наблюдаем за всеми текстовыми узлами в элементах с role="textbox" и в режиме реального времени фиксируем изменения в nodesTree.
+// Отправляем nodesTree спарсенного документа в background.ts для сохранения в nodesTreeCache
 function watchForTextChanges(textBoxNodes: Node[]) {
   if (!textBoxNodes || textBoxNodes.length === 0) {
     console.warn("⚠️ no text nodes for observation.");
     return null;
   }
 
+  console.log('=> textBoxNodes are found:', textBoxNodes);
   const documentId = getCurrentDocumentId();
   let debounceTimer: number | null = null;
 
-  const observer = new MutationObserver((mutations) => {
-    console.log('👀 TextChanges_Observer working...');
+  const observer = new MutationObserver(() => {
+    console.log('👀 TextChanges_Observer WORKING...');
 
-    let nodesTree: TextNodeTree[] = [];
     if (debounceTimer) clearTimeout(debounceTimer);
 
-    // мутации текстовых узлов формируем с задержкой 200мс
     debounceTimer = setTimeout(() => {
-      currentToggle = null;
-      for (const mutation of mutations) {
-        if (mutation.type === 'characterData') {
-          for (const textBoxNode of textBoxNodes) {
-            nodesTree.push(createNodeTree(textBoxNode));
-          }
-        }
+      currentHeading = null;
+      nodesTree = [];
+
+      for (const textBoxNode of textBoxNodes) {
+        nodesTree.push(createNodeTree(textBoxNode));
       }
       sendNodesTree(nodesTree, documentId);
     }, 200)
@@ -156,15 +171,9 @@ function watchForTextChanges(textBoxNodes: Node[]) {
   return observer;
 }
 
-// Отправляем дерево текстовых узлов спарсенного в background-script
+
 function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
-  chrome.runtime.sendMessage({action: ACT.GET_NODE_TREE, data: {nodeTree: nodesTree, id: id}}, () => {
-    if (chrome.runtime.lastError) {
-      console.error("Ошибка при отправке сообщения ACT.GET_NODE_TREE:", chrome.runtime.lastError.message);
-    } else {
-      console.log("✉️ send message ACT.GET_NODE_TREE:", {nodeTree: nodesTree, id: id})//, JSON.stringify({nodeTree: nodesTree, id: id}, null, 2))
-    }
-  });
+  port.postMessage({action: ACT.GET_NODE_TREE, data: {nodeTree: nodesTree, id: id}});
 }
 
 // рекурсивно обходим текстовый блок документа и строим узловое дерево
@@ -188,8 +197,8 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
   nodeElement.childNodes.forEach((node) => {
     if (node.nodeType === Node.TEXT_NODE) {
 
-      if (currentToggle && nodeNames.includes(currentToggle))
-        nodeNames = nodeNames.filter(name => name === currentToggle);
+      if (currentHeading && nodeNames.includes(currentHeading))
+        nodeNames = nodeNames.filter(name => name === currentHeading);
 
       // разбиваем текст на слова, фильтром убираем пустые строки и сохраняем их
       const words = node.textContent?.trim().split(/\s+/).filter(w => w) || [];
@@ -222,18 +231,18 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
 
         switch (node.nodeName) {
           case "H1":
-            currentToggle = "H1";
+            currentHeading = "H1";
             break;
           case "H2":
-            currentToggle = "H2";
+            currentHeading = "H2";
             break;
           case "H3":
-            currentToggle = "H3";
+            currentHeading = "H3";
             break;
         }
 
-        if (currentToggle)
-          nodeNames.push(`${currentToggle}_toggle_content`);
+        if (currentHeading)
+          nodeNames.push(`${currentHeading}_toggle_content`);
 
         // рекурсивно обрабатываем вложенные элементы
         nodeTreeElement.children.push(createNodeTree(node, nodeNames));
@@ -244,8 +253,8 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
   return nodeTreeElement;
 }
 
-// Если нода содержит class, то получаем его.
-// Нужны для дальнейшего парсинга с учетом VALID_CLASS_NAMES
+// Если нода содержит class, то получаем его и сохраняем в массив тегов, они нужны для дальнейшего парсинга
+// с учетом VALID_CLASS_NAMES
 function getNodeNameFromClass(node: Node) {
   if (node instanceof Element) {
     return node.classList.length > 0

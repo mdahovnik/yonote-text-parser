@@ -34,7 +34,8 @@
     "webNavigation",
     "activeTab",
     "storage",
-    "scripting"
+    "scripting",
+    "alarms"
   ]
 }
 

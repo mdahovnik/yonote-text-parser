@@ -54,6 +54,10 @@ export function MainPage(
               .flatMap(array => array.filter(item => item.isAllowed))
               .map(item => item.tagName)
               .flat();
+            //TODO: убрать логи
+            // console.log("открытый документ есть в store:", data.some(item => item.id === documentId))
+            // console.log("настройки не соответствуют документу:", data.some(item => item.id === documentId
+            //   && JSON.stringify(item.settings) !== JSON.stringify(currentSettings)), JSON.stringify(currentSettings))
 
             if (data.length === 0 || !data.some(item => item.id === documentId)) {
               return <ButtonAction onClick={onPlusClick}
