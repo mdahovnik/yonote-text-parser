@@ -56,6 +56,16 @@ chrome.runtime.onConnect.addListener((port) => {
 // для передачи сообщений из App.tsx постоянное соединение не важно, поэтому используем chrome.runtime.onMessage().
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
+  if (message.action === ACT.SELECTION_TEXT_CHANGED) {
+    const selectionText = message.data.selectionText || '';
+
+    if (selectionText?.length > 0) {
+      chrome.action.setBadgeText({
+        text: selectionText.length.toString()
+      });
+    }
+  }
+
   if (message.action === ACT.SAVE_DOCUMENT) {
     chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
       const storageDocuments = storage.documents;

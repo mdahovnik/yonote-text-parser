@@ -56,6 +56,7 @@ export type TMessage = {
     id: string,
     newSettings?: TSettingList,
     words?: number,
-    nodeTree?: TextNodeTree[]
+    nodeTree?: TextNodeTree[],
+    selectionText?: string
   }
 }

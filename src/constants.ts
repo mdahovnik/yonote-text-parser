@@ -12,7 +12,8 @@ export const ACT = {
   APPLY_SETTINGS: 'APPLY_SETTINGS',
   SET_BADGE: 'SET_BADGE',
   TEXT_CHANGED: 'TEXT_CHANGED',
-  GET_NODE_TREE: 'GET_NODE_TREE'
+  GET_NODE_TREE: 'GET_NODE_TREE',
+  SELECTION_TEXT_CHANGED: 'SELECTION_TEXT_CHANGED'
 }
 
 export const appSettings: TSettingList = {
@@ -37,7 +38,11 @@ export const appSettings: TSettingList = {
     // {tagName: "allow_toggle_h1_title", label: "H1 title", isAllowed: false},
     // {tagName: ["allow_toggle_h2_content"], label: "H2 content", isAllowed: false},
     // {tagName: ["allow_toggle_h3_title"], label: "H3 title", isAllowed: false},
-    {tagName: ["notice-block info", "notice-block warning", "notice-block tip"], label: "Callout block", isAllowed: false},
+    {
+      tagName: ["notice-block info", "notice-block warning", "notice-block tip"],
+      label: "Callout block",
+      isAllowed: false
+    },
   ],
   text: [
     {tagName: ["STRONG"], label: "Bold", isAllowed: true},

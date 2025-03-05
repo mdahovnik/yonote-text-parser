@@ -14,7 +14,8 @@ const ACT = {
   APPLY_SETTINGS: 'APPLY_SETTINGS',
   SET_BADGE: 'SET_BADGE',
   TEXT_CHANGED: 'TEXT_CHANGED',
-  GET_NODE_TREE: 'GET_NODE_TREE'
+  GET_NODE_TREE: 'GET_NODE_TREE',
+  SELECTION_TEXT_CHANGED: 'SELECTION_TEXT_CHANGED'
 }
 const NEUTRAL_TAGS = ["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD', 'PRE'];
 const IGNORED_TAGS = ['BUTTON', 'OPTION'];
@@ -34,7 +35,6 @@ let nodesTree: TextNodeTree[] = [];
 
 // открываем постоянное соединение которое будем использовать в background.ts
 let port = chrome.runtime.connect({name: "content-to-background"});
-
 port.onDisconnect.addListener(reconnectPort);
 
 function reconnectPort() {
@@ -50,6 +50,33 @@ function reconnectPort() {
     }
   }, 500)
 }
+
+function createCharacterIndicator() {
+  const characterIndicator = document.createElement('div');
+  characterIndicator.textContent = '';
+  characterIndicator.style.fontSize = '18px';
+  characterIndicator.style.display = 'flex';
+  characterIndicator.style.alignItems = 'center';
+  characterIndicator.style.borderRadius = '10%';
+  characterIndicator.style.paddingInline = "5px";
+  characterIndicator.style.backgroundColor = 'lightgreen';
+  return characterIndicator;
+}
+
+let selection: Selection | null = null
+let selectionToolbar: HTMLElement | null = null;
+const characterIndicator = createCharacterIndicator();
+
+document.addEventListener('selectionchange', () => {
+  selection = window.getSelection();
+    if (!selectionToolbar) {
+    selectionToolbar = document.querySelector('.selection-toolbar');
+  } else {
+    characterIndicator.textContent = `${selection?.toString().length || ''}`;
+    selectionToolbar.appendChild(characterIndicator);
+  }
+  console.log('selectionchange', selection?.toString().length);
+})
 
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendMessage) => {

@@ -52,10 +52,6 @@ function App() {
   const [documents, setDocuments] = useState<TDocument[]>([]);
 
   useEffect(() => {
-    // getTabId()
-    //   .then((tabId: number) =>
-    //     setTabId(tabId));
-
     getUrl()
       .then((host: string) =>
         setIsValidPageOpen(host === "yppm.yonote.ru"));
