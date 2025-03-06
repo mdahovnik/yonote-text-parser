@@ -63,19 +63,21 @@ function createCharacterIndicator() {
   return characterIndicator;
 }
 
-let selection: Selection | null = null
 let selectionToolbar: HTMLElement | null = null;
 const characterIndicator = createCharacterIndicator();
 
 document.addEventListener('selectionchange', () => {
-  selection = window.getSelection();
-    if (!selectionToolbar) {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+
+  if (!selectionToolbar) {
     selectionToolbar = document.querySelector('.selection-toolbar');
-  } else {
+  }
+
+  if (selectionToolbar) {
     characterIndicator.textContent = `${selection?.toString().length || ''}`;
     selectionToolbar.appendChild(characterIndicator);
   }
-  console.log('selectionchange', selection?.toString().length);
 })
 
 
