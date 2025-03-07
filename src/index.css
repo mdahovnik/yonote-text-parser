@@ -100,7 +100,7 @@ body {
     font-weight: 700;
 }
 
-/* Кнопка клопирования при наведении на счетчик страницы */
+/* Кнопка клонирования при наведении на счетчик страницы */
 .record-counter {
     flex-shrink: 0;
 }
@@ -124,9 +124,6 @@ body {
     display: flex;
     flex-direction: column;
     text-align: center;
-    /*width: 100%;*/
-    /*user-select: none;*/
-    /*cursor: default;*/
 }
 
 .placeholder svg {
@@ -140,7 +137,7 @@ input, label {
 /* Цвет кнопок при наведении  */
 .action:hover {
     color: rgb(0, 122, 255);
-    /*cursor: pointer;*/
+    cursor: pointer;
 }
 
 .action:hover svg {
@@ -199,7 +196,6 @@ input, label {
 .record-wrapper {
     display: flex;
     flex-direction: row;
-    /*justify-content: space-evenly;*/
 }
 
 hr {

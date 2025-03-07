@@ -4,12 +4,16 @@ import {TMessage, TStorage, TextNodeTree, TDocument, TSettingList} from "./types
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
     "settings": appSettings,
-    "documents": []
+    "documents": [],
+    "cache": {
+      "currentDocumentId": '',
+      "nodesTreeCache": []
+    }
   });
 });
 
 let nodesTreeCache: TextNodeTree[] = [];// Для хранения текстовых узлов кешируемых в live-режиме из content-script
-let currentDocumentId = "";
+// let currentDocumentId = "";
 
 // для предотвращения автоматической выгрузки Service Worker при отсутствии активных событий после 30сек простоя
 chrome.alarms.create("keepServiceWorkerAlive", {
@@ -31,24 +35,33 @@ chrome.runtime.onConnect.addListener((port) => {
   port.onMessage.addListener((message: TMessage) => {
     if (message.action === ACT.GET_NODE_TREE) {
       nodesTreeCache = message.data.nodeTree ?? [];
-      currentDocumentId = message.data.id;
-      console.log("ACT.GET_NODE_TREE*********************", message.data.nodeTree?.length, nodesTreeCache, currentDocumentId)
 
-      chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
-        const storageSettings = storage.settings;
-        const storageDocuments = storage.documents;
-        const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
-
-        //TODO: при наборе текста обновляется только бейдж
-        //проверяем наличие документа по id в хранилище, если есть - обновляем его
-        const foundDocument = findDocumentById(storageDocuments, currentDocumentId);
-        if (foundDocument) {
-          storageDocuments.splice(storageDocuments.indexOf(foundDocument), 1, currentDocument);
-          chrome.storage.local.set({"documents": storageDocuments});
+      chrome.storage.local.set({
+        cache: {
+          currentDocumentId: message.data.id,
+          nodesTreeCache: message.data.nodeTree ?? []
         }
+      }, () => {
+        // currentDocumentId = message.data.id;
+        //TODO: убрать логирование
+        console.log("ACT.GET_NODE_TREE***********", message.data.nodeTree?.length, JSON.stringify(nodesTreeCache, null, 2))
 
-        setBadge(currentDocument, storageSettings);
-      });
+        chrome.storage.local.get(["documents", "settings", "cache"], (storage: TStorage) => {
+          const storageSettings = storage.settings;
+          const storageDocuments = storage.documents;
+          const currentDocumentId = storage.cache.currentDocumentId;
+          const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
+
+          //проверяем наличие документа по id в хранилище, если есть - обновляем его
+          const foundDocument = findDocumentById(storageDocuments, currentDocumentId);
+          if (foundDocument) {
+            storageDocuments.splice(storageDocuments.indexOf(foundDocument), 1, currentDocument);
+            chrome.storage.local.set({"documents": storageDocuments});
+          }
+
+          setBadge(currentDocument, storageSettings);
+        });
+      })
     }
   });
 })
@@ -56,20 +69,11 @@ chrome.runtime.onConnect.addListener((port) => {
 // для передачи сообщений из App.tsx постоянное соединение не важно, поэтому используем chrome.runtime.onMessage().
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
-  if (message.action === ACT.SELECTION_TEXT_CHANGED) {
-    const selectionText = message.data.selectionText || '';
-
-    if (selectionText?.length > 0) {
-      chrome.action.setBadgeText({
-        text: selectionText.length.toString()
-      });
-    }
-  }
-
   if (message.action === ACT.SAVE_DOCUMENT) {
-    chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
+    chrome.storage.local.get(["documents", "settings", "cache"], (storage: TStorage) => {
       const storageDocuments = storage.documents;
       const storageSettings = storage.settings;
+      const currentDocumentId = storage.cache.currentDocumentId;
       const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
       const foundDocument = findDocumentById(storageDocuments, currentDocumentId);
 
@@ -125,9 +129,10 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     const newSettings = message.data.newSettings;
 
     chrome.storage.local.set({"settings": newSettings}, () => {
-      chrome.storage.local.get(["documents", "settings"], (storage: TStorage) => {
+      chrome.storage.local.get(["documents", "settings", "cache"], (storage: TStorage) => {
         const storageDocuments = storage.documents;
         const storageSettings = storage.settings;
+        const currentDocumentId = storage.cache.currentDocumentId;
 
         const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
         setBadge(currentDocument, storageSettings);

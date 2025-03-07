@@ -1,5 +1,5 @@
 import {TSetting, TDocument} from "../types.ts";
-import {ButtonAction} from "./buttonAction.tsx";
+import {Button} from "./button.tsx";
 
 
 type TRecordList = {
@@ -26,16 +26,16 @@ export function Records(
           data.map((item, index) => (
               <div className={"record"}
                    key={index}>
-                <ButtonAction className={"record-remove danger"}
-                              onClick={() => onDeleteClick(item.id)}
-                              type={"remove"}/>
+                <Button className={"record-remove danger"}
+                        onClick={() => onDeleteClick(item.id)}
+                        type={"remove"}/>
                 <div className="title">
                   <span className={item.id === documentId ? "record opened" : "record"}>{item.title}</span>
                 </div>
-                <ButtonAction className={"record-counter"}
-                              onClick={() => onCopyClick(settings[0].isAllowed ? item.words : item.symbols)}
-                              type={"copy"}
-                              text={`${settings[0].isAllowed ? item.words : item.symbols}`}/>
+                <Button className={"record-counter"}
+                        onClick={() => onCopyClick(settings[0].isAllowed ? item.words : item.symbols)}
+                        type={"copy"}
+                        text={`${settings[0].isAllowed ? item.words : item.symbols}`}/>
               </div>
             )
           )}

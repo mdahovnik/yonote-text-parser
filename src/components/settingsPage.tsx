@@ -1,6 +1,6 @@
 import {TSettingList} from "../types.ts";
 import {Settings} from "./settings.tsx";
-import {ButtonAction} from "./buttonAction.tsx";
+import {Button} from "./button.tsx";
 
 type TSettingPage = {
   onBackButtonClick: () => void;
@@ -22,9 +22,9 @@ export function SettingsPage(
   return (
     <div id="settings-page">
       <div className="menu">
-        <ButtonAction onClick={onBackButtonClick}
-                      id={"to-main"}
-                      type={"back"}/>
+        <Button onClick={onBackButtonClick}
+                id={"to-main"}
+                type={"back"}/>
         <div className="title">Settings</div>
         <div/>
       </div>
@@ -45,10 +45,10 @@ export function SettingsPage(
                 onSettingsChange={onSettingsChange}/>
       <hr/>
       <div className="setting-copy-rawtext">
-        <ButtonAction onClick={onCopyHandler}
-                      id={"debug"}
-                      type={"copy"}
-                      text={"Copy raw text"}/>
+        <Button onClick={onCopyHandler}
+                id={"debug"}
+                type={"copy"}
+                text={"Copy raw text"}/>
       </div>
     </div>
   )

@@ -12,13 +12,12 @@ export const ACT = {
   APPLY_SETTINGS: 'APPLY_SETTINGS',
   SET_BADGE: 'SET_BADGE',
   TEXT_CHANGED: 'TEXT_CHANGED',
-  GET_NODE_TREE: 'GET_NODE_TREE',
-  SELECTION_TEXT_CHANGED: 'SELECTION_TEXT_CHANGED'
+  GET_NODE_TREE: 'GET_NODE_TREE'
 }
 
 export const appSettings: TSettingList = {
   block: [
-    {tagName: ["allow_title"], label: "Page title", isAllowed: false},
+    {tagName: ["page_title"], label: "Page title", isAllowed: false},
     {tagName: ["BLOCKQUOTE"], label: "Quote block", isAllowed: false},
     {tagName: ["DIV"], label: "Text block", isAllowed: true},
     {tagName: ["H1"], label: "Heading 1", isAllowed: true},

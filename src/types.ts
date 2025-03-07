@@ -38,7 +38,11 @@ export type TSettingList = {
 
 export type TStorage = {
   documents: TDocument[],
-  settings: TSettingList
+  settings: TSettingList,
+  cache: {
+    currentDocumentId: string
+    nodesTreeCache: TextNodeTree[]
+  }
 }
 
 export type TextNodeTree = {

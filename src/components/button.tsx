@@ -9,7 +9,7 @@ type TButtonAction = {
   isActive?: boolean;
 }
 
-export function ButtonAction(
+export function Button(
   {
     id,
     onClick,

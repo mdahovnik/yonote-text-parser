@@ -14,8 +14,7 @@ const ACT = {
   APPLY_SETTINGS: 'APPLY_SETTINGS',
   SET_BADGE: 'SET_BADGE',
   TEXT_CHANGED: 'TEXT_CHANGED',
-  GET_NODE_TREE: 'GET_NODE_TREE',
-  SELECTION_TEXT_CHANGED: 'SELECTION_TEXT_CHANGED'
+  GET_NODE_TREE: 'GET_NODE_TREE'
 }
 const NEUTRAL_TAGS = ["SPAN", "LI", "P", 'TBODY', 'TR', 'TH', 'TD', 'PRE'];
 const IGNORED_TAGS = ['BUTTON', 'OPTION'];
@@ -51,6 +50,8 @@ function reconnectPort() {
   }, 500)
 }
 
+// Индикатор количества символов в выделенной части текста, работает при выделении мышкой и ctrl+a.
+// Вешаем его во всплывающее меню появляющееся при выделении (.selection-toolbar)
 function createCharacterIndicator() {
   const characterIndicator = document.createElement('div');
   characterIndicator.textContent = '';
@@ -63,8 +64,8 @@ function createCharacterIndicator() {
   return characterIndicator;
 }
 
-let selectionToolbar: HTMLElement | null = null;
 const characterIndicator = createCharacterIndicator();
+let selectionToolbar: HTMLElement | null = null;
 
 document.addEventListener('selectionchange', () => {
   const selection = window.getSelection();
@@ -76,10 +77,11 @@ document.addEventListener('selectionchange', () => {
 
   if (selectionToolbar) {
     characterIndicator.textContent = `${selection?.toString().length || ''}`;
-    selectionToolbar.appendChild(characterIndicator);
+    if (!selectionToolbar.contains(characterIndicator)) {
+      selectionToolbar.appendChild(characterIndicator);
+    }
   }
 })
-
 
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendMessage) => {
   if (message.action === ACT.GET_DOCUMENT_ID) {
@@ -169,11 +171,10 @@ function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[])
 // Отправляем nodesTree спарсенного документа в background.ts для сохранения в nodesTreeCache
 function watchForTextChanges(textBoxNodes: Node[]) {
   if (!textBoxNodes || textBoxNodes.length === 0) {
-    console.warn("⚠️ no text nodes for observation.");
-    return null;
+    console.error("‼️ no text nodes for observation.");
+    return;
   }
 
-  console.log('=> textBoxNodes are found:', textBoxNodes);
   const documentId = getCurrentDocumentId();
   let debounceTimer: number | null = null;
 
@@ -196,12 +197,13 @@ function watchForTextChanges(textBoxNodes: Node[]) {
   // Запускаем слежение за всеми текстовыми узлами страницы
   for (const textBoxNode of textBoxNodes)
     observer.observe(textBoxNode, {characterData: true, subtree: true});
-
-  return observer;
 }
 
-
 function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
+  if (!nodesTree || nodesTree.length === 0) {
+    console.error("‼️ no nodesTree for sending.");
+    return;
+  }
   port.postMessage({action: ACT.GET_NODE_TREE, data: {nodeTree: nodesTree, id: id}});
 }
 
@@ -209,7 +211,7 @@ function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
 function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
   const isNodeNameNeutral = NEUTRAL_TAGS.includes(nodeElement.nodeName);
   const isNodeContainClass = VALID_CLASS_NAMES.includes(getNodeNameFromClass(nodeElement));
-  // console.log("====>", getNodeNameFromClass(nodeElement))
+
   let nodeNames = isNodeNameNeutral
     ? [...parentNodeNames]
     : [...parentNodeNames, isNodeContainClass
@@ -222,42 +224,18 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
     children: []
   };
 
-
   nodeElement.childNodes.forEach((node) => {
     if (node.nodeType === Node.TEXT_NODE) {
-
       if (currentHeading && nodeNames.includes(currentHeading))
         nodeNames = nodeNames.filter(name => name === currentHeading);
 
-      // разбиваем текст на слова, фильтром убираем пустые строки и сохраняем их
+      // Разбиваем текст на слова, фильтром убираем пустые строки и сохраняем их
+      // В tags с помощью new Set() оставляем только уникальные теги
       const words = node.textContent?.trim().split(/\s+/).filter(w => w) || [];
-
-      // в tags с помощью new Set() оставляем только уникальные теги
       words.forEach(word => nodeTreeElement.words.push({word, tags: [...new Set(nodeNames)]}));
 
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       if (!IGNORED_TAGS.includes(node.nodeName)) {
-
-        // if (node.nodeName === "H1") {
-        //   toggleH1 = true;
-        //   toggleH2 = false;
-        //   toggleH3 = false;
-        // }
-        // if (node.nodeName === "H2") {
-        //   toggleH1 = false;
-        //   toggleH2 = true;
-        //   toggleH3 = false;
-        // }
-        // if (node.nodeName === "H3") {
-        //   toggleH1 = false;
-        //   toggleH2 = false;
-        //   toggleH3 = true;
-        // }
-        //
-        // if (toggleH1) nodeNames.push('H1_toggle_content');
-        // if (toggleH2) nodeNames.push('H2_toggle_content');
-        // if (toggleH3) nodeNames.push('H3_toggle_content');
-
         switch (node.nodeName) {
           case "H1":
             currentHeading = "H1";
@@ -270,15 +248,14 @@ function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
             break;
         }
 
-        if (currentHeading)
+        if (currentHeading) {
+          nodeNames = nodeNames.filter(name => !name.includes(`_toggle_content`));
           nodeNames.push(`${currentHeading}_toggle_content`);
-
-        // рекурсивно обрабатываем вложенные элементы
+        }
         nodeTreeElement.children.push(createNodeTree(node, nodeNames));
       }
     }
   })
-
   return nodeTreeElement;
 }
 

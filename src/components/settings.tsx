@@ -20,14 +20,12 @@ export function Settings(
   return (
     <>
       <hr/>
-      <div className="settings-title">
-        {title}
-      </div>
+      <div className="settings-title">{title}</div>
       <div className="settings-grid"
            id="settings-formatting">
         {settings.map((item, index) => {
           return (
-            <div key={index} className={'action setting'} >
+            <div key={index} className={'action setting'}>
               <input className={item.tagName[0]}
                      id={item.label}
                      type={type}
