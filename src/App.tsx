@@ -5,11 +5,6 @@ import {MainPage} from "./components/mainPage.tsx";
 import {TDocument, TSettingList} from "./types.ts";
 import {ACT, appSettings} from "./constants.ts";
 
-async function getTabId() {
-  const tab = (await chrome.tabs.query({active: true, currentWindow: true}))[0];
-  return tab?.id as number;
-}
-
 async function fetchFromLocalStorage<T>(actionType: keyof typeof ACT) {
   return new Promise<T>((resolve, reject) => {
     chrome.runtime.sendMessage({action: actionType}, (data: T) => {
@@ -21,20 +16,6 @@ async function fetchFromLocalStorage<T>(actionType: keyof typeof ACT) {
     })
   });
 }
-
-async function fetchDocumentId() {
-  const tabId = await getTabId()
-  return new Promise<string>((resolve, reject) => {
-    chrome.tabs.sendMessage(tabId, {action: ACT.GET_DOCUMENT_ID}, (openedDocumentId: string) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-      } else {
-        resolve(openedDocumentId)
-      }
-    })
-  })
-}
-
 
 async function getUrl() {
   const tabs = await chrome.tabs.query({active: true, lastFocusedWindow: true});
@@ -57,15 +38,13 @@ function App() {
         setIsValidPageOpen(host === "yppm.yonote.ru"));
 
     fetchFromLocalStorage<TSettingList>("GET_SETTINGS")
-      .then((data) =>
-        setSettings(data));
+      .then((data) => setSettings(data));
 
     fetchFromLocalStorage<TDocument[]>("GET_DOCUMENTS")
       .then((data) => setDocuments(data));
 
-    fetchDocumentId()
-      .then((id) =>
-        setDocumentId(id));
+    fetchFromLocalStorage<string>("GET_DOCUMENT_ID")
+      .then((data) => setDocumentId(data));
   }, [])
 
   const handleSettingsChange = (category: keyof TSettingList, label: string) => {
@@ -115,7 +94,7 @@ function App() {
         console.error("Ошибка при удалении всех документов:", chrome.runtime.lastError);
       } else {
         setDocuments([]);
-        console.log("🗑️ all documents are DELETED")
+        console.log("🗑️ all documents are DELETED");
       }
     })
   }
@@ -131,23 +110,26 @@ function App() {
     })
   }
 
+  const handleCopyRawText = async () => {
+    const document = documents.find((document) => document.id === documentId);
+    await navigator.clipboard.writeText(document?.raw || "");
+  }
+
   return (
-    <>
-      {
-        isSettingOpen
-          ? <SettingsPage settings={settings}
-                          onSettingsChange={handleSettingsChange}
-                          onBackButtonClick={handleSettingsClick}/>
-          : <MainPage onPlusClick={handlePlusClick}
-                      onClearClick={handleClearClick}
-                      onDeleteClick={handleDeleteClick}
-                      onSettingClick={handleSettingsClick}
-                      data={documents}
-                      documentId={documentId}
-                      isActive={isValidPageOpen}
-                      settings={settings}/>
-      }
-    </>
+    isSettingOpen
+      ? <SettingsPage settings={settings}
+                      onSettingsChange={handleSettingsChange}
+                      onBackButtonClick={handleSettingsClick}
+                      onCopyRawText={handleCopyRawText}/>
+      : <MainPage onPlusClick={handlePlusClick}
+                  onClearClick={handleClearClick}
+                  onDeleteClick={handleDeleteClick}
+                  onSettingClick={handleSettingsClick}
+                  documents={documents}
+                  documentId={documentId}
+                  isActive={isValidPageOpen}
+                  settings={settings}/>
+
   )
 }
 

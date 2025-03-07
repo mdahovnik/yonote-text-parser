@@ -1,4 +1,4 @@
-import {TextNodeTree, TMessage} from "./types.ts";
+import {TextNodeTree} from "./types.ts";
 
 console.log("💡 content.ts is running:", document.readyState);
 
@@ -83,12 +83,12 @@ document.addEventListener('selectionchange', () => {
   }
 })
 
-chrome.runtime.onMessage.addListener((message: TMessage, {}, sendMessage) => {
-  if (message.action === ACT.GET_DOCUMENT_ID) {
-    const openedDocumentId = getCurrentDocumentId();
-    sendMessage(openedDocumentId)
-  }
-})
+// chrome.runtime.onMessage.addListener((message: TMessage, {}, sendMessage) => {
+//   if (message.action === ACT.GET_DOCUMENT_ID) {
+//     const openedDocumentId = getCurrentDocumentId();
+//     sendMessage(openedDocumentId)
+//   }
+// })
 
 const startWatchingDocument = () => {
   waitForOpenNewDocument(() => {

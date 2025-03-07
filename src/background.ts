@@ -12,8 +12,20 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-let nodesTreeCache: TextNodeTree[] = [];// Для хранения текстовых узлов кешируемых в live-режиме из content-script
-// let currentDocumentId = "";
+chrome.runtime.onRestartRequired.addListener((reason) => {
+  console.log("Требуется перезапуск. Причина:", reason);
+
+  // Показать уведомление пользователю
+  chrome.notifications.create({
+    type: "basic",
+    iconUrl: "icon.png",
+    title: "Требуется перезапуск",
+    message: "Расширение необходимо перезапустить для применения изменений.",
+  });
+
+  // Перезапустить расширение
+  chrome.runtime.restart();
+});
 
 // для предотвращения автоматической выгрузки Service Worker при отсутствии активных событий после 30сек простоя
 chrome.alarms.create("keepServiceWorkerAlive", {
@@ -34,22 +46,22 @@ chrome.runtime.onConnect.addListener((port) => {
 
   port.onMessage.addListener((message: TMessage) => {
     if (message.action === ACT.GET_NODE_TREE) {
-      nodesTreeCache = message.data.nodeTree ?? [];
-
       chrome.storage.local.set({
         cache: {
           currentDocumentId: message.data.id,
           nodesTreeCache: message.data.nodeTree ?? []
         }
       }, () => {
-        // currentDocumentId = message.data.id;
         //TODO: убрать логирование
-        console.log("ACT.GET_NODE_TREE***********", message.data.nodeTree?.length, JSON.stringify(nodesTreeCache, null, 2))
+        console.log(
+          "ACT.GET_NODE_TREE***********",
+          message.data.nodeTree?.length,
+          JSON.stringify(message.data.nodeTree, null, 2)
+        )
 
         chrome.storage.local.get(["documents", "settings", "cache"], (storage: TStorage) => {
-          const storageSettings = storage.settings;
-          const storageDocuments = storage.documents;
-          const currentDocumentId = storage.cache.currentDocumentId;
+
+          const {storageSettings, storageDocuments, currentDocumentId, nodesTreeCache} = getDataFromStorage(storage);
           const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
 
           //проверяем наличие документа по id в хранилище, если есть - обновляем его
@@ -68,12 +80,17 @@ chrome.runtime.onConnect.addListener((port) => {
 
 // для передачи сообщений из App.tsx постоянное соединение не важно, поэтому используем chrome.runtime.onMessage().
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
+  if (message.action === ACT.GET_DOCUMENT_ID) {
+    chrome.storage.local.get("cache", (storage: TStorage) => {
+      sendResponse(storage.cache.currentDocumentId)
+    })
+    return true;
+  }
 
   if (message.action === ACT.SAVE_DOCUMENT) {
     chrome.storage.local.get(["documents", "settings", "cache"], (storage: TStorage) => {
-      const storageDocuments = storage.documents;
-      const storageSettings = storage.settings;
-      const currentDocumentId = storage.cache.currentDocumentId;
+
+      const {storageSettings, storageDocuments, currentDocumentId, nodesTreeCache} = getDataFromStorage(storage);
       const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
       const foundDocument = findDocumentById(storageDocuments, currentDocumentId);
 
@@ -85,7 +102,6 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
       chrome.storage.local.set({"documents": storageDocuments}, () => {
         chrome.storage.local.get(["documents"], (storage: TStorage) => {
-          // console.log("🎯 localStorage is updated on ACT.SAVE_DOCUMENT");
           sendResponse(storage.documents);
         });
       });
@@ -130,10 +146,8 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
 
     chrome.storage.local.set({"settings": newSettings}, () => {
       chrome.storage.local.get(["documents", "settings", "cache"], (storage: TStorage) => {
-        const storageDocuments = storage.documents;
-        const storageSettings = storage.settings;
-        const currentDocumentId = storage.cache.currentDocumentId;
 
+        const {storageSettings, storageDocuments, currentDocumentId, nodesTreeCache} = getDataFromStorage(storage);
         const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
         setBadge(currentDocument, storageSettings);
 
@@ -155,6 +169,13 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 })
 
+function getDataFromStorage(storage: TStorage) {
+  const storageSettings = storage.settings;
+  const storageDocuments = storage.documents;
+  const currentDocumentId = storage.cache.currentDocumentId;
+  const nodesTreeCache = storage.cache.nodesTreeCache;
+  return {storageSettings, storageDocuments, currentDocumentId, nodesTreeCache}
+}
 
 function normalizeSettings(settings: TSettingList) {
   return Object.values(settings)

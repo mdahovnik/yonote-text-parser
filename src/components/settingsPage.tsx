@@ -5,6 +5,7 @@ import {Button} from "./button.tsx";
 type TSettingPage = {
   onBackButtonClick: () => void;
   onSettingsChange: (category: keyof TSettingList, type: string) => void;
+  onCopyRawText: () => void
   settings: TSettingList;
 }
 
@@ -12,12 +13,9 @@ export function SettingsPage(
   {
     onBackButtonClick,
     onSettingsChange,
+    onCopyRawText,
     settings
   }: TSettingPage) {
-
-  //TODO: реализовать копирование настроек
-  const onCopyHandler = () => {
-  }
 
   return (
     <div id="settings-page">
@@ -45,7 +43,7 @@ export function SettingsPage(
                 onSettingsChange={onSettingsChange}/>
       <hr/>
       <div className="setting-copy-rawtext">
-        <Button onClick={onCopyHandler}
+        <Button onClick={onCopyRawText}
                 id={"debug"}
                 type={"copy"}
                 text={"Copy raw text"}/>

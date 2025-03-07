@@ -237,6 +237,10 @@ hr {
 
 /* Цвета в темной теме */
 @media (prefers-color-scheme: dark) {
+
+    body {
+        background-color: darkseagreen;
+    }
     .button svg {
         fill: rgb(255, 255, 255);
         cursor: pointer;

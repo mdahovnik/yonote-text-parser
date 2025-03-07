@@ -4,7 +4,7 @@ import {Records} from "./records.tsx";
 
 type TMainPage = {
   isActive: boolean;
-  data: TDocument[];
+  documents: TDocument[];
   documentId: string;
   settings: TSettingList;
   onSettingClick: () => void;
@@ -22,7 +22,7 @@ function getTotals(data: TDocument[]) {
 
 export function MainPage(
   {
-    data,
+    documents,
     documentId,
     isActive,
     settings,
@@ -48,33 +48,35 @@ export function MainPage(
         </div>
         {
           (() => {
-            const currentSettings = Object.values(settings)
-              .flatMap(array => array.filter(item => item.isAllowed))
-              .map(item => item.tagName)
-              .flat();
+            // const currentSettings = Object.values(settings)
+            //   .flatMap(array => array.filter(item => item.isAllowed))
+            //   .map(item => item.tagName)
+            //   .flat();
 
-            if (data.length === 0 || !data.some(item => item.id === documentId)) {
+            if (documents.length === 0 || !documents.some(item => item.id === documentId)) {
               return <Button onClick={onPlusClick}
                              id={"add-record"}
                              type={"plus"}
                              isActive={isActive}/>
-            } else if (
-              data.some(item => item.id === documentId
-                && JSON.stringify(item.settings) !== JSON.stringify(currentSettings))) {
-              return <Button onClick={onPlusClick}
-                             id={"add-record"}
-                             type={"sync"}
-                             isActive={isActive}/>
-            } else {
+            }
+              // else if (
+              // documents.some(item => item.id === documentId
+              //   && JSON.stringify(item.settings) !== JSON.stringify(currentSettings))) {
+              // return <Button onClick={onPlusClick}
+              //                id={"add-record"}
+              //                type={"sync"}
+              //                isActive={isActive}/>
+            // }
+            else {
               return <div></div>
             }
           })()
         }
       </div>
       {
-        data.length > 0
+        documents.length > 0
           ? <div id="table">
-            <Records data={data}
+            <Records data={documents}
                      documentId={documentId}
                      onDeleteClick={onDeleteClick}
                      onCopyClick={handleCopyClick}
@@ -85,11 +87,11 @@ export function MainPage(
                       onClick={onClearClick}
                       id={"clear-all"}
                       type={"trash"}
-                      isActive={data.length > 0}
+                      isActive={documents.length > 0}
                       text={"Clear all"}/>
               {
                 (() => {
-                  const {words, symbols} = getTotals(data);
+                  const {words, symbols} = getTotals(documents);
                   const isCountWordsAllowed = settings.count.find((item) => item.label === "Words")?.isAllowed;
                   return (
                     <Button className={"record-counter"}

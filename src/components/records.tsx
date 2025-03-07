@@ -23,21 +23,22 @@ export function Records(
       <div id="records">
         <hr/>
         {
-          data.map((item, index) => (
-              <div className={"record"}
-                   key={index}>
-                <Button className={"record-remove danger"}
-                        onClick={() => onDeleteClick(item.id)}
-                        type={"remove"}/>
-                <div className="title">
-                  <span className={item.id === documentId ? "record opened" : "record"}>{item.title}</span>
+          data.map((item, index) => {
+              return (<div className={"record"}
+                           key={index}>
+                  <Button className={"record-remove danger"}
+                          onClick={() => onDeleteClick(item.id)}
+                          type={"remove"}/>
+                  <div className="title">
+                    <span className={item.id === documentId ? "record opened" : "record"}>{item.title}</span>
+                  </div>
+                  <Button className={"record-counter"}
+                          onClick={() => onCopyClick(settings[0].isAllowed ? item.words : item.symbols)}
+                          type={"copy"}
+                          text={`${settings[0].isAllowed ? item.words : item.symbols}`}/>
                 </div>
-                <Button className={"record-counter"}
-                        onClick={() => onCopyClick(settings[0].isAllowed ? item.words : item.symbols)}
-                        type={"copy"}
-                        text={`${settings[0].isAllowed ? item.words : item.symbols}`}/>
-              </div>
-            )
+              )
+            }
           )}
       </div>
     </>
