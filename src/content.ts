@@ -31,6 +31,7 @@ const VALID_CLASS_NAMES = [
 ]
 let currentHeading: "H1" | "H2" | "H3" | null = null;
 let nodesTree: TextNodeTree[] = [];
+let selectionToolbar: HTMLElement | null = null;
 
 // открываем постоянное соединение которое будем использовать в background.ts
 let port = chrome.runtime.connect({name: "content-to-background"});
@@ -60,7 +61,7 @@ waitForOpenNewDocument(() => {
 
 // Индикатор количества символов в выделенной части текста, работает при выделении мышкой и ctrl+a.
 // Вешаем его во всплывающее меню появляющееся при выделении (.selection-toolbar)
-function createCharacterIndicator() {
+const characterIndicator = (() => {
   const characterIndicator = document.createElement('span');
   characterIndicator.textContent = '0';
   characterIndicator.style.fontSize = '18px';
@@ -70,10 +71,7 @@ function createCharacterIndicator() {
   characterIndicator.style.paddingInline = "5px";
   characterIndicator.style.backgroundColor = 'lightgreen';
   return characterIndicator;
-}
-
-const characterIndicator = createCharacterIndicator();
-let selectionToolbar: HTMLElement | null = null;
+})()
 
 document.addEventListener('selectionchange', () => {
   const selection = window.getSelection();
@@ -83,18 +81,16 @@ document.addEventListener('selectionchange', () => {
     selectionToolbar = document.querySelector('.selection-toolbar');
     selectionToolbar?.appendChild(characterIndicator);
   } else {
-    characterIndicator.textContent = `${selection?.toString().length}`;
+    characterIndicator.textContent = `${selection?.toString().replace(/\n/g, '').length}`;
   }
 })
-
 
 // Отслеживаем изменения в document.head, мутации в head происходят только
 // при выборе нового документа для редактирования. Очищаем ссылку на selectionToolbar, так как он тоже мутирует.
 // Этот observer работает постоянно и каскадно запускает остальные.
 function waitForOpenNewDocument(callback: Function) {
-  const observer = new MutationObserver((mutations) => {
-    console.log('🟢 NewDocument_Observer WORKING...')
-    console.log("=> new document is opened: ", mutations);
+  const observer = new MutationObserver(() => {
+    console.log('🟢 NewDocument_Observer WORKING...');
     selectionToolbar = null;
     callback();
   })
@@ -159,7 +155,7 @@ function waitForTextboxes(element: HTMLElement, callback: (textBoxNodes: Node[])
 // Отправляем nodesTree спарсенного документа в background.ts для сохранения в nodesTreeCache
 function watchForTextChanges(textBoxNodes: Node[]) {
   if (!textBoxNodes || textBoxNodes.length === 0) {
-    console.error("‼️ no text nodes for observation.");
+    console.log("‼️ no text nodes for observation.");
     return;
   }
 
@@ -189,22 +185,27 @@ function watchForTextChanges(textBoxNodes: Node[]) {
 
 function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
   if (!nodesTree || nodesTree.length === 0) {
-    console.error("‼️ no nodesTree for sending.");
+    console.log("‼️ no nodesTree for sending.");
     return;
   }
   port.postMessage({action: ACT.GET_NODE_TREE, data: {nodeTree: nodesTree, id: id}});
 }
 
-// рекурсивно обходим текстовый блок документа и строим узловое дерево
+// рекурсивно обходим текстовый блок документа и строим узловое дерево documentEditableTitle
 function createNodeTree(nodeElement: Node, parentNodeNames: string[] = []) {
   const isNodeNameNeutral = NEUTRAL_TAGS.includes(nodeElement.nodeName);
   const isNodeContainClass = VALID_CLASS_NAMES.includes(getNodeNameFromClass(nodeElement));
+  const titleNodeAttribute = (nodeElement as HTMLElement).hasAttribute('data-testid')
+    ? (nodeElement as HTMLElement).getAttribute('data-testid')
+    : '';
 
   let nodeNames = isNodeNameNeutral
     ? [...parentNodeNames]
     : [...parentNodeNames, isNodeContainClass
       ? getNodeNameFromClass(nodeElement)
       : nodeElement.nodeName]
+
+  if (titleNodeAttribute && titleNodeAttribute.length > 0) nodeNames.push(titleNodeAttribute)
 
   const nodeTreeElement: TextNodeTree = {
     tag: nodeElement.nodeName,

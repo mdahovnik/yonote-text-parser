@@ -26,18 +26,15 @@ export function SettingsPage(
         <div className="title">Settings</div>
         <div/>
       </div>
-      <Settings type={"checkbox"}
-                title={"Types of blocks to be counted:"}
+      <Settings title={"Types of blocks to be counted:"}
                 settings={settings.block}
                 categorySettings={"block"}
                 onSettingsChange={onSettingsChange}/>
-      <Settings type={"checkbox"}
-                title={"Types of text style to be counted:"}
+      <Settings title={"Types of text style to be counted:"}
                 settings={settings.text}
                 categorySettings={"text"}
                 onSettingsChange={onSettingsChange}/>
-      <Settings type={"radio"}
-                title={"Counter type:"}
+      <Settings title={"Counter type:"}
                 settings={settings.count}
                 categorySettings={"count"}
                 onSettingsChange={onSettingsChange}/>

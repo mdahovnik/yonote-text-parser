@@ -12,6 +12,7 @@
 // }
 
 import {ACT} from "./constants.ts";
+import {HTMLInputTypeAttribute} from "react";
 
 export type TDocument = {
   id: string,
@@ -27,7 +28,8 @@ export type TDocument = {
 export type TSetting = {
   tagName: string[],
   label: string,
-  isAllowed: boolean
+  isAllowed: boolean,
+  type: HTMLInputTypeAttribute
 }
 
 export type TSettingList = {

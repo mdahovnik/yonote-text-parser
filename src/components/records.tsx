@@ -1,7 +1,6 @@
 import {TSetting, TDocument} from "../types.ts";
 import {Button} from "./button.tsx";
 
-
 type TRecordList = {
   data: TDocument[];
   settings: TSetting[];
@@ -18,29 +17,29 @@ export function Records(
     onCopyClick,
     settings
   }: TRecordList) {
+
+  const isWordCountAllowed = settings.length > 0 && settings[0].isAllowed;
+
   return (
-    <>
-      <div id="records">
-        <hr/>
-        {
-          data.map((item, index) => {
-              return (<div className={"record"}
-                           key={index}>
-                  <Button className={"record-remove danger"}
-                          onClick={() => onDeleteClick(item.id)}
-                          type={"remove"}/>
-                  <div className="title">
-                    <span className={item.id === documentId ? "record opened" : "record"}>{item.title}</span>
-                  </div>
-                  <Button className={"record-counter"}
-                          onClick={() => onCopyClick(settings[0].isAllowed ? item.words : item.symbols)}
-                          type={"copy"}
-                          text={`${settings[0].isAllowed ? item.words : item.symbols}`}/>
-                </div>
-              )
-            }
-          )}
-      </div>
-    </>
+    <div id="records">
+      <hr/>
+      {data.map((item) => (
+        <div className={"record"}
+             key={item.id}>
+          <Button className={"record-remove danger"}
+                  onClick={() => onDeleteClick(item.id)}
+                  type={"remove"}/>
+          <div className="title">
+                  <span className={item.id === documentId ? "record opened" : "record"}>
+                    {item.title}
+                  </span>
+          </div>
+          <Button className={"record-counter"}
+                  onClick={() => onCopyClick(isWordCountAllowed ? item.words : item.symbols)}
+                  type={"copy"}
+                  text={`${isWordCountAllowed ? item.words : item.symbols}`}/>
+        </div>
+      ))}
+    </div>
   )
 }
