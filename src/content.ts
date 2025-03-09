@@ -50,11 +50,19 @@ function reconnectPort() {
   }, 500)
 }
 
+waitForOpenNewDocument(() => {
+  waitForDocumentContainer(".hrehUE", (element: HTMLElement) => {
+    waitForTextboxes(element, (textBoxes: Node[]) => {
+      watchForTextChanges(textBoxes);
+    });
+  });
+});
+
 // Индикатор количества символов в выделенной части текста, работает при выделении мышкой и ctrl+a.
 // Вешаем его во всплывающее меню появляющееся при выделении (.selection-toolbar)
 function createCharacterIndicator() {
-  const characterIndicator = document.createElement('div');
-  characterIndicator.textContent = '';
+  const characterIndicator = document.createElement('span');
+  characterIndicator.textContent = '0';
   characterIndicator.style.fontSize = '18px';
   characterIndicator.style.display = 'flex';
   characterIndicator.style.alignItems = 'center';
@@ -73,41 +81,21 @@ document.addEventListener('selectionchange', () => {
 
   if (!selectionToolbar) {
     selectionToolbar = document.querySelector('.selection-toolbar');
-  }
-
-  if (selectionToolbar) {
-    characterIndicator.textContent = `${selection?.toString().length || ''}`;
-    if (!selectionToolbar.contains(characterIndicator)) {
-      selectionToolbar.appendChild(characterIndicator);
-    }
+    selectionToolbar?.appendChild(characterIndicator);
+  } else {
+    characterIndicator.textContent = `${selection?.toString().length}`;
   }
 })
 
-// chrome.runtime.onMessage.addListener((message: TMessage, {}, sendMessage) => {
-//   if (message.action === ACT.GET_DOCUMENT_ID) {
-//     const openedDocumentId = getCurrentDocumentId();
-//     sendMessage(openedDocumentId)
-//   }
-// })
-
-const startWatchingDocument = () => {
-  waitForOpenNewDocument(() => {
-    waitForDocumentContainer(".hrehUE", (element: HTMLElement) => {
-      waitForTextboxes(element, (textBoxes: Node[]) => {
-        watchForTextChanges(textBoxes);
-      });
-    });
-  });
-}
-
-startWatchingDocument();
 
 // Отслеживаем изменения в document.head, мутации в head происходят только
-// при выборе нового документа для редактирования. Этот observer работает постоянно и каскадно запускает остальные.
+// при выборе нового документа для редактирования. Очищаем ссылку на selectionToolbar, так как он тоже мутирует.
+// Этот observer работает постоянно и каскадно запускает остальные.
 function waitForOpenNewDocument(callback: Function) {
   const observer = new MutationObserver((mutations) => {
     console.log('🟢 NewDocument_Observer WORKING...')
     console.log("=> new document is opened: ", mutations);
+    selectionToolbar = null;
     callback();
   })
   observer.observe(document.head, {childList: true, subtree: false, attributes: false, characterData: false});

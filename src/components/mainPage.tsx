@@ -1,6 +1,7 @@
 import {Button} from "./button.tsx";
 import {TDocument, TSettingList} from "../types.ts";
 import {Records} from "./records.tsx";
+import {Placeholder} from "./placeholder.tsx";
 
 type TMainPage = {
   isActive: boolean;
@@ -103,13 +104,7 @@ export function MainPage(
               }
             </div>
           </div>
-          : <div className="placeholder" id="clear">
-            <hr/>
-            <p> To start counting click the <span className="button"><svg><use
-              href="icons.svg#plus"></use></svg></span> sign <br/>
-              when Yonote tab is active.
-            </p>
-          </div>
+          : <Placeholder/>
       }
     </div>
   )

@@ -25,7 +25,6 @@ async function getUrl() {
 }
 
 function App() {
-  // const [tabId, setTabId] = useState<number>(0);
   const [isSettingOpen, setIsSettingOpen] = useState(false);
   const [settings, setSettings] = useState<TSettingList>(appSettings);
   const [isValidPageOpen, setIsValidPageOpen] = useState(false);
@@ -63,7 +62,7 @@ function App() {
       data: {newSettings: {...updatedSettings}}
     }, (data: { savedDocuments: TDocument[], savedSettings: TSettingList }) => {
       if (chrome.runtime.lastError) {
-        console.error("Ошибка при отправке сообщения:", chrome.runtime.lastError);
+        console.error("Error on ACT.SAVE_SETTINGS:", chrome.runtime.lastError.message);
       } else {
         setSettings(data.savedSettings);
         setDocuments(data.savedDocuments);
@@ -80,7 +79,7 @@ function App() {
   const handlePlusClick = () => {
     chrome.runtime.sendMessage({action: ACT.SAVE_DOCUMENT, data: {newSettings: settings}}, (documents: TDocument[]) => {
       if (chrome.runtime.lastError) {
-        console.error("Ошибка при сохранении документа:", chrome.runtime.lastError);
+        console.error("Error on ACT.SAVE_DOCUMENT:", chrome.runtime.lastError.message);
       } else {
         setDocuments(documents);
         console.log("💾 document is SAVED");
@@ -91,7 +90,7 @@ function App() {
   const handleClearClick = () => {
     chrome.runtime.sendMessage({action: ACT.CLEAR_RECORDS}, () => {
       if (chrome.runtime.lastError) {
-        console.error("Ошибка при удалении всех документов:", chrome.runtime.lastError);
+        console.error('Error on ACT.CLEAR_RECORDS:', chrome.runtime.lastError.message);
       } else {
         setDocuments([]);
         console.log("🗑️ all documents are DELETED");
@@ -102,7 +101,7 @@ function App() {
   const handleDeleteClick = (id: string) => {
     chrome.runtime.sendMessage({action: ACT.REMOVE_DOCUMENT, data: {id: id}}, (documents: TDocument[]) => {
       if (chrome.runtime.lastError) {
-        console.error("Ошибка при удалении документа по id:", chrome.runtime.lastError);
+        console.error("Error on ACT.REMOVE_DOCUMENT:", chrome.runtime.lastError.message);
       } else {
         setDocuments(documents);
         console.log("🗑️ document is DELETED BY ID", id);
@@ -129,7 +128,6 @@ function App() {
                   documentId={documentId}
                   isActive={isValidPageOpen}
                   settings={settings}/>
-
   )
 }
 
