@@ -17,15 +17,15 @@ export const ACT = {
 
 export const appSettings: TSettingList = {
   block: [
-    {tagName: ["documentEditableTitle"], label: "Page title", isAllowed: false, type: "checkbox"},
-    {tagName: ["BLOCKQUOTE"], label: "Quote block", isAllowed: false, type: "checkbox"},
+    {tagName: ["documentEditableTitle"], label: "Page title", isAllowed: true, type: "checkbox"},
     {tagName: ["DIV"], label: "Text block", isAllowed: true, type: "checkbox"},
     {tagName: ["H1"], label: "Heading 1", isAllowed: true, type: "checkbox"},
-    {tagName: ["H2"], label: "Heading 2", isAllowed: true, type: "checkbox"},
-    {tagName: ["H3"], label: "Heading 3", isAllowed: false, type: "checkbox"},
     {tagName: ["H1_toggle_content"], label: "H1 content", isAllowed: true, type: "checkbox"},
+    {tagName: ["H2"], label: "Heading 2", isAllowed: true, type: "checkbox"},
     {tagName: ["H2_toggle_content"], label: "H2 content", isAllowed: true, type: "checkbox"},
+    {tagName: ["H3"], label: "Heading 3", isAllowed: false, type: "checkbox"},
     {tagName: ["H3_toggle_content"], label: "H3 content", isAllowed: false, type: "checkbox"},
+    {tagName: ["BLOCKQUOTE"], label: "Quote block", isAllowed: false, type: "checkbox"},
     {tagName: ['checkbox_list'], label: "To-do list", isAllowed: false, type: "checkbox"},
     {tagName: ['bullet_list'], label: "Bulleted list", isAllowed: false, type: "checkbox"},
     {tagName: ['ordered_list'], label: "Numbered list", isAllowed: false, type: "checkbox"},

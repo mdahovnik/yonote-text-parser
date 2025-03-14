@@ -60,7 +60,6 @@ waitForOpenNewDocument(() => {
 });
 
 // Индикатор количества символов в выделенной части текста, работает при выделении мышкой и ctrl+a.
-// Вешаем его во всплывающее меню появляющееся при выделении (.selection-toolbar)
 const characterIndicator = (() => {
   const characterIndicator = document.createElement('span');
   characterIndicator.textContent = '0';
@@ -73,6 +72,7 @@ const characterIndicator = (() => {
   return characterIndicator;
 })()
 
+// Вешаем индикатор количества символов во всплывающее меню появляющееся при выделении (.selection-toolbar)
 document.addEventListener('selectionchange', () => {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return;
@@ -188,7 +188,10 @@ function sendNodesTree(nodesTree: TextNodeTree[], id: string) {
     console.log("‼️ no nodesTree for sending.");
     return;
   }
-  port.postMessage({action: ACT.GET_NODE_TREE, data: {nodeTree: nodesTree, id: id}});
+  port.postMessage({
+    action: ACT.GET_NODE_TREE,
+    data: {nodeTree: nodesTree, id: id}
+  });
 }
 
 // рекурсивно обходим текстовый блок документа и строим узловое дерево documentEditableTitle

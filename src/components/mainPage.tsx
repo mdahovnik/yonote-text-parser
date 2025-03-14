@@ -42,13 +42,11 @@ export function MainPage(
     [documents]
   );
 
-  const isCountWordsAllowed = useMemo(() =>
-      settings.count.find((item) => item.label === "Words")?.isAllowed,
-    [settings.count]
-  );
+  const isCountWordsAllowed = () =>
+    settings.count.find((item) => item.label === "Words")?.isAllowed;
 
   const shouldShowAddButton = documents.length === 0 || !documents.some(item => item.id === documentId);
-  const currentCount = isCountWordsAllowed ? words : symbols;
+  const currentCount = isCountWordsAllowed() ? words : symbols;
 
   return (
     <div id="main-page">
@@ -83,10 +81,9 @@ export function MainPage(
                     isActive={documents.length > 0}
                     text={"Clear all"}/>
             <Button className={"record-counter"}
-                    text={`${isCountWordsAllowed ? 'Words' : 'Symbols'}: ${currentCount}`}
+                    text={`${isCountWordsAllowed() ? 'Words' : 'Symbols'}: ${currentCount}`}
                     onClick={() => handleCopyClick(currentCount)}
                     type={"copy"}/>
-
           </div>
         </div>
       ) : (

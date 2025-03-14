@@ -1,5 +1,5 @@
 import {TSettingList} from "../types.ts";
-import {Settings} from "./settings.tsx";
+import {SettingsSection} from "./settingsSection.tsx";
 import {Button} from "./button.tsx";
 
 type TSettingPage = {
@@ -26,18 +26,18 @@ export function SettingsPage(
         <div className="title">Settings</div>
         <div/>
       </div>
-      <Settings title={"Types of blocks to be counted:"}
-                settings={settings.block}
-                categorySettings={"block"}
-                onSettingsChange={onSettingsChange}/>
-      <Settings title={"Types of text style to be counted:"}
-                settings={settings.text}
-                categorySettings={"text"}
-                onSettingsChange={onSettingsChange}/>
-      <Settings title={"Counter type:"}
-                settings={settings.count}
-                categorySettings={"count"}
-                onSettingsChange={onSettingsChange}/>
+      <SettingsSection title={"Types of blocks to be counted:"}
+                       settings={settings.block}
+                       categorySettings={"block"}
+                       onSettingsChange={onSettingsChange}/>
+      <SettingsSection title={"Types of text style to be counted:"}
+                       settings={settings.text}
+                       categorySettings={"text"}
+                       onSettingsChange={onSettingsChange}/>
+      <SettingsSection title={"Counter type:"}
+                       settings={settings.count}
+                       categorySettings={"count"}
+                       onSettingsChange={onSettingsChange}/>
       <hr/>
       <div className="setting-copy-rawtext">
         <Button onClick={onCopyRawText}

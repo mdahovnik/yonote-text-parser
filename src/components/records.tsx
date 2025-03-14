@@ -24,15 +24,13 @@ export function Records(
     <div id="records">
       <hr/>
       {data.map((item) => (
-        <div className={"record"}
+        <div className={item.id === documentId ? "record selected" : "record"}
              key={item.id}>
           <Button className={"record-remove danger"}
                   onClick={() => onDeleteClick(item.id)}
-                  type={"remove"}/>
+                  type={item.id === documentId ? "remove-selected" : "remove"}/>
           <div className="title">
-                  <span className={item.id === documentId ? "record opened" : "record"}>
-                    {item.title}
-                  </span>
+            <span>{item.title}</span>
           </div>
           <Button className={"record-counter"}
                   onClick={() => onCopyClick(isWordCountAllowed ? item.words : item.symbols)}

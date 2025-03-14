@@ -22,11 +22,10 @@ body {
     flex-wrap: nowrap;
     justify-content: space-between;
     align-items: center;
-    /*height: 3em;*/
 }
 
 /* Полужирные заголовки в меню */
-.title {
+.menu .title {
     font-weight: 700;
     font-size: 1.3em;
 }
@@ -65,19 +64,22 @@ body {
 .record {
     display: flex;
     flex-wrap: nowrap;
+    font-weight: 400;
     justify-content: space-between;
     align-items: center;
     padding: 0.25em 0 0.25em 0;
 }
 
-.opened {
-    font-size: 1.5em;
-    color: rgb(0, 122, 255);
-}
+/*.selected {*/
+/*    font-size: 1.5em;*/
+/*    font-weight: 700;*/
+/*    !*color: rgb(0, 122, 255);*!*/
+/*}*/
 
 /* Заголовок записи */
 .record .title {
     padding: 0 0.25em 0 0.25em;
+    font-size: 1.3em;
     flex-grow: 2;
     text-align: left;
     display: table;
@@ -88,7 +90,7 @@ body {
 .record .title span {
     display: table-cell;
     font-size: 0.9em;
-    font-weight: normal;
+    /*font-weight: normal;*/
     max-width: 1px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -98,6 +100,7 @@ body {
 /* Выделение полужирным выделенной строки */
 .selected {
     font-weight: 700;
+    /*color: rgb(0, 122, 255);*/
 }
 
 /* Кнопка клонирования при наведении на счетчик страницы */
@@ -181,7 +184,7 @@ input, label {
     display: flex;
     flex-direction: row;
     align-items: center;
-    font-size: 1.2em;
+    font-size: 1.3em;
     gap: 0.25em;
 }
 
@@ -204,7 +207,99 @@ hr {
     margin: 0.6em 0;
 }
 
+
+/* From Uiverse.io by cssbuttons-io */
+/*.cbx {*/
+/* position: relative;*/
+/* top: 1px;*/
+/* width: 27px;*/
+/* height: 27px;*/
+/* border: 1px solid #c8ccd4;*/
+/* border-radius: 3px;*/
+/* vertical-align: middle;*/
+/* transition: background 0.1s ease;*/
+/* cursor: pointer;*/
+/* display: block;*/
+/*}*/
+
+/*.cbx:after {*/
+/* content: '';*/
+/* position: absolute;*/
+/* top: 2px;*/
+/* left: 8px;*/
+/* width: 7px;*/
+/* height: 14px;*/
+/* opacity: 0;*/
+/* transform: rotate(45deg) scale(0);*/
+/* border-right: 2px solid #fff;*/
+/* border-bottom: 2px solid #fff;*/
+/* transition: all 0.3s ease;*/
+/* transition-delay: 0.15s;*/
+/*}*/
+
+/*.lbl {*/
+/* margin-left: 5px;*/
+/* vertical-align: middle;*/
+/* cursor: pointer;*/
+/*}*/
+
+/*#cbx:checked ~ .cbx {*/
+/* border-color: transparent;*/
+/* background: #6871f1;*/
+/* animation: jelly 0.6s ease;*/
+/*}*/
+
+/*#cbx:checked ~ .cbx:after {*/
+/* opacity: 1;*/
+/* transform: rotate(45deg) scale(1);*/
+/*}*/
+
+/*.cntr {*/
+/* position: relative;*/
+/*}*/
+
+/*@keyframes jelly {*/
+/* from {*/
+/*  transform: scale(1, 1);*/
+/* }*/
+
+/* 30% {*/
+/*  transform: scale(1.25, 0.75);*/
+/* }*/
+
+/* 40% {*/
+/*  transform: scale(0.75, 1.25);*/
+/* }*/
+
+/* 50% {*/
+/*  transform: scale(1.15, 0.85);*/
+/* }*/
+
+/* 65% {*/
+/*  transform: scale(0.95, 1.05);*/
+/* }*/
+
+/* 75% {*/
+/*  transform: scale(1.05, 0.95);*/
+/* }*/
+
+/* to {*/
+/*  transform: scale(1, 1);*/
+/* }*/
+/*}*/
+
+/*.hidden-xs-up {*/
+/* display: none!important;*/
+/*}*/
+
+
 /* Иконки чекбоксов и радио кнопок*/
+input[type="checkbox"],
+input[type="radio"] {
+    height: 1.1em;
+    width: 1.1em;
+}
+
 /*input:where([type="checkbox"], [type="radio"]) {*/
 /*    display: none;*/
 /*}*/
@@ -241,6 +336,7 @@ hr {
     body {
         background-color: darkseagreen;
     }
+
     .button svg {
         fill: rgb(255, 255, 255);
         cursor: pointer;
@@ -273,6 +369,7 @@ hr {
         margin: 0.8em 0;
     }
 }
+
 
 
 
