@@ -28,22 +28,34 @@ function App() {
   const [isSettingOpen, setIsSettingOpen] = useState(false);
   const [settings, setSettings] = useState<TSettingList>(appSettings);
   const [isValidPageOpen, setIsValidPageOpen] = useState(false);
-  const [documentId, setDocumentId] = useState<string>("");
+  const [currentDocumentId, setCurrentDocumentId] = useState<string>("");
   const [documents, setDocuments] = useState<TDocument[]>([]);
 
   useEffect(() => {
-    getUrl()
-      .then((host: string) =>
-        setIsValidPageOpen(host === "yppm.yonote.ru"));
+    const abortController = new AbortController();
+    const fetchData = async () => {
+      try {
+        const host = await getUrl();
+        setIsValidPageOpen(host.includes("yonote.ru"));
 
-    fetchFromLocalStorage<TSettingList>("GET_SETTINGS")
-      .then((data) => setSettings(data));
+        const [settings, documents, documentId] = await Promise.all([
+          fetchFromLocalStorage<TSettingList>("GET_SETTINGS"),
+          fetchFromLocalStorage<TDocument[]>("GET_DOCUMENTS"),
+          fetchFromLocalStorage<string>("GET_DOCUMENT_ID"),
+        ])
 
-    fetchFromLocalStorage<TDocument[]>("GET_DOCUMENTS")
-      .then((data) => setDocuments(data));
+        setSettings(settings);
+        setDocuments(documents);
+        setCurrentDocumentId(documentId);
 
-    fetchFromLocalStorage<string>("GET_DOCUMENT_ID")
-      .then((data) => setDocumentId(data));
+      } catch (error) {
+        console.error("Ошибка при получении данных", error)
+      }
+    }
+
+    fetchData().then(() => console.log("Данные загружены"));
+
+    return () => abortController.abort();
   }, [])
 
   const handleSettingsChange = (category: keyof TSettingList, label: string) => {
@@ -110,8 +122,11 @@ function App() {
   }
 
   const handleCopyRawText = async () => {
-    const document = documents.find((document) => document.id === documentId);
+    const document = documents.find((document) => document.id === currentDocumentId);
     await navigator.clipboard.writeText(document?.raw || "");
+  }
+
+  const handleLanguageAppChange = async () => {
   }
 
   return (
@@ -119,14 +134,15 @@ function App() {
       ? <SettingsPage settings={settings}
                       onSettingsChange={handleSettingsChange}
                       onBackButtonClick={handleSettingsClick}
+                      onLanguageAppClick={handleLanguageAppChange}
                       onCopyRawText={handleCopyRawText}/>
       : <MainPage onPlusClick={handlePlusClick}
                   onClearClick={handleClearClick}
                   onDeleteClick={handleDeleteClick}
                   onSettingClick={handleSettingsClick}
                   documents={documents}
-                  documentId={documentId}
-                  isActive={isValidPageOpen}
+                  currentDocumentId={currentDocumentId}
+                  isValidPageOpen={isValidPageOpen}
                   settings={settings}/>
   )
 }

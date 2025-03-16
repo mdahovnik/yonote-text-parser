@@ -1,5 +1,8 @@
 import {TSetting, TSettingList} from "../types.ts";
-import {OptionField} from "./optionField.tsx";
+import {SettingItem} from "./settingItem.tsx";
+import {FC} from "react";
+import {Heading} from "./heading.tsx";
+import {Separator} from "./separator.tsx";
 
 type TSettingsBlock = {
   title: string;
@@ -8,19 +11,17 @@ type TSettingsBlock = {
   onSettingsChange: (key: keyof TSettingList, type: string) => void;
 }
 
-export function SettingsSection({title, settings, onSettingsChange, categorySettings}: TSettingsBlock) {
-  return (
-    <>
-      <hr/>
-      <div className="settings-title">{title}</div>
-      <div className="settings-grid" id="settings-formatting">
-        {settings.map((item, index) => (
-          <OptionField setting={item}
-                       key={index}
-                       onSettingsChange={onSettingsChange}
-                       categorySettings={categorySettings}/>
-        ))}
-      </div>
-    </>
-  )
-}
+export const SettingsSection: FC<TSettingsBlock> = ({title, settings, onSettingsChange, categorySettings}) => (
+  <>
+    <Separator/>
+    <Heading level={3} className="settings-title">{title}</Heading>
+    <div className="settings-grid">
+      {settings.map((setting, index) => (
+        <SettingItem setting={setting}
+                     key={index}
+                     onSettingsChange={onSettingsChange}
+                     categorySettings={categorySettings}/>
+      ))}
+    </div>
+  </>
+)

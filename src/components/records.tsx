@@ -1,42 +1,34 @@
 import {TSetting, TDocument} from "../types.ts";
-import {Button} from "./button.tsx";
+import {FC} from "react";
+import {RecordItem} from "./recordItem.tsx";
 
 type TRecordList = {
-  data: TDocument[];
+  documents: TDocument[];
   settings: TSetting[];
-  documentId: string;
+  currentDocumentId: string;
   onDeleteClick: (id: string) => void;
   onCopyClick: (count: number) => void;
 }
 
-export function Records(
+export const Records: FC<TRecordList> = (
   {
-    data,
-    documentId,
-    onDeleteClick,
-    onCopyClick,
+    documents,
+    currentDocumentId, onDeleteClick, onCopyClick,
     settings
-  }: TRecordList) {
+  }) => {
 
   const isWordCountAllowed = settings.length > 0 && settings[0].isAllowed;
-
   return (
-    <div id="records">
-      <hr/>
-      {data.map((item) => (
-        <div className={item.id === documentId ? "record selected" : "record"}
-             key={item.id}>
-          <Button className={"record-remove danger"}
-                  onClick={() => onDeleteClick(item.id)}
-                  type={item.id === documentId ? "remove-selected" : "remove"}/>
-          <div className="title">
-            <span>{item.title}</span>
-          </div>
-          <Button className={"record-counter"}
-                  onClick={() => onCopyClick(isWordCountAllowed ? item.words : item.symbols)}
-                  type={"copy"}
-                  text={`${isWordCountAllowed ? item.words : item.symbols}`}/>
-        </div>
+    <div className={"records-wrapper"}>
+      {documents.map((document) => (
+        <RecordItem key={document.id}
+                    document={document}
+                    onDeleteClick={onDeleteClick}
+                    onCopyClick={onCopyClick}
+                    isWordCountAllowed={isWordCountAllowed}
+                    currentDocumentId={currentDocumentId}>
+          {document.title}
+        </RecordItem>
       ))}
     </div>
   )

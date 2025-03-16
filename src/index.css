@@ -4,16 +4,14 @@
 
 /* Основные настройки окна */
 body {
-    width: 320px;
+    width: 340px;
     padding: 0;
     margin: 0;
     font-family: system-ui;
     text-align: center;
     font-size: 0.75em;
-
     user-select: none;
     -webkit-user-select: none;
-    /*cursor: default;*/
 }
 
 /* Строка верхнего или нижнего меню */
@@ -27,57 +25,81 @@ body {
 /* Полужирные заголовки в меню */
 .menu .title {
     font-weight: 700;
+    font-size: 1.5em;
+}
+
+.heading{
+    text-transform: uppercase;
+}
+/* Кнопка */
+.button {
+    border: none;
     font-size: 1.3em;
+    background-color: transparent;
 }
 
-/* Иконка в кнопке */
 .button svg {
-    height: 1.3em;
-    width: 1.3em;
-    margin-bottom: -0.13em;
+    display: block;
+    height: 1.1em;
+    width: 1.1em;
     fill: rgb(0, 0, 0);
-    display: flex;
 }
 
-/* Стили для SVG */
-.clickable-icon {
+.button:disabled,
+.button:disabled svg {
+    fill: lightgrey;
+    pointer-events: none;
+}
+
+.button:hover,
+.button:hover svg {
+    color: rgb(0, 122, 255);
+    fill: rgb(0, 122, 255);
     cursor: pointer;
-    transition: transform 0.3s ease; /* Плавное изменение размера */
 }
 
-/* Класс для уменьшения размера */
-.shrink {
-    transform: scale(0.8); /* Уменьшаем размер до 80% */
+.button:active,
+.button:active svg {
+    color: black;
+    fill: black;
 }
 
-.button-icon {
+.button-icon-wrapper {
     display: flex;
     gap: 0.25em;
     align-items: center;
 }
 
-.button-icon-label {
-    font-size: 1.1em;
+/* Стили для SVG */
+/*.clickable-icon {*/
+/*    cursor: pointer;*/
+/*    transition: transform 0.3s ease; !* Плавное изменение размера *!*/
+/*}*/
+
+/* Класс для уменьшения размера */
+/*.shrink {*/
+/*    transform: scale(0.8); !* Уменьшаем размер до 80% *!*/
+/*}*/
+
+.records-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
 }
 
 /* Строка с записью */
 .record {
     display: flex;
+    font-size: 1.1em;
     flex-wrap: nowrap;
     font-weight: 400;
     justify-content: space-between;
     align-items: center;
-    padding: 0.25em 0 0.25em 0;
+    /*padding: 0.25em 0 0.25em 0;*/
 }
 
-/*.selected {*/
-/*    font-size: 1.5em;*/
-/*    font-weight: 700;*/
-/*    !*color: rgb(0, 122, 255);*!*/
-/*}*/
-
 /* Заголовок записи */
-.record .title {
+.record-title {
     padding: 0 0.25em 0 0.25em;
     font-size: 1.3em;
     flex-grow: 2;
@@ -87,10 +109,9 @@ body {
 }
 
 /* Обрезание текста заголовка в троеточие */
-.record .title span {
+.record-title span {
     display: table-cell;
     font-size: 0.9em;
-    /*font-weight: normal;*/
     max-width: 1px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -101,11 +122,13 @@ body {
 .selected {
     font-weight: 700;
     /*color: rgb(0, 122, 255);*/
+    /*font-size: 1.1em;*/
 }
 
 /* Кнопка клонирования при наведении на счетчик страницы */
 .record-counter {
     flex-shrink: 0;
+    font-weight: inherit;
 }
 
 .record-counter svg {
@@ -114,12 +137,6 @@ body {
 
 .record-counter:hover svg {
     display: inline;
-    margin-right: 0.25em;
-}
-
-.count-bold {
-    font-weight: 700;
-    margin-left: 0.35em;
 }
 
 /* Настройки заглушки когда нет записей */
@@ -133,19 +150,15 @@ body {
     display: inline-block;
 }
 
-input, label {
-    cursor: pointer;
-}
+/*Цвет кнопок при наведении  */
+/*.action:hover {*/
+/*    color: rgb(0, 122, 255);*/
+/*    cursor: pointer;*/
+/*}*/
 
-/* Цвет кнопок при наведении  */
-.action:hover {
-    color: rgb(0, 122, 255);
-    cursor: pointer;
-}
-
-.action:hover svg {
-    fill: rgb(0, 122, 255);
-}
+/*.action:hover svg {*/
+/*    fill: rgb(0, 122, 255);*/
+/*}*/
 
 .danger:hover {
     color: rgb(255, 59, 48);
@@ -159,11 +172,6 @@ input, label {
     fill: rgb(255, 59, 48);
 }
 
-.disabled {
-    pointer-events: none;
-    opacity: 0.2;
-}
-
 /* Сетка настроек */
 .settings-grid {
     display: grid;
@@ -174,7 +182,7 @@ input, label {
 
 /* Заголовок раздела настроек */
 .settings-title {
-    text-align: center;
+    /*text-align: center;*/
     font-weight: 700;
     padding-bottom: 0.6em;
 }
@@ -196,139 +204,22 @@ input, label {
     margin-top: 1.0em;
 }
 
-.record-wrapper {
-    display: flex;
-    flex-direction: row;
-}
-
 hr {
     opacity: 0.6;
     width: 100%;
     margin: 0.6em 0;
 }
 
-
-/* From Uiverse.io by cssbuttons-io */
-/*.cbx {*/
-/* position: relative;*/
-/* top: 1px;*/
-/* width: 27px;*/
-/* height: 27px;*/
-/* border: 1px solid #c8ccd4;*/
-/* border-radius: 3px;*/
-/* vertical-align: middle;*/
-/* transition: background 0.1s ease;*/
-/* cursor: pointer;*/
-/* display: block;*/
-/*}*/
-
-/*.cbx:after {*/
-/* content: '';*/
-/* position: absolute;*/
-/* top: 2px;*/
-/* left: 8px;*/
-/* width: 7px;*/
-/* height: 14px;*/
-/* opacity: 0;*/
-/* transform: rotate(45deg) scale(0);*/
-/* border-right: 2px solid #fff;*/
-/* border-bottom: 2px solid #fff;*/
-/* transition: all 0.3s ease;*/
-/* transition-delay: 0.15s;*/
-/*}*/
-
-/*.lbl {*/
-/* margin-left: 5px;*/
-/* vertical-align: middle;*/
-/* cursor: pointer;*/
-/*}*/
-
-/*#cbx:checked ~ .cbx {*/
-/* border-color: transparent;*/
-/* background: #6871f1;*/
-/* animation: jelly 0.6s ease;*/
-/*}*/
-
-/*#cbx:checked ~ .cbx:after {*/
-/* opacity: 1;*/
-/* transform: rotate(45deg) scale(1);*/
-/*}*/
-
-/*.cntr {*/
-/* position: relative;*/
-/*}*/
-
-/*@keyframes jelly {*/
-/* from {*/
-/*  transform: scale(1, 1);*/
-/* }*/
-
-/* 30% {*/
-/*  transform: scale(1.25, 0.75);*/
-/* }*/
-
-/* 40% {*/
-/*  transform: scale(0.75, 1.25);*/
-/* }*/
-
-/* 50% {*/
-/*  transform: scale(1.15, 0.85);*/
-/* }*/
-
-/* 65% {*/
-/*  transform: scale(0.95, 1.05);*/
-/* }*/
-
-/* 75% {*/
-/*  transform: scale(1.05, 0.95);*/
-/* }*/
-
-/* to {*/
-/*  transform: scale(1, 1);*/
-/* }*/
-/*}*/
-
-/*.hidden-xs-up {*/
-/* display: none!important;*/
-/*}*/
-
-
 /* Иконки чекбоксов и радио кнопок*/
 input[type="checkbox"],
 input[type="radio"] {
-    height: 1.1em;
-    width: 1.1em;
+    height: 1.2em;
+    width: 1.2em;
 }
 
-/*input:where([type="checkbox"], [type="radio"]) {*/
-/*    display: none;*/
-/*}*/
-
-/*input:where([type="checkbox"], [type="radio"]) + label:before {*/
-/*    display: inline-block;*/
-/*}*/
-
-/*input:where([type="checkbox"], [type="radio"]) + label svg {*/
-/*    height: 1.1em;*/
-/*    width: 1.1em;*/
-/*    margin-bottom: -0.2em;*/
-/*}*/
-
-/*input:where([type="checkbox"], [type="radio"]) + label svg:first-of-type {*/
-/*    display: none;*/
-/*}*/
-
-/*input:where([type="checkbox"], [type="radio"]) + label svg:last-of-type {*/
-/*    display: inline-block;*/
-/*}*/
-
-/*input:where([type="checkbox"], [type="radio"]):checked + label svg:first-of-type {*/
-/*    display: inline-block;*/
-/*}*/
-
-/*input:where([type="checkbox"], [type="radio"]):checked + label svg:last-of-type {*/
-/*    display: none;*/
-/*}*/
+input, label {
+    cursor: pointer;
+}
 
 /* Цвета в темной теме */
 @media (prefers-color-scheme: dark) {
@@ -346,14 +237,12 @@ input[type="radio"] {
         fill: rgb(255, 255, 255);
     }
 
-    .action:hover {
-        color: rgb(10, 132, 255);
-    }
-
-    .action:hover svg {
-        fill: rgb(10, 132, 255);
-    }
-
+    /*.action:hover {*/
+    /*    color: rgb(10, 132, 255);*/
+    /*}*/
+    /*.action:hover svg {*/
+    /*    fill: rgb(10, 132, 255);*/
+    /*}*/
     .danger:hover {
         color: rgb(255, 69, 58);
     }
