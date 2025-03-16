@@ -1,21 +1,11 @@
-import {Button} from "./button/button.tsx";
-import {TDocument, TSettingList} from "../types.ts";
-import {Records} from "./records.tsx";
-import {Placeholder} from "./placeholder.tsx";
-import {useMemo} from "react";
-import {Heading} from "./heading.tsx";
-import {Separator} from "./separator.tsx";
-
-type TMainPage = {
-  isValidPageOpen: boolean;
-  documents: TDocument[];
-  currentDocumentId: string;
-  settings: TSettingList;
-  onSettingClick: () => void;
-  onPlusClick: () => void;
-  onClearClick: () => void;
-  onDeleteClick: (id: string) => void;
-}
+import {Button} from "../button/button.tsx";
+import {TDocument} from "../../types.ts";
+import {Records} from "../records/records.tsx";
+import {Placeholder} from "../placeholder/placeholder.tsx";
+import {FC, useMemo} from "react";
+import {Heading} from "../../shared/ui/heading/heading.tsx";
+import {Separator} from "../../shared/ui/separator/separator.tsx";
+import {TMainPage} from "./type.ts";
 
 function getTotalCountFromDocuments(data: TDocument[]) {
   return data.reduce(
@@ -23,7 +13,7 @@ function getTotalCountFromDocuments(data: TDocument[]) {
     {words: 0, symbols: 0});
 }
 
-export function MainPage(
+export const MainPage: FC<TMainPage> = (
   {
     documents,
     currentDocumentId,
@@ -33,9 +23,9 @@ export function MainPage(
     onPlusClick,
     onClearClick,
     onDeleteClick
-  }: TMainPage) {
+  }) => {
 
-  const handleCopyClick = async (totalCount: number) => {
+  const copyTotalCountToClipboard = async (totalCount: number) => {
     await navigator.clipboard.writeText(totalCount.toString());
   }
 
@@ -44,11 +34,10 @@ export function MainPage(
     [documents]
   );
 
-  const isCountWordsAllowed = () =>
-    settings.count.find((item) => item.label === "Words")?.isAllowed;
-
-  const shouldShowAddButton = documents.length === 0 || !documents.some(item => item.id === currentDocumentId);
+  const isCountWordsAllowed = () => settings.count.find((item) => item.label === "Words")?.isAllowed;
+  const shouldShowAddButton = isValidPageOpen && !documents.some(item => item.id === currentDocumentId);
   const currentCount = isCountWordsAllowed() ? words : symbols;
+  const countString = `${isCountWordsAllowed() ? 'Words' : 'Symbols'}: ${currentCount}`;
 
   return (
     <>
@@ -69,19 +58,17 @@ export function MainPage(
           <Records documents={documents}
                    currentDocumentId={currentDocumentId}
                    onDeleteClick={onDeleteClick}
-                   onCopyClick={handleCopyClick}
+                   onCopyClick={copyTotalCountToClipboard}
                    settings={settings.count}/>
           <Separator/>
           <div className="menu">
-            <Button className={"danger"}
-                    onClick={onClearClick}
+            <Button onClick={onClearClick}
                     iconType={"trash"}>
               {"Clear all"}
             </Button>
-            <Button className={"record-counter"}
-                    onClick={() => handleCopyClick(currentCount)}
+            <Button onClick={() => copyTotalCountToClipboard(currentCount)}
                     iconType={"copy"}>
-              {`${isCountWordsAllowed() ? 'Words' : 'Symbols'}: ${currentCount}`}
+              {countString}
             </Button>
           </div>
         </>

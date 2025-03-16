@@ -1,26 +1,19 @@
-import {TSettingList} from "../types.ts";
-import {SettingsSection} from "./settingsSection.tsx";
-import {Button} from "./button/button.tsx";
+import {SettingsSection} from "../settings-section/settings-section.tsx";
+import {Button} from "../button/button.tsx";
 import {FC} from "react";
-import {Heading} from "./heading.tsx";
-
-type TSettingPage = {
-  onBackButtonClick: () => void;
-  onLanguageAppClick: () => void;
-  onSettingsChange: (category: keyof TSettingList, type: string) => void;
-  onCopyRawText: () => void
-  settings: TSettingList;
-}
+import {Heading} from "../../shared/ui/heading/heading.tsx";
+import {TSettingPage} from "./type.ts";
+import {Separator} from "../../shared/ui/separator/separator.tsx";
 
 export const SettingsPage: FC<TSettingPage> = (
   {
     onBackButtonClick,
     onLanguageAppClick,
-    onSettingsChange,
-    onCopyRawText,
+    onSettingChangeClick,
+    onCopyRawTextClick,
     settings
   }) => (
-  <div id="settings-page">
+  <>
     <div className="menu">
       <Button onClick={onBackButtonClick}
               iconType={"back"}/>
@@ -30,24 +23,27 @@ export const SettingsPage: FC<TSettingPage> = (
         {"ru"}
       </Button>
     </div>
+    <Separator/>
     <SettingsSection title={"Types of blocks to be counted:"}
                      settings={settings.block}
                      categorySettings={"block"}
-                     onSettingsChange={onSettingsChange}/>
+                     onSettingsChange={onSettingChangeClick}/>
+    {/*<Separator/>*/}
     <SettingsSection title={"Types of text style to be counted:"}
                      settings={settings.text}
                      categorySettings={"text"}
-                     onSettingsChange={onSettingsChange}/>
+                     onSettingsChange={onSettingChangeClick}/>
+    {/*<Separator/>*/}
     <SettingsSection title={"Counter type:"}
                      settings={settings.count}
                      categorySettings={"count"}
-                     onSettingsChange={onSettingsChange}/>
-    <hr/>
-    <div className="setting-copy-rawtext">
-      <Button onClick={onCopyRawText}
-              iconType={"copy"}>
-        {"Copy raw text"}
-      </Button>
-    </div>
-  </div>
+                     onSettingsChange={onSettingChangeClick}/>
+    <Separator/>
+    {/*<div className="setting-copy-rawtext">*/}
+    <Button onClick={onCopyRawTextClick}
+            iconType={"copy"}>
+      {"Copy raw text"}
+    </Button>
+    {/*</div>*/}
+  </>
 )

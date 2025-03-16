@@ -1,0 +1,6 @@
+/* Настройки заглушки когда нет записей */
+.placeholder {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}

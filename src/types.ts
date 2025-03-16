@@ -11,7 +11,7 @@
 //   raw: string,
 // }
 
-import {ACT} from "./constants.ts";
+import {ACT} from "./constants/constants.ts";
 import {HTMLInputTypeAttribute} from "react";
 
 export type TDocument = {

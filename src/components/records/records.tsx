@@ -1,14 +1,7 @@
-import {TSetting, TDocument} from "../types.ts";
 import {FC} from "react";
-import {RecordItem} from "./recordItem.tsx";
-
-type TRecordList = {
-  documents: TDocument[];
-  settings: TSetting[];
-  currentDocumentId: string;
-  onDeleteClick: (id: string) => void;
-  onCopyClick: (count: number) => void;
-}
+import {RecordItem} from "../record-item/record-item.tsx";
+import style from "./records.module.css";
+import {TRecordList} from "./type.ts";
 
 export const Records: FC<TRecordList> = (
   {
@@ -19,7 +12,7 @@ export const Records: FC<TRecordList> = (
 
   const isWordCountAllowed = settings.length > 0 && settings[0].isAllowed;
   return (
-    <div className={"records-wrapper"}>
+    <div className={style.recordsWrapper}>
       {documents.map((document) => (
         <RecordItem key={document.id}
                     document={document}

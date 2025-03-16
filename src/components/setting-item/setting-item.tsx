@@ -1,11 +1,6 @@
-import {TSetting, TSettingList} from "../types.ts";
-import {FC, HTMLAttributes} from "react";
-
-interface ISettingItem extends HTMLAttributes<HTMLLabelElement> {
-  setting: TSetting,
-  onSettingsChange: (key: keyof TSettingList, type: string) => void;
-  categorySettings: keyof TSettingList;
-}
+import {FC,} from "react";
+import {ISettingItem} from "./type.ts";
+import style from "./setting-item.module.css";
 
 export const SettingItem: FC<ISettingItem> = (
   {
@@ -14,7 +9,7 @@ export const SettingItem: FC<ISettingItem> = (
     categorySettings,
     ...props
   }) => (
-  <label className={'setting'} {...props}>
+  <label className={style.setting} {...props}>
     <input type={setting.type}
            checked={setting.isAllowed}
            onChange={() => {

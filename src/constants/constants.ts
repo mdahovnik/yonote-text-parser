@@ -1,4 +1,4 @@
-import {TSettingList} from "./types.ts";
+import {TSettingList} from "../types.ts";
 
 export const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',

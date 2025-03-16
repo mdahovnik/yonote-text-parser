@@ -1,9 +1,9 @@
 import {useEffect, useState} from 'react'
 import './App.css'
-import {SettingsPage} from "./components/settingsPage.tsx";
-import {MainPage} from "./components/mainPage.tsx";
+import {SettingsPage} from "./components/settings-page/settings-page.tsx";
+import {MainPage} from "./components/main-page/main-page.tsx";
 import {TDocument, TSettingList} from "./types.ts";
-import {ACT, appSettings} from "./constants.ts";
+import {ACT, appSettings} from "./constants/constants.ts";
 
 async function fetchFromLocalStorage<T>(actionType: keyof typeof ACT) {
   return new Promise<T>((resolve, reject) => {
@@ -58,7 +58,7 @@ function App() {
     return () => abortController.abort();
   }, [])
 
-  const handleSettingsChange = (category: keyof TSettingList, label: string) => {
+  const changeSettingField = (category: keyof TSettingList, label: string) => {
     const updatedSettings = {
       ...settings,
       [category]: settings[category].map((item) => {
@@ -83,12 +83,12 @@ function App() {
     })
   }
 
-  const handleSettingsClick = () => {
+  const togglePage = () => {
     const isOpen = !isSettingOpen;
     setIsSettingOpen(isOpen);
   }
 
-  const handlePlusClick = () => {
+  const saveCurrentDocument = () => {
     chrome.runtime.sendMessage({action: ACT.SAVE_DOCUMENT, data: {newSettings: settings}}, (documents: TDocument[]) => {
       if (chrome.runtime.lastError) {
         console.error("Error on ACT.SAVE_DOCUMENT:", chrome.runtime.lastError.message);
@@ -99,7 +99,7 @@ function App() {
     })
   }
 
-  const handleClearClick = () => {
+  const deleteAllDocuments = () => {
     chrome.runtime.sendMessage({action: ACT.CLEAR_RECORDS}, () => {
       if (chrome.runtime.lastError) {
         console.error('Error on ACT.CLEAR_RECORDS:', chrome.runtime.lastError.message);
@@ -110,7 +110,7 @@ function App() {
     })
   }
 
-  const handleDeleteClick = (id: string) => {
+  const deleteSelectedDocument = (id: string) => {
     chrome.runtime.sendMessage({action: ACT.REMOVE_DOCUMENT, data: {id: id}}, (documents: TDocument[]) => {
       if (chrome.runtime.lastError) {
         console.error("Error on ACT.REMOVE_DOCUMENT:", chrome.runtime.lastError.message);
@@ -121,25 +121,25 @@ function App() {
     })
   }
 
-  const handleCopyRawText = async () => {
+  const copyRawTextToClipboard = async () => {
     const document = documents.find((document) => document.id === currentDocumentId);
     await navigator.clipboard.writeText(document?.raw || "");
   }
 
-  const handleLanguageAppChange = async () => {
+  const changeAppLanguage = async () => {
   }
 
   return (
     isSettingOpen
       ? <SettingsPage settings={settings}
-                      onSettingsChange={handleSettingsChange}
-                      onBackButtonClick={handleSettingsClick}
-                      onLanguageAppClick={handleLanguageAppChange}
-                      onCopyRawText={handleCopyRawText}/>
-      : <MainPage onPlusClick={handlePlusClick}
-                  onClearClick={handleClearClick}
-                  onDeleteClick={handleDeleteClick}
-                  onSettingClick={handleSettingsClick}
+                      onSettingChangeClick={changeSettingField}
+                      onBackButtonClick={togglePage}
+                      onLanguageAppClick={changeAppLanguage}
+                      onCopyRawTextClick={copyRawTextToClipboard}/>
+      : <MainPage onPlusClick={saveCurrentDocument}
+                  onClearClick={deleteAllDocuments}
+                  onDeleteClick={deleteSelectedDocument}
+                  onSettingClick={togglePage}
                   documents={documents}
                   currentDocumentId={currentDocumentId}
                   isValidPageOpen={isValidPageOpen}

@@ -1,0 +1,63 @@
+/* Строка с записью */
+.record {
+    display: flex;
+    font-size: 1.1em;
+    flex-wrap: nowrap;
+    font-weight: 400;
+    justify-content: space-between;
+    align-items: center;
+    /*padding: 0.25em 0 0.25em 0;*/
+}
+
+/*!* Кнопка клонирования при наведении на счетчик страницы *!*/
+/*.recordCounter {*/
+/*    flex-shrink: 0;*/
+/*    font-weight: inherit;*/
+/*}*/
+
+/*.recordCounter svg {*/
+/*    display: none;*/
+/*}*/
+
+/*.recordCounter:hover svg {*/
+/*    display: inline;*/
+/*}*/
+
+/* Заголовок записи */
+.recordTitle {
+    padding: 0 0.25em 0 0.25em;
+    font-size: 1.3em;
+    flex-grow: 2;
+    text-align: left;
+    display: table;
+    width: 100%;
+}
+
+/* Выделение полужирным выделенной строки */
+.selected {
+    font-weight: 700;
+    /*color: rgb(0, 122, 255);*/
+    /*font-size: 1.1em;*/
+}
+
+/* Обрезание текста заголовка в троеточие */
+.recordTitle span {
+    display: table-cell;
+    font-size: 0.9em;
+    max-width: 1px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+/*.danger:hover {*/
+/*    color: rgb(255, 59, 48);*/
+/*}*/
+
+/*.danger:focus {*/
+/*    color: rgb(0, 0, 0);*/
+/*}*/
+
+/*.danger:hover svg {*/
+/*    fill: rgb(255, 59, 48);*/
+/*}*/

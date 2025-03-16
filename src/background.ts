@@ -1,4 +1,4 @@
-import {ACT, appSettings} from "./constants.ts";
+import {ACT, appSettings} from "./constants/constants.ts";
 import {TMessage, TStorage, TextNodeTree, TDocument, TSettingList} from "./types.ts";
 
 chrome.runtime.onInstalled.addListener(() => {
