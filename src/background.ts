@@ -1,5 +1,5 @@
-import {ACT, appSettings} from "./constants/constants.ts";
-import {TMessage, TStorage, TextNodeTree, TDocument, TSettingList} from "./types.ts";
+import {Act, appSettings} from "./constants/constants.ts";
+import {TMessage, TStorage, TextNodeTree, TDocument, TSettingList} from "./types/types.ts";
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
@@ -45,7 +45,7 @@ chrome.runtime.onConnect.addListener((port) => {
   console.log("Content.ts подключился:", port.name);
 
   port.onMessage.addListener((message: TMessage) => {
-    if (message.action === ACT.GET_NODE_TREE) {
+    if (message.action === Act.GET_NODE_TREE) {
       chrome.storage.local.set({
         cache: {
           currentDocumentId: message.data.id,
@@ -80,14 +80,14 @@ chrome.runtime.onConnect.addListener((port) => {
 
 // для передачи сообщений из App.tsx постоянное соединение не важно, поэтому используем chrome.runtime.onMessage().
 chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
-  if (message.action === ACT.GET_DOCUMENT_ID) {
+  if (message.action === Act.GET_DOCUMENT_ID) {
     chrome.storage.local.get("cache", (storage: TStorage) => {
       sendResponse(storage.cache.currentDocumentId)
     })
     return true;
   }
 
-  if (message.action === ACT.SAVE_DOCUMENT) {
+  if (message.action === Act.SAVE_DOCUMENT) {
     chrome.storage.local.get(["documents", "settings", "cache"], (storage: TStorage) => {
 
       const {storageSettings, storageDocuments, currentDocumentId, nodesTreeCache} = getDataFromStorage(storage);
@@ -109,7 +109,7 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     return true;
   }
 
-  if (message.action === ACT.REMOVE_DOCUMENT) {
+  if (message.action === Act.REMOVE_DOCUMENT) {
     chrome.storage.local.get("documents", (storage: TStorage) => {
       const filteredRecords = storage.documents.filter((document) => document.id !== message.data.id);
       chrome.storage.local.set({"documents": filteredRecords}, () => {
@@ -119,28 +119,28 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
     return true;
   }
 
-  if (message.action === ACT.GET_DOCUMENTS) {
+  if (message.action === Act.GET_DOCUMENTS) {
     chrome.storage.local.get("documents", (storage: TStorage) => {
       sendResponse(storage.documents);
     })
     return true;
   }
 
-  if (message.action === ACT.GET_SETTINGS) {
+  if (message.action === Act.GET_SETTINGS) {
     chrome.storage.local.get("settings", (storage: TStorage) => {
       sendResponse(storage.settings);
     })
     return true;
   }
 
-  if (message.action === ACT.CLEAR_RECORDS) {
+  if (message.action === Act.CLEAR_RECORDS) {
     chrome.storage.local.set({"documents": []}, () => {
       sendResponse(null);
     })
     return true;
   }
 
-  if (message.action === ACT.SAVE_SETTINGS) {
+  if (message.action === Act.SAVE_SETTINGS) {
     // console.log("🟢ACT.", message.action);
     const newSettings = message.data.newSettings;
 

@@ -1,5 +1,4 @@
 import {ButtonHTMLAttributes} from "react";
 
-export interface IButtonAction extends ButtonHTMLAttributes<HTMLButtonElement> {
-  iconType: string;
+export interface IButton extends ButtonHTMLAttributes<HTMLButtonElement> {
 }

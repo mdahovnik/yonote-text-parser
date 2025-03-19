@@ -1,0 +1,44 @@
+/* Кнопка */
+/*.button {*/
+/*    border: none;*/
+/*    font-size: 1.3em;*/
+/*    background-color: transparent;*/
+/*}*/
+
+
+/*.button:hover,*/
+/*.button:hover svg {*/
+/*    color: rgb(0, 122, 255);*/
+/*    fill: rgb(0, 122, 255);*/
+/*    cursor: pointer;*/
+/*}*/
+
+/*.button:active,*/
+/*.button:active svg {*/
+/*    color: black;*/
+/*    fill: black;*/
+/*}*/
+
+/*.button:disabled,*/
+/*.button:disabled svg {*/
+/*    fill: lightgrey;*/
+/*    pointer-events: none;*/
+/*}*/
+
+/*.buttonIconWrapper {*/
+/*    display: flex;*/
+/*    gap: 0.25em;*/
+/*    align-items: center;*/
+/*}*/
+
+/*.danger:hover {*/
+/*    color: rgb(255, 59, 48);*/
+/*}*/
+
+/*.danger:focus {*/
+/*    color: rgb(0, 0, 0);*/
+/*}*/
+
+/*.danger:hover svg {*/
+/*    fill: rgb(255, 59, 48);*/
+/*}*/

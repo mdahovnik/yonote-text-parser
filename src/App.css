@@ -3,6 +3,17 @@
     margin: 0 auto;
     padding: 0.8rem;
     text-align: center;
+
+    --white: #FAFAFA;
+    --black: #000;
+    --green: #8FBC8F;
+    --red: #FF453A;
+    --blue: #007AFF;
+    --lightgrey: #D3D3D3;
+}
+
+html {
+    font-size: 16px;
 }
 
 h1,
@@ -19,6 +30,78 @@ fieldset {
     margin: 0;
     padding: 0;
 }
+
+/* Основные настройки окна */
+body {
+    width: 340px;
+    padding: 0;
+    margin: 0;
+    font-family: "Roboto Light", system-ui;
+    text-align: center;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+
+/* Полужирные заголовки в меню */
+.menu .title {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+/* Иконки чекбоксов и радио кнопок*/
+input[type="checkbox"],
+input[type="radio"] {
+    height: 0.9rem;
+    width: 0.9rem;
+}
+
+input, label {
+    cursor: pointer;
+}
+
+.buttonRawCopy {
+    justify-content: center;
+}
+
+/* Цвета в темной теме */
+@media (prefers-color-scheme: dark) {
+
+    body {
+        background-color: var(--green);
+    }
+
+    .button svg {
+        fill: var(--white);
+        cursor: pointer;
+    }
+
+    label svg {
+        fill: var(--white);
+    }
+
+    /*.action:hover {*/
+    /*    color: rgb(10, 132, 255);*/
+    /*}*/
+    /*.action:hover svg {*/
+    /*    fill: rgb(10, 132, 255);*/
+    /*}*/
+    .iconDanger:hover {
+        color: var(--red);
+    }
+
+    .iconDanger:hover svg {
+        fill: var(--red);
+    }
+
+    hr {
+        opacity: 0.6;
+        border-top: 1px solid var(--white);
+        width: 350px;
+        margin: 0.8rem 0;
+    }
+}
+
 
 /*.logo {*/
 /*    height: 6em;*/

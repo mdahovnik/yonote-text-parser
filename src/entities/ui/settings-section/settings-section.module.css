@@ -1,0 +1,13 @@
+/* Сетка настроек */
+.settingsSectionGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-items: start;
+    gap: 0.25rem;
+}
+
+/* Заголовок раздела настроек */
+.settingsSectionTitle {
+    font-weight: 700;
+    padding-bottom: 0.5rem;
+}

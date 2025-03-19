@@ -1,4 +1,4 @@
-import {TextNodeTree} from "./types.ts";
+import {TextNodeTree} from "./types/types.ts";
 
 console.log("💡 content.ts is running:", document.readyState);
 
@@ -100,9 +100,9 @@ function waitForOpenNewDocument(callback: Function) {
 // Ищем блок с class='hrehUE', он при обновлении документа мутирует и его можно отследить DocumentContainer_Observer
 // После обнаружения блока дисконнектим DocumentContainer_Observer.
 function waitForDocumentContainer(selector: string, callback: (element: HTMLElement) => void) {
-  const element = document.querySelector(selector);
+  const element = document.querySelector(selector) as HTMLElement;
   if (element) {
-    callback(element as HTMLElement);
+    callback(element);
     return;
   }
 

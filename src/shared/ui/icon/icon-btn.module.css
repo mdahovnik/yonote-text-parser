@@ -1,0 +1,33 @@
+.iconWrapper {
+    display: flex;
+    gap: 0.20rem;
+}
+
+.iconSvg {
+    display: block;
+    height: 1.0rem;
+    width: 1.0rem;
+    fill: var(--black);
+}
+
+.iconDanger:hover {
+    color: var(--red);
+}
+
+.iconDanger:focus {
+    color: rgb(0, 0, 0);
+}
+
+.iconDanger:hover svg {
+    fill: var(--red);
+}
+
+/* Кнопка клонирования при наведении на счетчик страницы */
+.iconCounter {
+    flex-shrink: 0;
+    font-weight: inherit;
+}
+
+.iconCounter svg {
+    fill: transparent;
+}

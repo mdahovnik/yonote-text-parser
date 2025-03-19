@@ -1,0 +1,8 @@
+
+/* Строка верхнего или нижнего меню */
+.wrapper {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+}
