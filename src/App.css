@@ -13,7 +13,7 @@
 }
 
 html {
-    font-size: 16px;
+    font-size: 14px;
 }
 
 h1,
@@ -33,7 +33,7 @@ fieldset {
 
 /* Основные настройки окна */
 body {
-    width: 340px;
+    width: 22rem;
     padding: 0;
     margin: 0;
     font-family: "Roboto Light", system-ui;

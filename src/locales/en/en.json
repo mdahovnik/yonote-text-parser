@@ -5,9 +5,11 @@
   "countSymbols": "Symbols",
   "copyRawText": "Raw text",
   "settingsTitle": "Settings",
-  "typesOfBlockHeading": "Types of blocks to be counted",
-  "typesOfTextHeading": "Types of text style to be counted",
-  "counterType": "Counter type",
+  "type1_strings": "Types of strings to be counted",
+  "type2_blocks": "Types of blocks to be counted",
+  "type3_lists": "Types of lists to be counted",
+  "type4_text": "Types of text styles to be counted",
+  "type5_counter": "Counter type",
   "Page title": "Page title",
   "Text block": "Text block",
   "Heading 1": "Heading 1",
@@ -32,5 +34,6 @@
   "Strike": "Strike",
   "Code": "Code",
   "Words": "Words",
-  "Symbols": "Symbols"
+  "Symbols": "Symbols",
+  "Placeholder": "To start counting, click the ✚ sign when YoNote tab is active."
 }

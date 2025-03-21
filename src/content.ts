@@ -174,6 +174,7 @@ function watchForTextChanges(textBoxNodes: Node[]) {
       for (const textBoxNode of textBoxNodes) {
         nodesTree.push(createNodeTree(textBoxNode));
       }
+
       sendNodesTree(nodesTree, documentId);
     }, 200)
   })

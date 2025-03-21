@@ -39,7 +39,7 @@ export const MainPage: FC<TMainPage> = (
     await navigator.clipboard.writeText(totalCount.toString());
   }
 
-  const isCountWordsAllowed = () => settings.count.find((item) => item.label === "Words")?.isAllowed;
+  const isCountWordsAllowed = () => settings.type5_counter.find((item) => item.label === "Words")?.isAllowed;
   const shouldShowAddButton = isValidPageOpen && !documents.some(item => item.id === currentDocumentId);
   const currentCount = isCountWordsAllowed() ? words : symbols;
   const countString = `${isCountWordsAllowed() ? t('countWords') : t('countSymbols')}: ${currentCount}`;
@@ -62,20 +62,16 @@ export const MainPage: FC<TMainPage> = (
                    currentDocumentId={currentDocumentId}
                    onDeleteClick={onDeleteClick}
                    onCopyClick={copyTotalCountToClipboard}
-                   settings={settings.count}/>
-          {/*<Wrapper style={{justifySelf: "end"}}></Wrapper>*/}
+                   settings={settings}/>
           <Separator/>
           <Wrapper>
-            <ActionButton onClick={onClearClick}
-                          iconType={Icon.TRASH}>
+            <ActionButton onClick={onClearClick} iconType={Icon.TRASH}>
               {t('clearButton')}
             </ActionButton>
-            <ActionButton onClick={onCopyRawTextClick}
-                          iconType={Icon.COPY}>
+            <ActionButton onClick={onCopyRawTextClick} iconType={Icon.COPY}>
               {t('copyRawText')}
             </ActionButton>
-            <ActionButton onClick={() => copyTotalCountToClipboard(currentCount)}
-                          iconType={Icon.COPY}>
+            <ActionButton onClick={() => copyTotalCountToClipboard(currentCount)} iconType={Icon.COPY}>
               {countString}
             </ActionButton>
           </Wrapper>
@@ -83,7 +79,7 @@ export const MainPage: FC<TMainPage> = (
       ) : (
         <>
           <Separator/>
-          <Placeholder/>
+          <Placeholder>{t('Placeholder')}</Placeholder>
         </>
       )}
     </>

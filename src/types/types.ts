@@ -12,24 +12,28 @@ export type TDocument = {
   title: string,
   words: number,
 }
-type TTranslation = keyof typeof en;
+
+export type TTranslation = keyof typeof en;
 
 export type TSetting = {
-  tagName: string[],
+  id: string
   label: TTranslation,
+  tagName: string[],
   isAllowed: boolean,
   type: HTMLInputTypeAttribute
 }
 
 export type TSettingList = {
-  block: TSetting[],
-  text: TSetting[],
-  count: TSetting[]
+  type1_strings: TSetting[],
+  type2_blocks: TSetting[],
+  type3_lists: TSetting[],
+  type4_text: TSetting[],
+  type5_counter: TSetting[]
 }
 
 export type TStorage = {
-  documents: TDocument[],
   settings: TSettingList,
+  documents: TDocument[],
   cache: {
     currentDocumentId: string
     nodesTreeCache: TextNodeTree[]

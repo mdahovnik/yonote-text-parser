@@ -5,7 +5,7 @@ declare module 'i18next' {
   interface CustomTypeOptions {
     defaultNS: 'translation',
     resources: {
-      uiTranslation: typeof en
+      translation: typeof en
     }
   }
 }

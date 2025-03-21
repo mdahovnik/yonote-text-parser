@@ -1,5 +1,6 @@
 import {Act, appSettings} from "./constants/constants.ts";
 import {TMessage, TStorage, TextNodeTree, TDocument, TSettingList} from "./types/types.ts";
+import {v4 as uuidv4} from 'uuid';
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
@@ -60,7 +61,6 @@ chrome.runtime.onConnect.addListener((port) => {
         )
 
         chrome.storage.local.get(["documents", "settings", "cache"], (storage: TStorage) => {
-
           const {storageSettings, storageDocuments, currentDocumentId, nodesTreeCache} = getDataFromStorage(storage);
           const currentDocument = getCurrentDocument(nodesTreeCache, storageSettings, currentDocumentId);
 
@@ -141,7 +141,6 @@ chrome.runtime.onMessage.addListener((message: TMessage, {}, sendResponse) => {
   }
 
   if (message.action === Act.SAVE_SETTINGS) {
-    // console.log("🟢ACT.", message.action);
     const newSettings = message.data.newSettings;
 
     chrome.storage.local.set({"settings": newSettings}, () => {
@@ -184,9 +183,9 @@ function normalizeSettings(settings: TSettingList) {
         .map(item => item.tagName).flat());
 }
 
-function setBadge(document: TDocument | null, currentSettings: TSettingList) {
+async function setBadge(document: TDocument | null, currentSettings: TSettingList) {
   if (!document) return;
-  const count = Object.values(currentSettings.count).find(count => count.isAllowed);
+  const count = Object.values(currentSettings.type5_counter).find(count => count.isAllowed);
 
   chrome.action.setBadgeText({
     text: count?.label === "Words"
@@ -246,11 +245,11 @@ function createNewDocument(
   data: Record<string, string>,
   normalizeSettings: string[],
   title: string,
-  openedDocumentId: string
+  openedDocumentId: string | undefined
 ): TDocument {
   const {words, symbols, raw} = getTotalsFromRecordType(data);
   return {
-    id: openedDocumentId,
+    id: openedDocumentId ?? uuidv4(),
     parsedData: data,
     settings: normalizeSettings,
     raw: raw,

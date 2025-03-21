@@ -10,7 +10,7 @@ export const Records: FC<TRecordList> = (
     settings
   }) => {
 
-  const isWordCountAllowed = settings.length > 0 && settings[0].isAllowed;
+  const isWordCountAllowed = settings.type5_counter.length > 0 && settings.type5_counter[0].isAllowed;
   return (
     <div className={style.recordsWrapper}>
       {documents.map((document) => (

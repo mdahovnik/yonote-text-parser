@@ -59,14 +59,14 @@ function App() {
     return () => abortController.abort();
   }, [])
 
-  const changeSettingField = (category: keyof TSettingList, label: string) => {
+  const changeOptionField = (category: keyof TSettingList, optionLabel: string) => {
     const updatedSettings = {
       ...settings,
       [category]: settings[category].map((item) => {
-        if (category === "count")
-          return {...item, isAllowed: item.label === label};
+        if (category === "type5_counter")
+          return {...item, isAllowed: item.label === optionLabel};
         else
-          return {...item, isAllowed: item.label === label ? !item.isAllowed : item.isAllowed};
+          return {...item, isAllowed: item.label === optionLabel ? !item.isAllowed : item.isAllowed};
       })
     };
 
@@ -127,11 +127,10 @@ function App() {
     await navigator.clipboard.writeText(document?.raw || "");
   }
 
-
   return (
     isSettingOpen
       ? <SettingsPage settings={settings}
-                      onSettingChangeClick={changeSettingField}
+                      onOptionChangeClick={changeOptionField}
                       onBackButtonClick={togglePage}/>
       : <MainPage onPlusClick={saveCurrentDocument}
                   onClearClick={deleteAllDocuments}

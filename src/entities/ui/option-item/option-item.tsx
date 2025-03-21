@@ -1,12 +1,12 @@
 import {FC,} from "react";
-import {ISettingItem} from "./type.ts";
-import style from "./setting-item.module.css";
+import {IOptionItem} from "./type.ts";
+import style from "./option-item.module.css";
 import {useTranslation} from "react-i18next";
 
-export const SettingItem: FC<ISettingItem> = (
+export const OptionItem: FC<IOptionItem> = (
   {
     setting,
-    onSettingsChange,
+    onOptionChangeClick,
     categorySettings,
     ...props
   }) => {
@@ -16,7 +16,7 @@ export const SettingItem: FC<ISettingItem> = (
       <input type={setting.type}
              checked={setting.isAllowed}
              onChange={() => {
-               onSettingsChange(categorySettings, setting.label);
+               onOptionChangeClick(categorySettings, setting.label);
              }}/>
       {t(setting.label)}
     </label>
