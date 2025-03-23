@@ -28,23 +28,113 @@ export const Icon = {
 
 export const appSettings: TSettingList = {
   type1_strings: [
-    {id: uuidv4(), label: "Page title", tagName: ["documentEditableTitle"], isAllowed: true, type: "checkbox"},
-    {id: uuidv4(), label: "Heading 1", tagName: ["H1"], isAllowed: true, type: "checkbox"},
-    {id: uuidv4(), label: "H1 content", tagName: ["H1_toggle_content"], isAllowed: true, type: "checkbox"},
-    {id: uuidv4(), label: "Heading 2", tagName: ["H2"], isAllowed: true, type: "checkbox"},
-    {id: uuidv4(), label: "H2 content", tagName: ["H2_toggle_content"], isAllowed: true, type: "checkbox"},
-    {id: uuidv4(), label: "Heading 3", tagName: ["H3"], isAllowed: false, type: "checkbox"},
-    {id: uuidv4(), label: "H3 content", tagName: ["H3_toggle_content"], isAllowed: false, type: "checkbox"},
-    {id: uuidv4(), label: "Code", tagName: ["CODE"], isAllowed: false, type: "checkbox"}
+    {
+      label: "Page title",
+      id: uuidv4(),
+      tagName: ["documentEditableTitle"],
+      isAllowed: true,
+      type: "checkbox"
+    },
+    {
+      label: "Heading 1",
+      id: uuidv4(),
+      tagName: ["H1"],
+      isAllowed: true,
+      type: "checkbox"
+    },
+    {
+      label: "H1 content",
+      id: uuidv4(),
+      tagName: ["H1_toggle_content"],
+      isAllowed: true,
+      type: "checkbox"
+    },
+    {
+      label: "Heading 2",
+      id: uuidv4(),
+      tagName: ["H2"],
+      isAllowed: true,
+      type: "checkbox"
+    },
+    {
+      label: "H2 content",
+      id: uuidv4(),
+      tagName: ["H2_toggle_content"],
+      isAllowed: true,
+      type: "checkbox"
+    },
+    {
+      label: "Heading 3",
+      id: uuidv4(),
+      tagName: ["H3"],
+      isAllowed: false,
+      type: "checkbox"
+    },
+    {
+      label: "H3 content",
+      id: uuidv4(),
+      tagName: ["H3_toggle_content"],
+      isAllowed: false,
+      type: "checkbox"
+    },
+    {
+      label: "Code",
+      id: uuidv4(),
+      tagName: ["CODE"],
+      isAllowed: false,
+      type: "checkbox"
+    }
   ],
   type2_blocks: [
-    {id: uuidv4(), label: "Text block", tagName: ["DIV"], isAllowed: true, type: "checkbox"},
-    {id: uuidv4(), label: "Quote block", tagName: ["BLOCKQUOTE"], isAllowed: false, type: "checkbox"},
-    {id: uuidv4(), label: "Toggle block", tagName: ['toggle'], isAllowed: false, type: "checkbox"},
-    {id: uuidv4(), label: "Columns", tagName: ['columns'], isAllowed: false, type: "checkbox"},
-    {id: uuidv4(), label: "Content", tagName: ["allow_toggle_content"], isAllowed: false, type: "checkbox"},
-    {id: uuidv4(), label: "Table", tagName: ["TABLE"], isAllowed: false, type: "checkbox"},
-    {id: uuidv4(), label: "Code block", tagName: ['code-block'], isAllowed: false, type: "checkbox"},
+    {
+      label: "Text block",
+      id: uuidv4(),
+      tagName: ["DIV"],
+      isAllowed: true,
+      type: "checkbox"
+    },
+    {
+      label: "Quote block",
+      id: uuidv4(),
+      tagName: ["BLOCKQUOTE"],
+      isAllowed: false,
+      type: "checkbox"
+    },
+    {
+      id: uuidv4(),
+      label: "Toggle block",
+      tagName: ['toggle'],
+      isAllowed: false,
+      type: "checkbox"
+    },
+    {
+      id: uuidv4(),
+      label: "Columns",
+      tagName: ['columns'],
+      isAllowed: false,
+      type: "checkbox"
+    },
+    {
+      id: uuidv4(),
+      label: "Content",
+      tagName: ["allow_toggle_content"],
+      isAllowed: false,
+      type: "checkbox"
+    },
+    {
+      id: uuidv4(),
+      label: "Table",
+      tagName: ["TABLE"],
+      isAllowed: false,
+      type: "checkbox"
+    },
+    {
+      id: uuidv4(),
+      label: "Code block",
+      tagName: ['code-block'],
+      isAllowed: false,
+      type: "checkbox"
+    },
     {
       id: uuidv4(),
       label: "Callout block",
@@ -54,18 +144,69 @@ export const appSettings: TSettingList = {
     }
   ],
   type3_lists: [
-    {id: uuidv4(), label: "To-do list", tagName: ['checkbox_list'], isAllowed: false, type: "checkbox"},
-    {id: uuidv4(), label: "Bulleted list", tagName: ['bullet_list'], isAllowed: false, type: "checkbox"},
-    {id: uuidv4(), label: "Numbered list", tagName: ['ordered_list'], isAllowed: false, type: "checkbox"},
+    {
+      label: "To-do list",
+      id: uuidv4(),
+      tagName: ['checkbox_list'],
+      isAllowed: false,
+      type: "checkbox"
+    },
+    {
+      label: "Bulleted list",
+      id: uuidv4(),
+      tagName: ['bullet_list'],
+      isAllowed: false,
+      type: "checkbox"
+    },
+    {
+      label: "Numbered list",
+      id: uuidv4(),
+      tagName: ['ordered_list'],
+      isAllowed: false,
+      type: "checkbox"
+    },
   ],
   type4_text: [
-    {id: uuidv4(), label: "Bold", tagName: ["STRONG"], isAllowed: true, type: "checkbox"},
-    {id: uuidv4(), label: "Italic", tagName: ["EM"], isAllowed: true, type: "checkbox"},
-    {id: uuidv4(), label: "Underline", tagName: ["U"], isAllowed: false, type: "checkbox"},
-    {id: uuidv4(), label: "Strike", tagName: ["DEL"], isAllowed: false, type: "checkbox"}
+    {
+      label: "Bold",
+      id: uuidv4(),
+      tagName: ["STRONG"],
+      isAllowed: true,
+      type: "checkbox"
+    },
+    {
+      label: "Italic",
+      id: uuidv4(),
+      tagName: ["EM"],
+      isAllowed: true,
+      type: "checkbox"
+    },
+    {
+      label: "Underline",
+      id: uuidv4(),
+      tagName: ["U"], isAllowed: false, type: "checkbox"
+    },
+    {
+      label: "Strike",
+      id: uuidv4(),
+      tagName: ["DEL"],
+      isAllowed: false, type: "checkbox"
+    }
   ],
   type5_counter: [
-    {id: uuidv4(), label: "Words", tagName: ["count_words"], isAllowed: true, type: "radio"},
-    {id: uuidv4(), label: "Symbols", tagName: ["count_symbols"], isAllowed: false, type: "radio"}
+    {
+      label: "Words",
+      id: uuidv4(),
+      tagName: ["count_words"],
+      isAllowed: true,
+      type: "radio"
+    },
+    {
+      label: "Symbols",
+      id: uuidv4(),
+      tagName: ["count_symbols"],
+      isAllowed: false,
+      type: "radio"
+    }
   ]
 };

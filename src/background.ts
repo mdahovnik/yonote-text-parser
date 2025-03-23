@@ -10,6 +10,8 @@ chrome.runtime.onInstalled.addListener(() => {
       "currentDocumentId": '',
       "nodesTreeCache": []
     }
+  }, () => {
+    console.log("STORAGE WAS INITIALISED")
   });
 });
 
@@ -35,7 +37,7 @@ chrome.alarms.create("keepServiceWorkerAlive", {
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "keepServiceWorkerAlive") {
-    console.log("Будим Service Worker");
+    console.log("WAKE UP Service Worker");
   }
 });
 
@@ -43,7 +45,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // используем chrome.runtime.connect(). Это постоянное соединение, в данном случае более оптимизированный и быстрый способ,
 // чем sendMessage(), меньше накладных расходов.
 chrome.runtime.onConnect.addListener((port) => {
-  console.log("Content.ts подключился:", port.name);
+  console.log("Content.ts WAS CONNECTED:", port.name);
 
   port.onMessage.addListener((message: TMessage) => {
     if (message.action === Act.GET_NODE_TREE) {
@@ -285,4 +287,4 @@ function extractDataFromNodeTree(
   return totalTree;
 }
 
-console.log("💡 background.ts is running");
+console.log("💡 background.ts IS RUNNING");

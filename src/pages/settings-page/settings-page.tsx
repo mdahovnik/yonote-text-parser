@@ -8,18 +8,15 @@ import {Icon} from "../../constants/constants.ts";
 import {useTranslation} from "react-i18next";
 import {LanguageSwitcher} from "../../entities/ui/language-switcher/language-switcher.tsx";
 
-export const SettingsPage: FC<TSettingPage> = (
-  {
-    onBackButtonClick,
-    onOptionChangeClick,
-    settings
-  }) => {
+export const SettingsPage: FC<TSettingPage> = ({onBackButtonClick, onOptionChangeClick, settings}) => {
   const {t} = useTranslation();
   return (
     <>
       <Wrapper>
-        <ActionButton onClick={onBackButtonClick} iconType={Icon.BACK}/>
-        <Heading level={2}>{t('settingsTitle')}</Heading>
+        <ActionButton iconType={Icon.BACK} onClick={onBackButtonClick}/>
+        <Heading level={2}>
+          {t('settingsTitle')}
+        </Heading>
         <LanguageSwitcher iconType={Icon.LNG}/>
       </Wrapper>
       <OptionsSection settings={settings}

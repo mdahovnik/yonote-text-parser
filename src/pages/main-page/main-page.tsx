@@ -24,7 +24,7 @@ export const MainPage: FC<TMainPage> = (
     settings,
     onSettingClick,
     onPlusClick,
-    onClearClick,
+    onAllClearClick,
     onCopyRawTextClick,
     onDeleteClick
   }) => {
@@ -40,20 +40,29 @@ export const MainPage: FC<TMainPage> = (
   }
 
   const isCountWordsAllowed = () => settings.type5_counter.find((item) => item.label === "Words")?.isAllowed;
+
+  const currentCount = isCountWordsAllowed()
+    ? words
+    : symbols;
+
+  const totalCountString = isCountWordsAllowed()
+    ? `${t('countWords')}: ${words}`
+    : `${t('countSymbols')}: ${symbols}`;
+
   const shouldShowAddButton = isValidPageOpen && !documents.some(item => item.id === currentDocumentId);
-  const currentCount = isCountWordsAllowed() ? words : symbols;
-  const countString = `${isCountWordsAllowed() ? t('countWords') : t('countSymbols')}: ${currentCount}`;
 
   return (
     <>
       <Wrapper>
-        <ActionButton onClick={onSettingClick}
-                      disabled={!isValidPageOpen}
-                      iconType={Icon.SETTINGS}/>
-        <Heading level={2}>{t('extensionTitle')}</Heading>
-        <ActionButton onClick={onPlusClick}
-                      disabled={!shouldShowAddButton}
-                      iconType={Icon.PLUS}/>
+        <ActionButton iconType={Icon.SETTINGS}
+                      onClick={onSettingClick}
+                      disabled={!isValidPageOpen}/>
+        <Heading level={2}>
+          {t('extensionTitle')}
+        </Heading>
+        <ActionButton iconType={Icon.PLUS}
+                      onClick={onPlusClick}
+                      disabled={!shouldShowAddButton}/>
       </Wrapper>
       {documents.length > 0 ? (
         <>
@@ -65,14 +74,14 @@ export const MainPage: FC<TMainPage> = (
                    settings={settings}/>
           <Separator/>
           <Wrapper>
-            <ActionButton onClick={onClearClick} iconType={Icon.TRASH}>
+            <ActionButton iconType={Icon.TRASH} onClick={onAllClearClick}>
               {t('clearButton')}
             </ActionButton>
-            <ActionButton onClick={onCopyRawTextClick} iconType={Icon.COPY}>
+            <ActionButton iconType={Icon.COPY} onClick={onCopyRawTextClick}>
               {t('copyRawText')}
             </ActionButton>
-            <ActionButton onClick={() => copyTotalCountToClipboard(currentCount)} iconType={Icon.COPY}>
-              {countString}
+            <ActionButton iconType={Icon.COPY} onClick={() => copyTotalCountToClipboard(currentCount)}>
+              {totalCountString}
             </ActionButton>
           </Wrapper>
         </>

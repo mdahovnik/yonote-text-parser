@@ -31,7 +31,6 @@ function App() {
   const [currentDocumentId, setCurrentDocumentId] = useState<string>("");
   const [documents, setDocuments] = useState<TDocument[]>([]);
 
-
   useEffect(() => {
     const abortController = new AbortController();
     const fetchData = async () => {
@@ -59,7 +58,7 @@ function App() {
     return () => abortController.abort();
   }, [])
 
-  const changeOptionField = (category: keyof TSettingList, optionLabel: string) => {
+  const toggleOptionField = (category: keyof TSettingList, optionLabel: string) => {
     const updatedSettings = {
       ...settings,
       [category]: settings[category].map((item) => {
@@ -71,8 +70,7 @@ function App() {
     };
 
     chrome.runtime.sendMessage({
-      action: Act.SAVE_SETTINGS,
-      data: {newSettings: {...updatedSettings}}
+      action: Act.SAVE_SETTINGS, data: {newSettings: {...updatedSettings}}
     }, (data: { savedDocuments: TDocument[], savedSettings: TSettingList }) => {
       if (chrome.runtime.lastError) {
         console.error("Error on ACT.SAVE_SETTINGS:", chrome.runtime.lastError.message);
@@ -84,13 +82,14 @@ function App() {
     })
   }
 
-  const togglePage = () => {
-    const isOpen = !isSettingOpen;
-    setIsSettingOpen(isOpen);
+  const togglePages = () => {
+    setIsSettingOpen(prev => !prev);
   }
 
   const saveCurrentDocument = () => {
-    chrome.runtime.sendMessage({action: Act.SAVE_DOCUMENT, data: {newSettings: settings}}, (documents: TDocument[]) => {
+    chrome.runtime.sendMessage({
+      action: Act.SAVE_DOCUMENT, data: {newSettings: settings}
+    }, (documents: TDocument[]) => {
       if (chrome.runtime.lastError) {
         console.error("Error on ACT.SAVE_DOCUMENT:", chrome.runtime.lastError.message);
       } else {
@@ -101,23 +100,27 @@ function App() {
   }
 
   const deleteAllDocuments = () => {
-    chrome.runtime.sendMessage({action: Act.CLEAR_RECORDS}, () => {
+    chrome.runtime.sendMessage({
+      action: Act.CLEAR_RECORDS
+    }, () => {
       if (chrome.runtime.lastError) {
         console.error('Error on ACT.CLEAR_RECORDS:', chrome.runtime.lastError.message);
       } else {
         setDocuments([]);
-        console.log("🗑️ all documents are DELETED");
+        console.log("🗑️ all documents was DELETED");
       }
     })
   }
 
   const deleteSelectedDocument = (id: string) => {
-    chrome.runtime.sendMessage({action: Act.REMOVE_DOCUMENT, data: {id: id}}, (documents: TDocument[]) => {
+    chrome.runtime.sendMessage({
+      action: Act.REMOVE_DOCUMENT, data: {id: id}
+    }, (documents: TDocument[]) => {
       if (chrome.runtime.lastError) {
         console.error("Error on ACT.REMOVE_DOCUMENT:", chrome.runtime.lastError.message);
       } else {
         setDocuments(documents);
-        console.log("🗑️ document is DELETED BY ID", id);
+        console.log("🗑️ document was DELETED BY ID", id);
       }
     })
   }
@@ -130,12 +133,12 @@ function App() {
   return (
     isSettingOpen
       ? <SettingsPage settings={settings}
-                      onOptionChangeClick={changeOptionField}
-                      onBackButtonClick={togglePage}/>
+                      onOptionChangeClick={toggleOptionField}
+                      onBackButtonClick={togglePages}/>
       : <MainPage onPlusClick={saveCurrentDocument}
-                  onClearClick={deleteAllDocuments}
+                  onAllClearClick={deleteAllDocuments}
                   onDeleteClick={deleteSelectedDocument}
-                  onSettingClick={togglePage}
+                  onSettingClick={togglePages}
                   documents={documents}
                   currentDocumentId={currentDocumentId}
                   isValidPageOpen={isValidPageOpen}

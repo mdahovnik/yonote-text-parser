@@ -1,6 +1,6 @@
 import {TextNodeTree} from "./types/types.ts";
 
-console.log("💡 content.ts is running:", document.readyState);
+console.log("💡 content.ts IS RUNNING", document.readyState);
 
 const ACT = {
   GET_DOCUMENT: 'GET_DOCUMENT',
@@ -60,16 +60,16 @@ waitForOpenNewDocument(() => {
 });
 
 // Индикатор количества символов в выделенной части текста, работает при выделении мышкой и ctrl+a.
-const characterIndicator = (() => {
-  const characterIndicator = document.createElement('span');
-  characterIndicator.textContent = '0';
-  characterIndicator.style.fontSize = '18px';
-  characterIndicator.style.display = 'flex';
-  characterIndicator.style.alignItems = 'center';
-  characterIndicator.style.borderRadius = '10%';
-  characterIndicator.style.paddingInline = "5px";
-  characterIndicator.style.backgroundColor = 'lightgreen';
-  return characterIndicator;
+const charactersCounterIndicator = (() => {
+  const indicator = document.createElement('span');
+  indicator.textContent = '0';
+  indicator.style.fontSize = '18px';
+  indicator.style.display = 'flex';
+  indicator.style.alignItems = 'center';
+  indicator.style.borderRadius = '10%';
+  indicator.style.paddingInline = "5px";
+  indicator.style.backgroundColor = 'lightgreen';
+  return indicator;
 })()
 
 // Вешаем индикатор количества символов во всплывающее меню появляющееся при выделении (.selection-toolbar)
@@ -79,9 +79,9 @@ document.addEventListener('selectionchange', () => {
 
   if (!selectionToolbar) {
     selectionToolbar = document.querySelector('.selection-toolbar');
-    selectionToolbar?.appendChild(characterIndicator);
+    selectionToolbar?.appendChild(charactersCounterIndicator);
   } else {
-    characterIndicator.textContent = `${selection?.toString().replace(/\n/g, '').length}`;
+    charactersCounterIndicator.textContent = `${selection?.toString().replace(/\n/g, '').length}`;
   }
 })
 

@@ -2,7 +2,7 @@ import {FC} from "react";
 import style from "./icon-btn.module.css";
 import {IIconBtn} from "./type.ts";
 
-export const IconBtn: FC<IIconBtn> = ({iconType, ...props}) => {
+export const IconBtn: FC<IIconBtn> = ({iconType, children, ...props}) => {
 
   let className = (iconType === "trash" || iconType === "remove")
     ? style.iconDanger
@@ -12,11 +12,10 @@ export const IconBtn: FC<IIconBtn> = ({iconType, ...props}) => {
 
   return (
     <div className={`${style.iconWrapper} ${className}`} {...props}>
-      <svg className={style.iconSvg}
-           style={props.style}>
+      <svg className={style.iconSvg}>
         <use href={`icons.svg#${iconType}`}></use>
       </svg>
-      <label>{props.children}</label>
+      <label>{children}</label>
     </div>
   )
 }

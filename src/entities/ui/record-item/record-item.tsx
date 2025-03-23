@@ -11,6 +11,7 @@ export const RecordItem: FC<IRecordItem> = (
     currentDocumentId,
     onDeleteClick,
     onCopyClick,
+    children,
     ...props
   }) => {
 
@@ -23,7 +24,7 @@ export const RecordItem: FC<IRecordItem> = (
       <ActionButton onClick={() => onDeleteClick(document.id)}
                     iconType={Icon.REMOVE}/>
       <div className={`${style.recordTitle}`}>
-        <span>{props.children}</span>
+        <span>{children}</span>
       </div>
       <ActionButton className={className}
                     onClick={() => onCopyClick(isWordCountAllowed ? document.words : document.symbols)}

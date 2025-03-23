@@ -1,6 +1,7 @@
 import {TDocument, TSettingList} from "../../../types/types.ts";
+import {HTMLAttributes} from "react";
 
-export type TRecordList = {
+export interface IRecordList extends HTMLAttributes<HTMLDivElement> {
   documents: TDocument[];
   settings: TSettingList;
   currentDocumentId: string;

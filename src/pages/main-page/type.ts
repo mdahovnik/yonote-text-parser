@@ -7,7 +7,7 @@ export type TMainPage = {
   settings: TSettingList;
   onSettingClick: () => void;
   onPlusClick: () => void;
-  onClearClick: () => void;
+  onAllClearClick: () => void;
   onDeleteClick: (id: string) => void;
   onCopyRawTextClick: () => void;
 }
