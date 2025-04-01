@@ -52,8 +52,8 @@ function reconnectPort() {
 }
 
 waitForOpenNewDocument(() => {
-  waitForDocumentContainer(".hrehUE", (element: HTMLElement) => {
-    waitForTextboxes(element, (textBoxes: Node[]) => {
+  waitForDocumentContainer((mainDocumentContainer: HTMLElement) => {
+    waitForTextboxes(mainDocumentContainer, (textBoxes: Node[]) => {
       watchForTextChanges(textBoxes);
     });
   });
@@ -97,25 +97,23 @@ function waitForOpenNewDocument(callback: Function) {
   observer.observe(document.head, {childList: true, subtree: false, attributes: false, characterData: false});
 }
 
-// Ищем блок с class='hrehUE', он при обновлении документа мутирует и его можно отследить DocumentContainer_Observer
+// Ищем блок с class='main-document-container', он при обновлении документа мутирует и его можно отследить DocumentContainer_Observer
 // После обнаружения блока дисконнектим DocumentContainer_Observer.
-function waitForDocumentContainer(selector: string, callback: (element: HTMLElement) => void) {
-  const element = document.querySelector(selector) as HTMLElement;
-  if (element) {
+function waitForDocumentContainer(callback: (element: HTMLElement) => void) {
+  let element = document.querySelector('.main-document-container');
+  if (element instanceof HTMLElement) {
     callback(element);
     return;
   }
 
-  const observer = new MutationObserver((mutations) => {
-    console.log('🟢 DocumentContainer_Observer WORKING...')
-    for (const mutation of mutations) {
-      mutation.addedNodes.forEach((node) => {
-        if (node instanceof HTMLElement && node.matches(selector)) {
-          callback(node);
-          observer.disconnect();
-          console.log('🟥 DocumentContainer_Observer DISCONNECTED');
-        }
-      })
+  const observer = new MutationObserver(() => {
+    console.log('🟢 DocumentContainer_Observer WORKING...');
+    element = document.querySelector('.main-document-container') as HTMLElement;
+
+    if (element instanceof HTMLElement && element.matches('.main-document-container')) {
+      callback(element);
+      observer.disconnect();
+      console.log('🟥 DocumentContainer_Observer DISCONNECTED');
     }
   })
   observer.observe(document.body, {childList: true, subtree: true});

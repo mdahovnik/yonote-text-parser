@@ -4,6 +4,12 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // css: {
+  //   modules: {
+  //     localsConvention: "camelCase", // Не меняет названия классов
+  //     generateScopedName: "[name]__[local]", // Формат названий
+  //   },
+  // },
   build: {
     outDir: "dist",
     rollupOptions: {

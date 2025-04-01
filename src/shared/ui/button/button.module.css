@@ -2,26 +2,27 @@
 .button {
     border: none;
     font-size: 1.0rem;
+    color: var(--text-color);
     background-color: transparent;
 }
 
 
 .button:hover,
 .button:hover svg {
-    color: var(--blue);
-    fill: var(--blue);
+    color: var(--button-text-color);
+    fill: var(--button-text-color);
     cursor: pointer;
 }
 
 .button:active,
 .button:active svg {
-    color: var(--black);
-    fill: var(--black);
+    color: var(--text-color);
+    fill: var(--text-color);
 }
 
 .button:disabled,
 .button:disabled svg {
-    fill: var(--lightgrey);
+    fill: var(--button-color);
     pointer-events: none;
 }
 

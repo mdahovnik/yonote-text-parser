@@ -7,19 +7,19 @@
     display: block;
     height: 1.0rem;
     width: 1.0rem;
-    fill: var(--black);
+    fill: var(--text-color);
 }
 
 .iconDanger:hover {
-    color: var(--red);
+    color: var(--danger-color);
 }
 
 .iconDanger:focus {
-    color: rgb(0, 0, 0);
+    color: var(--text-color);
 }
 
 .iconDanger:hover svg {
-    fill: var(--red);
+    fill: var(--danger-color);
 }
 
 /* Кнопка клонирования при наведении на счетчик страницы */

@@ -3,6 +3,7 @@ import {TMessage, TStorage, TextNodeTree, TDocument, TSettingList} from "./types
 import {v4 as uuidv4} from 'uuid';
 
 chrome.runtime.onInstalled.addListener(() => {
+
   chrome.storage.local.set({
     "settings": appSettings,
     "documents": [],
